@@ -2,7 +2,17 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/db';
 
-export async function GET() {
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit';
+
+export async function GET(request: Request) {
+    // Basic protection against health check spam
+    const ip = getClientIP(request);
+    const rateLimitResult = checkRateLimit(`health:${ip}`, RATE_LIMITS.API_GENERAL);
+
+    if (!rateLimitResult.success) {
+        return NextResponse.json({ status: 'busy' }, { status: 429 });
+    }
+
     try {
         const client = await clientPromise;
         // Just a quick ping to see if we can talk to the server

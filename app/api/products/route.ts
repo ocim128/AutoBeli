@@ -4,6 +4,7 @@ import clientPromise from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { Product } from '@/lib/definitions';
 import { encryptContent } from '@/lib/crypto';
+import { validate, createProductSchema, updateProductSchema } from '@/lib/validation';
 
 export async function POST(request: Request) {
     // Auth Check
@@ -14,11 +15,14 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { title, slug, description, priceIdr, content, isActive } = body;
 
-        if (!title || !slug || !priceIdr || !content) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Validate input
+        const validation = validate(createProductSchema, body);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
         }
+
+        const { title, slug, description, priceIdr, content, isActive } = validation.data!;
 
         const client = await clientPromise;
         const db = client.db();
@@ -36,8 +40,8 @@ export async function POST(request: Request) {
         const newProduct: Product = {
             title,
             slug,
-            description,
-            priceIdr: parseInt(priceIdr),
+            description: description || '',
+            priceIdr,
             contentEncrypted,
             isActive: isActive ?? true,
             createdAt: new Date(),
@@ -84,17 +88,37 @@ export async function PUT(request: Request) {
         const body = await request.json();
         const { originalSlug, title, description, priceIdr, content, isActive } = body;
 
+        // Basic validation for originalSlug
+        if (!originalSlug || typeof originalSlug !== 'string') {
+            return NextResponse.json({ error: 'Original slug is required' }, { status: 400 });
+        }
+
+        // Validate update fields
+        const updateValidation = validate(updateProductSchema, {
+            slug: originalSlug,
+            title,
+            description,
+            priceIdr: priceIdr ? parseInt(priceIdr) : undefined,
+            content,
+            isActive
+        });
+
+        if (!updateValidation.success) {
+            return NextResponse.json({ error: updateValidation.error }, { status: 400 });
+        }
+
         const client = await clientPromise;
         const db = client.db();
         const collection = db.collection<Product>('products');
 
-        const updateData: any = {
-            title,
-            description,
-            priceIdr: parseInt(priceIdr),
-            isActive: isActive ?? true,
+        const updateData: Partial<Product> & { updatedAt: Date } = {
             updatedAt: new Date(),
         };
+
+        if (title) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
+        if (priceIdr !== undefined) updateData.priceIdr = parseInt(priceIdr);
+        if (isActive !== undefined) updateData.isActive = isActive;
 
         if (content) {
             updateData.contentEncrypted = encryptContent(content);

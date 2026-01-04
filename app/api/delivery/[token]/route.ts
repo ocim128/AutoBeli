@@ -4,6 +4,7 @@ import clientPromise from '@/lib/db';
 import { AccessToken, Product } from '@/lib/definitions';
 import { decryptContent } from '@/lib/crypto';
 import { ObjectId } from 'mongodb';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit';
 
 export async function GET(
     request: Request,
@@ -13,6 +14,24 @@ export async function GET(
 
     if (!token) {
         return NextResponse.json({ error: 'Token required' }, { status: 400 });
+    }
+
+    // IP-based Rate Limiting (Lightweight protection)
+    const ip = getClientIP(request);
+    const rateLimitResult = checkRateLimit(`delivery:${ip}`, RATE_LIMITS.DELIVERY);
+
+    if (!rateLimitResult.success) {
+        return NextResponse.json(
+            { error: 'Too many requests. Please try again later.' },
+            {
+                status: 429,
+                headers: {
+                    'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+                    'X-RateLimit-Remaining': '0',
+                    'X-RateLimit-Reset': rateLimitResult.resetAt.toString(),
+                }
+            }
+        );
     }
 
     try {

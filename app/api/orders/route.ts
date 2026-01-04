@@ -3,52 +3,64 @@ import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/db';
 import { Product, Order } from '@/lib/definitions';
 import { ObjectId } from 'mongodb';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit';
+import { validate, createOrderSchema, updateOrderContactSchema } from '@/lib/validation';
 
 export async function POST(request: Request) {
     try {
-        const { slug } = await request.json();
+        // Rate limiting
+        const ip = getClientIP(request);
+        const rateLimitResult = checkRateLimit(`order:create:${ip}`, RATE_LIMITS.ORDER_CREATE);
 
-        if (!slug) {
-            return NextResponse.json({ error: 'Product slug required' }, { status: 400 });
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+                        'X-RateLimit-Remaining': '0',
+                        'X-RateLimit-Reset': rateLimitResult.resetAt.toString(),
+                    }
+                }
+            );
         }
+
+        // Validate input
+        const body = await request.json();
+        const validation = validate(createOrderSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+
+        const { slug } = validation.data!;
 
         const client = await clientPromise;
         const db = client.db();
 
-
-        // Simple In-Memory Rate Limit (per IP)
-        // In production, use Redis or DB with TTL
-        const ip = request.headers.get('x-forwarded-for') || 'unknown';
-        // A real implementation would track IP + timestamp.
-        // Here we just skip it to keep "memory map" state simpler or just assume Phase 7 
-        // "Polish" means basic safeguard.
-        // Let's rely on client side or checking DB for recent pending orders.
-
-        // Check if IP has > 3 pending orders in last minute (DB check is cleaner for serverless)
+        // Additional DB-based rate limit (global safety cap)
         const recentOrders = await db.collection<Order>('orders').countDocuments({
-            createdAt: { $gt: new Date(Date.now() - 60 * 1000) }, // last 1 min
+            createdAt: { $gt: new Date(Date.now() - 60 * 1000) },
             status: 'PENDING'
-            // We don't strictly track IP in Order schema yet, so this is a global "DOS protection" 
-            // or we can just say "One pending order per product per minute"?
-            // Let's just stick to standard logic without over-engineering since schema is closed.
         });
 
-        if (recentOrders > 20) { // Global safety Cap
+        if (recentOrders > 50) {
             return NextResponse.json({ error: 'System busy. Try again later.' }, { status: 429 });
         }
 
-        // 1. Get Product
+        // Get Product
         const product = await db.collection<Product>('products').findOne({ slug, isActive: true });
 
         if (!product) {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         }
 
-        // 2. Create Order (PENDING)
+        // Create Order (PENDING)
         const newOrder: Order = {
             productId: product._id!,
             status: 'PENDING',
-            amountPaid: 0, // Not paid yet
+            amountPaid: 0,
             paymentGateway: 'MOCK',
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -59,6 +71,11 @@ export async function POST(request: Request) {
         return NextResponse.json({
             success: true,
             orderId: result.insertedId.toString()
+        }, {
+            headers: {
+                'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+                'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            }
         });
 
     } catch (e) {
@@ -69,12 +86,26 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
     try {
-        const body = await request.json();
-        const { orderId, contact } = body;
+        // Rate limiting (use same as order creation)
+        const ip = getClientIP(request);
+        const rateLimitResult = checkRateLimit(`order:update:${ip}`, RATE_LIMITS.ORDER_CREATE);
 
-        if (!orderId) {
-            return NextResponse.json({ error: 'Order ID required' }, { status: 400 });
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429 }
+            );
         }
+
+        // Validate input
+        const body = await request.json();
+        const validation = validate(updateOrderContactSchema, body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+
+        const { orderId, contact } = validation.data!;
 
         const client = await clientPromise;
         const db = client.db();

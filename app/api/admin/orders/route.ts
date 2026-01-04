@@ -3,9 +3,22 @@ import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rateLimit';
+
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+    // Rate limit
+    const ip = getClientIP(request);
+    const rateLimitResult = checkRateLimit(`admin:orders:${ip}`, RATE_LIMITS.API_GENERAL);
+
+    if (!rateLimitResult.success) {
+        return NextResponse.json(
+            { error: 'Too many requests' },
+            { status: 429 }
+        );
+    }
+
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
