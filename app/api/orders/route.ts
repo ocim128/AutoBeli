@@ -66,3 +66,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
     }
 }
+
+export async function PATCH(request: Request) {
+    try {
+        const body = await request.json();
+        const { orderId, contact } = body;
+
+        if (!orderId) {
+            return NextResponse.json({ error: 'Order ID required' }, { status: 400 });
+        }
+
+        const client = await clientPromise;
+        const db = client.db();
+
+        await db.collection<Order>('orders').updateOne(
+            { _id: new ObjectId(orderId) },
+            { $set: { customerContact: contact || undefined } }
+        );
+
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+    }
+}

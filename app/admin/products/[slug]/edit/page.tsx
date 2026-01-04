@@ -1,0 +1,184 @@
+
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { Product } from '@/lib/definitions';
+
+export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
+    const router = useRouter();
+    const [slug, setSlug] = useState<string>('');
+
+    // Unwrap params
+    useEffect(() => {
+        params.then(p => setSlug(p.slug));
+    }, [params]);
+
+    const [form, setForm] = useState({
+        title: '',
+        description: '',
+        priceIdr: 0,
+        content: '',
+        isActive: true
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    // Fetch product data
+    useEffect(() => {
+        if (!slug) return;
+
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => {
+                const product = data.products.find((p: Product) => p.slug === slug);
+                if (product) {
+                    setForm({
+                        title: product.title,
+                        description: product.description,
+                        priceIdr: product.priceIdr,
+                        content: '', // Keep blank
+                        isActive: product.isActive
+                    });
+                } else {
+                    setError('Product not found');
+                }
+            })
+            .catch(e => setError('Failed to load'))
+            .finally(() => setLoading(false));
+    }, [slug]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm(prev => ({ ...prev, isActive: e.target.checked }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await fetch('/api/products', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    originalSlug: slug,
+                    ...form
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to update');
+            }
+
+            router.push('/admin/products');
+            router.refresh();
+        } catch (err: any) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    if (loading && !slug) return <div>Initializing...</div>;
+    if (loading) return <div>Loading Product...</div>;
+    if (error) return <div className="text-red-500">{error}</div>;
+
+    return (
+        <div className="max-w-2xl mx-auto">
+            <h1 className="text-2xl font-bold mb-6">Edit Product: {slug}</h1>
+
+            <form onSubmit={handleSubmit} className="space-y-4 border p-6 rounded-lg bg-white shadow-sm">
+
+                {/* Title */}
+                <div>
+                    <label className="block text-sm font-medium">Title</label>
+                    <input
+                        type="text"
+                        name="title"
+                        required
+                        className="w-full border rounded p-2"
+                        value={form.title}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* Price */}
+                <div>
+                    <label className="block text-sm font-medium">Price (IDR)</label>
+                    <input
+                        type="number"
+                        name="priceIdr"
+                        required
+                        min="0"
+                        className="w-full border rounded p-2"
+                        value={form.priceIdr}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* Description */}
+                <div>
+                    <label className="block text-sm font-medium">Description</label>
+                    <textarea
+                        name="description"
+                        rows={3}
+                        className="w-full border rounded p-2"
+                        value={form.description}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* Content */}
+                <div>
+                    <label className="block text-sm font-medium">Reset Content (Optional)</label>
+                    <p className="text-xs text-gray-500 mb-1">Leave blank to keep existing encrypted content.</p>
+                    <textarea
+                        name="content"
+                        rows={6}
+                        className="w-full border rounded p-2 font-mono text-sm bg-yellow-50"
+                        placeholder="Enter new content to overwrite..."
+                        value={form.content}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* Active */}
+                <div className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={form.isActive}
+                        onChange={handleCheckbox}
+                        className="h-4 w-4"
+                    />
+                    <label>Active (Visible in store)</label>
+                </div>
+
+                <div className="flex justify-end gap-2 text-sm">
+                    <span className="text-yellow-600 self-center">Note: Slug cannot be changed.</span>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
+                    >
+                        {loading ? 'Saving...' : 'Update Product'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}

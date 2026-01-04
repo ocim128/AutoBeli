@@ -1,7 +1,7 @@
 
 import { getOrderWithProduct } from '@/lib/orders';
 import { notFound, redirect } from 'next/navigation';
-import MockPayButton from '@/components/MockPayButton';
+import CheckoutForm from '@/components/CheckoutForm';
 
 interface Props {
     params: Promise<{ orderId: string }>;
@@ -57,10 +57,7 @@ export default async function CheckoutPage({ params }: Props) {
                     </div>
 
                     <div className="mt-8">
-                        <MockPayButton orderId={orderId} amount={order.product.priceIdr} />
-                        <p className="text-center text-xs text-gray-400 mt-3">
-                            This is a simulation. No real money will be deducted.
-                        </p>
+                        <CheckoutForm orderId={orderId} amount={order.product.priceIdr} />
                     </div>
                 </div>
             </div>

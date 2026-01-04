@@ -73,3 +73,44 @@ export async function GET() {
         return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    const session = await getSession();
+    if (!session || session.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const body = await request.json();
+        const { originalSlug, title, description, priceIdr, content, isActive } = body;
+
+        const client = await clientPromise;
+        const db = client.db();
+        const collection = db.collection<Product>('products');
+
+        const updateData: any = {
+            title,
+            description,
+            priceIdr: parseInt(priceIdr),
+            isActive: isActive ?? true,
+            updatedAt: new Date(),
+        };
+
+        if (content) {
+            updateData.contentEncrypted = encryptContent(content);
+        }
+
+        const result = await collection.updateOne(
+            { slug: originalSlug },
+            { $set: updateData }
+        );
+
+        if (result.matchedCount === 0) {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+    }
+}

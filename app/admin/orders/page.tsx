@@ -35,6 +35,7 @@ export default function AdminOrders() {
                             <th className="p-4">ID</th>
                             <th className="p-4">Product</th>
                             <th className="p-4">Amount</th>
+                            <th className="p-4">Contact</th>
                             <th className="p-4">Status</th>
                             <th className="p-4">Gateway</th>
                             <th className="p-4">Date</th>
@@ -42,7 +43,7 @@ export default function AdminOrders() {
                     </thead>
                     <tbody>
                         {orders.length === 0 && (
-                            <tr><td colSpan={6} className="p-4 text-center text-gray-500">No orders found.</td></tr>
+                            <tr><td colSpan={7} className="p-4 text-center text-gray-500">No orders found.</td></tr>
                         )}
                         {orders.map((order) => (
                             <tr key={order._id} className="border-b last:border-0 hover:bg-gray-50 transition">
@@ -56,9 +57,18 @@ export default function AdminOrders() {
                                     Rp {(order.amountPaid || order.product?.priceIdr || 0).toLocaleString('id-ID')}
                                 </td>
                                 <td className="p-4">
+                                    {order.customerContact ? (
+                                        <span className="text-gray-700" title={order.customerContact}>
+                                            {order.customerContact}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400 italic">-</span>
+                                    )}
+                                </td>
+                                <td className="p-4">
                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                            order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
+                                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-gray-100 text-gray-800'
                                         }`}>
                                         {order.status}
                                     </span>

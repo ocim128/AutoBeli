@@ -40,6 +40,7 @@ export default function ProductList() {
                             <th className="p-4">Price</th>
                             <th className="p-4">Status</th>
                             <th className="p-4">Created</th>
+                            <th className="p-4"><span className="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,6 +63,14 @@ export default function ProductList() {
                                 </td>
                                 <td className="p-4 text-sm text-gray-500">
                                     {new Date(p.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="p-4 text-right">
+                                    <Link
+                                        href={`/admin/products/${p.slug}/edit`}
+                                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                                    >
+                                        Edit
+                                    </Link>
                                 </td>
                             </tr>
                         ))}
