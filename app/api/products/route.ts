@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     // Admin list
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
@@ -65,8 +65,29 @@ export async function GET() {
     }
 
     try {
+        const { searchParams } = new URL(request.url);
+        const slug = searchParams.get('slug');
+
         const client = await clientPromise;
         const db = client.db();
+
+        if (slug) {
+            const product = await db.collection<Product>('products').findOne({ slug });
+
+            if (!product) {
+                return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+            }
+
+            // Decrypt content for admin view
+            // @ts-ignore
+            if (product.contentEncrypted) {
+                // @ts-ignore
+                product.content = require('@/lib/crypto').decryptContent(product.contentEncrypted);
+            }
+
+            return NextResponse.json({ product });
+        }
+
         const products = await db.collection<Product>('products')
             .find({})
             .sort({ createdAt: -1 })
@@ -74,6 +95,7 @@ export async function GET() {
 
         return NextResponse.json({ products });
     } catch (e) {
+        console.error(e);
         return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
     }
 }

@@ -28,16 +28,19 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
     useEffect(() => {
         if (!slug) return;
 
-        fetch('/api/products')
+        if (!slug) return;
+
+        // Fetch specific product (which will return decrypted content for admin)
+        fetch(`/api/products?slug=${slug}`)
             .then(res => res.json())
             .then(data => {
-                const product = data.products.find((p: Product) => p.slug === slug);
+                const product = data.product;
                 if (product) {
                     setForm({
                         title: product.title,
                         description: product.description,
                         priceIdr: product.priceIdr,
-                        content: '', // Keep blank
+                        content: product.content || '', // Pre-fill decrypted content
                         isActive: product.isActive
                     });
                 } else {
@@ -62,18 +65,28 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
         setLoading(true);
         setError('');
 
+        const payload = {
+            originalSlug: slug,
+            ...form,
+        };
+
+        // Remove content if empty so validation doesn't fail (min 1 char)
+        // and backend knows not to update it.
+        if (!payload.content) {
+            // @ts-ignore
+            delete payload.content;
+        }
+
         try {
             const res = await fetch('/api/products', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    originalSlug: slug,
-                    ...form
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
-                throw new Error('Failed to update');
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to update');
             }
 
             router.push('/admin/products');
@@ -135,8 +148,8 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
                 {/* Content */}
                 <div>
-                    <label className="block text-sm font-medium">Reset Content (Optional)</label>
-                    <p className="text-xs text-gray-500 mb-1">Leave blank to keep existing encrypted content.</p>
+                    <label className="block text-sm font-medium">Current Content</label>
+                    <p className="text-xs text-gray-500 mb-1">Edit to update encrypted content.</p>
                     <textarea
                         name="content"
                         rows={6}

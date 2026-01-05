@@ -32,6 +32,8 @@ export default function BuyButton({ slug, priceIdr }: { slug: string, priceIdr: 
             <button
                 onClick={handleBuy}
                 disabled={loading}
+                aria-busy={loading}
+                aria-label={loading ? "Processing order" : `Beli Sekarang for Rp ${priceIdr.toLocaleString('id-ID')}`}
                 className="w-full bg-gray-900 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-lg hover:bg-indigo-600 hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
             >
                 {loading ? 'Processing...' : `Beli Sekarang - Rp ${priceIdr.toLocaleString('id-ID')}`}
