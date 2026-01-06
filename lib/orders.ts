@@ -6,6 +6,8 @@ import { invalidateProductCache } from "@/lib/products";
 export type OrderWithProduct = Order & { product: Product };
 
 export async function getOrderWithProduct(orderId: string): Promise<OrderWithProduct | null> {
+  if (!ObjectId.isValid(orderId)) return null;
+
   try {
     const client = await clientPromise;
     const db = client.db();
@@ -41,6 +43,8 @@ import { generateAccessToken } from "@/lib/tokens";
 import { AccessToken } from "@/lib/definitions";
 
 export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> {
+  if (!ObjectId.isValid(orderId)) return false;
+
   try {
     const client = await clientPromise;
     const db = client.db();

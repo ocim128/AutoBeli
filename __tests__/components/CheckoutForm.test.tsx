@@ -31,7 +31,7 @@ describe("CheckoutForm Component", () => {
   it("renders contact input field", () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    expect(screen.getByLabelText(/whatsapp number/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/whatsapp delivery number/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/08123456789/i)).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe("CheckoutForm Component", () => {
   it("shows validation error for whitespace-only contact", async () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "   ");
 
     fireEvent.click(screen.getByRole("button"));
@@ -94,7 +94,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
@@ -133,7 +133,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "  081234567890  ");
 
     fireEvent.click(screen.getByRole("button"));
@@ -153,7 +153,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     const button = screen.getByRole("button");
@@ -174,7 +174,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
@@ -194,7 +194,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
@@ -210,7 +210,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     const button = screen.getByRole("button");
@@ -230,7 +230,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp number/i);
+    const input = screen.getByLabelText(/whatsapp delivery number/i);
     await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
