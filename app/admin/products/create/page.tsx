@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CreateProduct() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateProductContent />
+    </Suspense>
+  );
+}
+
+function CreateProductContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourceSlug = searchParams.get("sourceSlug");
+
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -15,6 +26,28 @@ export default function CreateProduct() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (sourceSlug) {
+      setLoading(true);
+      fetch(`/api/products?slug=${sourceSlug}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.product) {
+            setForm({
+              title: data.product.title,
+              slug: `${data.product.slug}-copy`, // Append copy to avoid collision
+              description: data.product.description || "",
+              priceIdr: data.product.priceIdr,
+              content: data.product.content || "",
+              isActive: true,
+            });
+          }
+        })
+        .catch((err) => console.error("Failed to load source product", err))
+        .finally(() => setLoading(false));
+    }
+  }, [sourceSlug]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

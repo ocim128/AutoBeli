@@ -17,9 +17,10 @@ export async function getActiveProducts(): Promise<Product[]> {
   const db = client.db();
 
   // Query uses compound index: {isActive: 1, createdAt: -1}
+  // Exclude sold products (unique digital products can only be sold once)
   const products = await db
     .collection<Product>("products")
-    .find({ isActive: true })
+    .find({ isActive: true, isSold: { $ne: true } })
     .project<Product>({ contentEncrypted: 0 }) // NEVER fetch content for list
     .sort({ createdAt: -1 })
     .toArray();
@@ -46,9 +47,13 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const db = client.db();
 
   // Query uses unique index: {slug: 1}
+  // Exclude sold products (unique digital products can only be sold once)
   const product = await db
     .collection<Product>("products")
-    .findOne({ slug, isActive: true }, { projection: { contentEncrypted: 0 } });
+    .findOne(
+      { slug, isActive: true, isSold: { $ne: true } },
+      { projection: { contentEncrypted: 0 } }
+    );
 
   // Store in cache (even null results to avoid repeated queries)
   cache.set(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);

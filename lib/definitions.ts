@@ -10,6 +10,7 @@ export interface Product {
   priceIdr: number; // Integer
   contentEncrypted: string; // Encrypted text content
   isActive: boolean;
+  isSold?: boolean; // True when product has been purchased (unique products)
   createdAt: Date;
   updatedAt: Date;
 }

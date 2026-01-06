@@ -1,6 +1,7 @@
 import clientPromise from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { Order, Product } from "@/lib/definitions";
+import { invalidateProductCache } from "@/lib/products";
 
 export type OrderWithProduct = Order & { product: Product };
 
@@ -76,7 +77,21 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
           }
         );
 
-        // 2. Ensure Access Token Exists
+        // 2. Mark product as sold (unique digital products can only be sold once)
+        await db.collection<Product>("products").updateOne(
+          { _id: order.productId },
+          {
+            $set: {
+              isSold: true,
+              updatedAt: new Date(),
+            },
+          }
+        );
+
+        // 3. Invalidate product cache so the store reflects the sold status
+        invalidateProductCache();
+
+        // 4. Ensure Access Token Exists
         const existingToken = await db.collection<AccessToken>("tokens").findOne({
           orderId: new ObjectId(orderId),
         });
