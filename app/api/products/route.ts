@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Product } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
 import { validate, createProductSchema, updateProductSchema } from "@/lib/validation";
+import { invalidateProductCache } from "@/lib/products";
 
 export async function POST(request: Request) {
   // Auth Check
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
     };
 
     await collection.insertOne(newProduct);
+
+    // Invalidate product cache after creation
+    invalidateProductCache();
 
     return NextResponse.json({ success: true, slug });
   } catch (e) {
@@ -150,6 +154,9 @@ export async function PUT(request: Request) {
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+
+    // Invalidate product cache after update
+    invalidateProductCache(originalSlug);
 
     return NextResponse.json({ success: true });
   } catch {
