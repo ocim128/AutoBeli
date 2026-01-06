@@ -1,0 +1,1322 @@
+API documentation
+Introduction
+Section for showcasing API endpoints
+
+​
+Get Started
+Headless API is an e-commerce development method where the user interface (Frontend) is separated from the product management and transaction processing systems (Backend). In headless commerce, the front-end can be built using various modern web technologies such as React or Vue.js, while the back-end performs tasks such as product storage, order processing, and integration with payment systems.
+By separating the front-end and back-end, headless commerce allows development teams to focus on the user experience without being hampered by the limitations of the underlying e-commerce platform. It also helps reduce the cost and time required to update and maintain an e-commerce site.
+​
+Authentication
+For starting using Mayar Headless API, you need account at https://mayar.id. If you have an account, you can create API KEY from https://web.mayar.id/api-keys.
+Generate API Key
+For your account security, don’t share your API KEY!
+Please note that any changes to your domain or subdomain require you to create a new API KEY, so the link in the response you receive will also be updated.
+​
+Sandbox Environment
+For testing purposes, you can use the webpage https://web.mayar.club/. You can log in or register first, then generate an API key from https://web.mayar.club/api-keys. (The same method as obtaining an API key on the production page).
+​
+Base URL
+The API Base URL is the main part of the address (URL) used to access an API endpoint. Mayar has two API Base URL’s based on the page.
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1
+
+
+API documentation
+Status Code
+Status Code From API Endpoint Request Results.
+
+The status code on an API endpoint is a 3-digit numeric code returned by the server each time a client (such as a browser, application, or other backend) sends a request to the API. Every request in our API has a response, and each response has a status code. This code indicates whether the request was successful, failed, or encountered another issue.
+Status Code	Explanation
+200	Your request Success
+400	Bad request, your request in complate or you need add required data
+404	Endpoint or Product doesn’t exist.
+401	You dont have Authorization for access API
+429	Your limit reached
+500	Error
+API documentation
+API Rate Limit
+API Rate limit per minute
+
+Mayar API rate limits and best practices for handling them.
+Mayar API has rate limits to ensure fair usage and maintain performance. The limits are as follows:
+20 requests per minute per IP address.
+If you exceed the rate limit, you will receive a 429 Too Many Requests response. The response will include a **Retry-After **header indicating how long you should wait before making another request.
+
+
+Product
+Get Product Page
+Endpoint where you can get your products
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product?page=1&pageSize=10
+​
+Authorizations
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Query Parameters
+​
+page
+integerdefault:"1"required
+Determine which page.
+​
+pageSize
+integerdefault:"10"required
+How much data is displayed on the page.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+hasMore
+booleanrequired
+Information on whether there is additional data to be retrieved (true/false).
+​
+pageCount
+integerrequired
+Total number of data pages.
+​
+pageSize
+integerrequired
+Number of items per page.
+​
+page
+integerrequired
+The page currently displayed.
+​
+data
+array of object
+List of products displayed.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique product ID.
+​
+amount
+integer | nullrequired
+Product price or nominal value.
+​
+category
+string | nullrequired
+Product category, can be null if there is no category.
+​
+createdAt
+number | timestamprequired
+Product creation time in epoch milliseconds format.
+​
+description
+stringrequired
+Product description.
+​
+link
+stringrequired
+Product slug/short URL.
+​
+type
+stringrequired
+Product type.
+​
+status
+stringrequired
+Product status.
+​
+name
+stringrequired
+Product name.
+​
+limit
+number | nullrequired
+Certain amount limit, can be null.
+​
+redirectUrl
+string | nullrequired
+Redirect destination URL, can be null.
+​
+installmentId
+string | nullrequired
+Installment ID if the product supports installments, can be null.
+​
+event
+object | nullrequired
+Related event data, can be null.
+​
+order
+object | nullrequired
+Related order data, can be null.
+​
+coverImageId
+string | nullrequired
+ID cover image, can be null.
+​
+multipleImageId
+string <uuid>required
+ID for multiple image group.
+​
+coverImage
+object | nullrequired
+Cover image data, can be null.
+​
+multimpleImage
+array of object
+List of additional images for the product.
+​
+multipleImage Structure (Array Of Object)
+​
+id
+string <uuid>required
+Unique ID for the image.
+​
+fileType
+stringrequired
+File type, for example, “jpeg”.
+​
+createdAt
+number | timestamprequired
+Image creation time (epoch milliseconds).
+​
+updateAt
+number | timestamprequired
+Image last updated time.
+​
+url
+stringrequired
+Direct link to the image.
+
+Request Example
+curl --request GET 'https://api.mayar.id/hl/v1/product?page=1&pageSize=10' \
+--header 'Authorization: Bearer Paste-Your-API-Key-Here'
+
+
+Product
+Get Product Page with Type Filter
+Endpoint where you can get your products with type filter
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product/type/event?page=1&pageSize=100
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Path Parameters
+​
+type
+stringrequired
+Product type for filtering, list all product with filter:
+generic_link
+physical_product
+event
+webinar
+digital_product
+coaching
+course
+cohort_based
+fundraising
+ebook
+podcast
+audiobook
+membership
+zakat
+invoice
+bundling
+saas
+payment_request
+support
+​
+Query Parameters
+​
+page
+integerdefault:1required
+Determine which page.
+​
+pageSize
+integerdefault:10required
+How much data is displayed on the page.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+hasMore
+booleanrequired
+Information on whether there is additional data to be retrieved (true/false).
+​
+pageCount
+integerrequired
+Total number of data pages.
+​
+pageSize
+integerrequired
+Number of items per page.
+​
+page
+integerrequired
+The page currently displayed.
+​
+data
+array of object
+List of products displayed.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique product ID.
+​
+amount
+integer | nullrequired
+Product price or nominal value.
+​
+category
+string | nullrequired
+Product category, can be null if there is no category.
+​
+createdAt
+number | timestamprequired
+Product creation time in epoch milliseconds format.
+​
+description
+stringrequired
+Product description.
+​
+link
+stringrequired
+Product slug/short URL.
+​
+type
+stringrequired
+Product type.
+​
+status
+stringrequired
+Product status.
+​
+name
+stringrequired
+Product name.
+​
+limit
+number | nullrequired
+Certain amount limit, can be /null.
+​
+redirectUrl
+string | nullrequired
+Redirect destination URL, can be null.
+​
+installmentId
+string | nullrequired
+Installment ID if the product supports installments, can be null.
+​
+event
+objectrequired
+Related event data.
+​
+order
+object | nullrequired
+Related order data, can be null.
+​
+coverImageId
+string | nullrequired
+ID cover image, can be null.
+​
+multipleImageId
+string <uuid>required
+ID for multiple image group.
+​
+coverImage
+object | nullrequired
+Cover image data, can be null.
+​
+multimpleImage
+array of object
+List of additional images for the product.
+​
+event Structure (Object)
+​
+id
+string <uuid>required
+Unique ID for the event.
+​
+event
+string | nullrequired
+Event name/type, can be null.
+​
+description
+string | nullrequired
+Event description, can be null
+​
+ticketevent
+array of objectrequired
+List of event tickets.
+​
+ticketEvent Structure (Array Of Object)
+​
+id
+string <uuid>required
+Unique ID for the ticket.
+​
+amount
+integerrequired
+Ticket price (0 if free).
+​
+createdAt
+number | timestamprequired
+Ticket creation time (epoch milliseconds).
+​
+name
+stringrequired
+Ticket name
+​
+quantity
+integerrequired
+Number of tickets available.
+​
+multipleImage Structure (Array Of Object)
+​
+id
+string <uuid>required
+Unique ID for the image.
+​
+fileType
+stringrequired
+File type, for example, “jpeg”.
+​
+createdAt
+number | timestamprequired
+Image creation time (epoch milliseconds).
+​
+updateAt
+number | timestamprequired
+Image last updated time.
+​
+url
+stringrequired
+Direct link to the image.
+
+Request Example
+curl --request GET 'https://api.mayar.id/hl/v1/product/type/event?page=1&pageSize=100' \
+--header 'Authorization: Bearer Paste-Your-API-Key-Here'
+
+
+Product
+Search Product
+Endpoint used to search for products by product name
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product?search=Testing
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Query Parameters
+​
+search
+stringrequired
+Search keywords.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+hasMore
+booleanrequired
+Information on whether there is additional data to be retrieved (true/false).
+​
+pageCount
+integerrequired
+Total number of data pages.
+​
+pageSize
+integerrequired
+Number of items per page.
+​
+page
+integerrequired
+The page currently displayed.
+​
+data
+array of object
+List of products displayed.
+​
+total
+integerrequired
+Total amount of data available.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique product ID.
+​
+amount
+integer | nullrequired
+Product price or nominal value.
+​
+category
+string | nullrequired
+Product category, can be null if there is no category.
+​
+createdAt
+number | timestamprequired
+Product creation time in epoch milliseconds format.
+​
+description
+stringrequired
+Product description.
+​
+link
+stringrequired
+Product slug/short URL.
+​
+type
+stringrequired
+Product type.
+​
+status
+stringrequired
+Product status.
+​
+name
+stringrequired
+Product name.
+​
+limit
+number | nullrequired
+Certain amount limit, can be null.
+​
+redirectUrl
+string | nullrequired
+Redirect destination URL, can be null.
+​
+installmentId
+string | nullrequired
+Installment ID if the product supports installments, can be null.
+​
+event
+object | nullrequired
+Related event data, can be null.
+​
+order
+object | nullrequired
+Related order data, can be null.
+​
+coverImageId
+string | nullrequired
+ID cover image, can be null.
+​
+multipleImageId
+string | nullrequired
+ID for multiple image group, can be null..
+​
+coverImage
+object | nullrequired
+Cover image data, can be null, can be null..
+​
+multimpleImage
+array | null
+List of additional images for the product, can be null.
+
+Product
+Get Detail Product
+Endpoint where you can get your detail products
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product/{id}
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Path Parameters
+​
+id
+string <uuid>required
+Unique product ID.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+data
+array of object
+List of products displayed.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique product ID.
+​
+amount
+integer | nullrequired
+Product price or nominal value.
+​
+category
+string | nullrequired
+Product category, can be null if there is no category.
+​
+createdAt
+number | timestamprequired
+Product creation time in epoch milliseconds format.
+​
+description
+stringrequired
+Product description.
+​
+link
+stringrequired
+Product slug/short URL.
+​
+type
+stringrequired
+Product type.
+​
+status
+stringrequired
+Product status.
+​
+name
+stringrequired
+Product name.
+​
+limit
+number | nullrequired
+Certain amount limit, can be /null.
+​
+redirectUrl
+string | nullrequired
+Redirect destination URL, can be null.
+​
+installmentId
+string | nullrequired
+Installment ID if the product supports installments, can be null.
+​
+event
+objectrequired
+Related event data.
+​
+order
+object | nullrequired
+Related order data, can be null.
+​
+coverImageId
+string | nullrequired
+ID cover image, can be null.
+​
+multipleImageId
+string <uuid>required
+ID for multiple image group.
+​
+coverImage
+object | nullrequired
+Cover image data, can be null.
+​
+multimpleImage
+array of object
+List of additional images for the product.
+​
+multipleImage Structure (Array Of Object)
+​
+id
+string <uuid>required
+Unique ID for the image.
+​
+fileType
+stringrequired
+File type, for example, “jpeg”.
+​
+url
+stringrequired
+Direct link to the image.
+
+Product
+Close Product
+Endpoint used to change the product status to closed
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product/close/{id}
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Path Parameters
+​
+id
+string <uuid>required
+Unique product ID.
+​
+Response
+Successful Response
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+
+Product
+Re-open Product
+Endpoint used to change product status from closed to open
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/product/open/{id}
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Path Parameters
+​
+id
+string <uuid>required
+Unique product ID.
+​
+Response
+Successful Response
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+
+
+
+nvoice
+Create Invoice
+Endpoint used to create invoices
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/invoice/create
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Request Body
+​
+name
+stringrequired
+Customer Name
+​
+email
+stringrequired
+Customer email used to send proof of payment, or payment reminders
+​
+mobile
+stringrequired
+Customer telephone number
+​
+redirectURL
+stringrequired
+The destination URL where the customer will be redirected after a successful or completed transaction.
+​
+description
+stringrequired
+General description of the transaction or order.
+​
+expiredAt
+string (format ISO 8601 date-time)required
+The transaction expiration date and time. This means that after this time, the payment link or order is no longer valid.
+​
+items
+array
+List of items (products/services) purchased.
+​
+quantity
+integer
+Number of items ordered.
+​
+rate
+integer
+Price per unit of goods.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+data
+array of object
+The main data returned (invoice details).
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique invoice ID.
+​
+transactionId
+string<uuid>required
+Unique transaction ID associated with this invoice.
+​
+link
+stringrequired
+The URL that users/clients can access to open invoices.
+​
+expiredAt
+numberrequired
+Invoice expiration time in epoch timestamp (ms) format.
+
+Invoice
+Edit Invoice
+Endpoint used to edit invoices that have been created.
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/invoice/edit
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Request Body
+​
+id
+string
+A unique identifier obtained when creating an invoice. If accessed through the dashboard, it can be found at the URL on the invoice details page.
+Example:
+f774034d-d9cc-43a0-97d8-a2520c127f03
+​
+name
+stringrequired
+Customer Name
+​
+email
+stringrequired
+Customer email used to send proof of payment, or payment reminders
+​
+mobile
+stringrequired
+Customer telephone number
+​
+redirectURL
+stringrequired
+The destination URL where the customer will be redirected after a successful or completed transaction.
+​
+description
+stringrequired
+General description of the transaction or order.
+​
+expiredAt
+string (format ISO 8601 date-time)required
+The transaction expiration date and time. This means that after this time, the payment link or order is no longer valid.
+​
+items
+array
+List of items (products/services) purchased.
+​
+quantity
+integer
+Number of items ordered.
+​
+rate
+integer
+Price per unit of goods.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+data
+array of object
+The main data returned (invoice details).
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique invoice ID.
+​
+link
+stringrequired
+The URL that users/clients can access to open invoices.
+
+Request Payment
+Create Single Payment Request
+Endpoint used to create single payment request
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/payment/create
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Request Body
+​
+name
+stringrequired
+Customer Name
+​
+email
+stringrequired
+Customer email used to send proof of payment, or payment reminders
+​
+amount
+integerrequired
+Nominal amount of payment
+​
+mobile
+stringrequired
+Customer telephone number
+​
+redirectURL
+stringrequired
+The destination URL where the customer will be redirected after a successful or completed transaction.
+​
+description
+stringrequired
+General description of the transaction or order.
+​
+expiredAt
+string (format ISO 8601 date-time)required
+The transaction expiration date and time. This means that after this time, the payment link or order is no longer valid.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+data
+array of object
+The main data returned (request payment details).
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique request payment ID.
+​
+transactionId
+string<uuid>required
+Unique transaction ID associated with this request payment.
+​
+link
+stringrequired
+The URL that users/clients can access to open request payment.
+Request Payment
+Edit Single Payment Request
+Endpoint used to edit billing that has been created
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/payment/edit
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Request Body
+​
+name
+stringrequired
+Customer Name
+​
+email
+stringrequired
+Customer email used to send proof of payment, or payment reminders
+​
+amount
+integerrequired
+Nominal amount of payment
+​
+mobile
+stringrequired
+Customer telephone number
+​
+redirectURL
+stringrequired
+The destination URL where the customer will be redirected after a successful or completed transaction.
+​
+description
+stringrequired
+General description of the transaction or order.
+​
+expiredAt
+string (format ISO 8601 date-time)required
+The transaction expiration date and time. This means that after this time, the payment link or order is no longer valid.
+​
+id
+string<uuid>required
+A unique identifier obtained when creating an single request payment. If accessed through the dashboard, it can be found at the URL on the request payment details page.
+Example:
+e890d24a-cfc0-4915-83d2-3166b9ffba9e
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+data
+array of object
+The main data returned (request payment details).
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique request payment ID.
+​
+link
+stringrequired
+The URL that users/clients can access to open request payment.
+
+Customer
+Get Customer
+Endpoint where you can get your customer details
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/customer?page=1&pageSize=10
+​
+Authorizations
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Query Parameters
+​
+page
+integerdefault:1required
+Determine which page.
+​
+pageSize
+integerdefault:10required
+How much data is displayed on the page.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+hasMore
+booleanrequired
+Information on whether there is additional data to be retrieved (true/false).
+​
+pageCount
+integerrequired
+Total number of data pages.
+​
+pageSize
+integerrequired
+Number of items per page.
+​
+page
+integerrequired
+The page currently displayed.
+​
+data
+array of object
+List of products displayed.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Unique customer ID.
+​
+createdAt
+integer | timestamp - Unix epoch in millisecondsrequired
+The time the data was created.
+​
+email
+stringrequired
+Customer’s email address.
+​
+mobile
+stringrequired
+Customer’s phone number.
+​
+name
+stringrequired
+Customer’s name.
+​
+status
+stringrequired
+Customer status, e.g., “active”, “inactive”.
+​
+updateAt
+integer | timestamp - Unix epoch in millisecondsrequired
+The last time the data was updated.
+​
+userId
+string<uuid>required
+The user ID of the owner of this data/customer.
+
+Webhook
+Get History
+Endpoint to get data webhook history
+
+Endpoint:
+
+Production
+
+Sandbox
+https://api.mayar.id/hl/v1/webhook/history?page=1&pageSize=10
+​
+Authorization
+​
+Authorization
+stringrequired
+Example:
+Authorization | Bearer Paste-Your-API-Key-Here
+​
+Query Parameters
+​
+page
+integerdefault:1required
+Determine which page.
+​
+pageSize
+integerdefault:10required
+How much data is displayed on the page.
+​
+Response
+Successful Response
+​
+Main Structure (Root)
+​
+statusCode
+integerrequired
+Status code form API.
+​
+messages
+stringrequired
+Status message that describes the status code.
+​
+hasMore
+booleanrequired
+Information on whether there is additional data to be retrieved (true/false).
+​
+pageCount
+integerrequired
+Total number of data pages.
+​
+pageSize
+integerrequired
+Number of items per page.
+​
+page
+integerrequired
+The page currently displayed.
+​
+data
+array of object
+List of products displayed.
+​
+data Structure (Array Of Object)
+​
+id
+string<uuid>required
+Webhook delivery record ID.
+​
+createdAt
+integer (timestamp)required
+Creation time of the webhook delivery log.
+​
+nextDelivery
+string | nullrequired
+Timestamp of the next delivery attempt (if any).
+​
+paymentLinkId
+string<uuid>required
+Associated payment link ID.
+​
+payload
+string (JSON string)required
+Original webhook payload sent (contains event + transaction data).
+​
+status
+stringrequired
+Delivery status (example: "SUCCESS").
+​
+type
+stringrequired
+Webhook event type (example: "payment.received", "payment.reminder").
+​
+updatedAt
+integer (timestamp)required
+Last update timestamp.
+​
+userId
+stringrequired
+User ID who owns this webhook.
+​
+paymentLinkTransactionId
+string<uuid>required
+Associated transaction ID.
+​
+urlDestination
+string (URL)required
+Destination endpoint where the webhook is delivered.
+​
+responsePayload
+string | nullrequired
+Response returned from the destination endpoint.
+​
+source
+stringrequired
+Indicates whether the webhook was sent automatically or manually (example: "AUTOMATIC").

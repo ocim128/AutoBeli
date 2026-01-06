@@ -1,37 +1,97 @@
-
-import clientPromise from '@/lib/db';
-import { ObjectId } from 'mongodb';
-import { Order, Product } from '@/lib/definitions';
+import clientPromise from "@/lib/db";
+import { ObjectId } from "mongodb";
+import { Order, Product } from "@/lib/definitions";
 
 export type OrderWithProduct = Order & { product: Product };
 
 export async function getOrderWithProduct(orderId: string): Promise<OrderWithProduct | null> {
-    try {
-        const client = await clientPromise;
-        const db = client.db();
+  try {
+    const client = await clientPromise;
+    const db = client.db();
 
-        // Aggregation to join Order with Product
-        const pipeline = [
-            { $match: { _id: new ObjectId(orderId) } },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: 'productId',
-                    foreignField: '_id',
-                    as: 'product',
-                },
-            },
-            { $unwind: '$product' },
-            // Exclude sensitive content
-            { $project: { 'product.contentEncrypted': 0 } }
-        ];
+    // Aggregation to join Order with Product
+    const pipeline = [
+      { $match: { _id: new ObjectId(orderId) } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "productId",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      // Exclude sensitive content
+      { $project: { "product.contentEncrypted": 0 } },
+    ];
 
-        const result = await db.collection<Order>('orders').aggregate(pipeline).toArray();
+    const result = await db.collection<Order>("orders").aggregate(pipeline).toArray();
 
-        if (result.length === 0) return null;
-        return result[0] as OrderWithProduct;
-    } catch (e) {
-        console.error(e);
-        return null;
+    if (result.length === 0) return null;
+    return result[0] as OrderWithProduct;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+import { getPaymentStatus } from "@/lib/veripay";
+import { generateAccessToken } from "@/lib/tokens";
+import { AccessToken } from "@/lib/definitions";
+
+export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> {
+  try {
+    const client = await clientPromise;
+    const db = client.db();
+
+    const order = await db.collection<Order>("orders").findOne({ _id: new ObjectId(orderId) });
+
+    if (!order || !order.paymentMetadata?.transaction_ref) {
+      return false;
     }
+
+    // Only skip if fully synced (PAID and has correct amount)
+    if (order.status === "PAID" && order.amountPaid > 0) {
+      return false;
+    }
+
+    if (order.paymentMetadata.provider === "veripay") {
+      const veripayStatus = await getPaymentStatus(order.paymentMetadata.transaction_ref);
+
+      // Veripay documentation says 'PAID', but experience shows 'SUCCESS'
+      if (
+        veripayStatus.success &&
+        (veripayStatus.data?.status === "PAID" || veripayStatus.data?.status === "SUCCESS")
+      ) {
+        // 1. Update Order Status
+        await db.collection<Order>("orders").updateOne(
+          { _id: new ObjectId(orderId) },
+          {
+            $set: {
+              status: "PAID",
+              amountPaid: veripayStatus.data?.gross_amount || 0,
+              paidAt: new Date(),
+              updatedAt: new Date(),
+            },
+          }
+        );
+
+        // 2. Ensure Access Token Exists
+        const existingToken = await db.collection<AccessToken>("tokens").findOne({
+          orderId: new ObjectId(orderId),
+        });
+
+        if (!existingToken) {
+          await generateAccessToken(orderId);
+        }
+
+        return true;
+      }
+    }
+
+    return false;
+  } catch (e) {
+    console.error("Failed to sync order status:", e);
+    return false;
+  }
 }

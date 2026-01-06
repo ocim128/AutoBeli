@@ -31,8 +31,8 @@ describe("CheckoutForm Component", () => {
   it("renders contact input field", () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    expect(screen.getByLabelText(/email or whatsapp/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/example@mail.com/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/whatsapp number/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/08123456789/i)).toBeInTheDocument();
   });
 
   it("formats large amounts correctly", () => {
@@ -48,9 +48,7 @@ describe("CheckoutForm Component", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Please enter your email or WhatsApp number"
-      );
+      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your WhatsApp number");
     });
 
     // Fetch should not be called
@@ -60,27 +58,44 @@ describe("CheckoutForm Component", () => {
   it("shows validation error for whitespace-only contact", async () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
+    const input = screen.getByLabelText(/whatsapp number/i);
     await userEvent.type(input, "   ");
 
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Please enter your email or WhatsApp number"
-      );
+      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your WhatsApp number");
     });
   });
 
   it("submits form with valid contact and processes payment", async () => {
     mockFetch
       .mockResolvedValueOnce({ ok: true }) // PATCH /api/orders
-      .mockResolvedValueOnce({ ok: true }); // POST /api/payment/mock/pay
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, payment_url: "https://pay.veripay.site/123" }),
+      }); // POST /api/payment/veripay/create
+
+    // Mock window.location.href using Object.defineProperty
+    let capturedHref = "";
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, "location");
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        get href() {
+          return capturedHref;
+        },
+        set href(value: string) {
+          capturedHref = value;
+        },
+      },
+      writable: true,
+    });
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "test@example.com");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -88,12 +103,12 @@ describe("CheckoutForm Component", () => {
       expect(mockFetch).toHaveBeenCalledWith("/api/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: "order123", contact: "test@example.com" }),
+        body: JSON.stringify({ orderId: "order123", contact: "081234567890" }),
       });
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/payment/mock/pay", {
+      expect(mockFetch).toHaveBeenCalledWith("/api/payment/veripay/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: "order123" }),
@@ -101,17 +116,25 @@ describe("CheckoutForm Component", () => {
     });
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/order/order123");
+      expect(capturedHref).toBe("https://pay.veripay.site/123");
     });
+
+    // Restore window.location
+    if (originalDescriptor) {
+      Object.defineProperty(window, "location", originalDescriptor);
+    }
   });
 
   it("trims contact input before sending", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: true });
+    mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "  test@example.com  ");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "  081234567890  ");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -119,7 +142,7 @@ describe("CheckoutForm Component", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/orders",
         expect.objectContaining({
-          body: JSON.stringify({ orderId: "order123", contact: "test@example.com" }),
+          body: JSON.stringify({ orderId: "order123", contact: "081234567890" }),
         })
       );
     });
@@ -130,8 +153,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "test@example.com");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "081234567890");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -151,8 +174,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "test@example.com");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -166,18 +189,18 @@ describe("CheckoutForm Component", () => {
       .mockResolvedValueOnce({ ok: true }) // Contact save succeeds
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: "Payment failed" }),
+        json: async () => ({ error: "Payment creation failed" }),
       }); // Payment fails
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "test@example.com");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Payment failed");
+      expect(screen.getByRole("alert")).toHaveTextContent("Payment creation failed");
     });
   });
 
@@ -187,8 +210,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
-    await userEvent.type(input, "test@example.com");
+    const input = screen.getByLabelText(/whatsapp number/i);
+    await userEvent.type(input, "081234567890");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -200,11 +223,14 @@ describe("CheckoutForm Component", () => {
   });
 
   it("accepts phone number as contact", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: true });
+    mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email or whatsapp/i);
+    const input = screen.getByLabelText(/whatsapp number/i);
     await userEvent.type(input, "081234567890");
 
     fireEvent.click(screen.getByRole("button"));

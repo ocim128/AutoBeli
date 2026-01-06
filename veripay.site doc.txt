@@ -1,0 +1,382 @@
+Overview
+Payment Gateway API memungkinkan Anda untuk membuat permintaan pembayaran secara programmatik. API ini mendukung berbagai metode pembayaran termasuk QRIS, Virtual Account, dan E-Wallet.
+
+Base URL
+
+https://veripay.site/api/v1
+Authentication
+Semua request ke API harus menyertakan header autentikasi untuk keamanan.
+
+Required Headers
+
+Authorization: Bearer YOUR_API_KEY
+x-api-key: YOUR_API_KEY
+x-timestamp: UNIX_TIMESTAMP
+x-signature: GENERATED_SIGNATURE
+Signature Format (WAJIB)
+Signature dihasilkan dari proses berikut:
+
+1. Buat payload:
+payload = api_key + timestamp
+
+2. Generate HMAC SHA256:
+hash = hash_hmac("sha256", payload, secret_key, true)
+
+3. Encode ke Base64:
+signature = base64_encode(hash)
+
+Catatan Penting:
+- Tidak menggunakan pemisah (tanpa tanda "|")
+- Menggunakan output HMAC biner (raw = true)
+- Hasil akhir wajib di-Base64 encode
+- Timestamp harus format UNIX (integer)
+
+Contoh Perhitungan Signature (PHP)
+
+
+$apiKey    = "YOUR_API_KEY";
+$secretKey = "YOUR_SECRET_KEY";
+$timestamp = time();
+
+$payload   = $apiKey . $timestamp;
+$rawHash   = hash_hmac("sha256", $payload, $secretKey, true);
+$signature = base64_encode($rawHash);
+
+echo $signature;
+Check Merchant Balance
+GET
+/merchant/balance
+Endpoint ini digunakan untuk mengecek saldo merchant yang tersedia saat ini secara real-time.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer YOUR_API_KEY	Yes
+x-api-key	YOUR_API_KEY	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+Success Response
+JSON
+
+Copy
+{
+    "success": true,
+    "message": "Success fetch merchant balance",
+    "data": {
+        "merchant_id": "VP-988231",
+        "balance": 25750000,
+        "created_at": "2024-01-10 08:30:00",
+        "last_updated": "2025-02-15 14:20:05"
+}
+Create Payment Request
+POST
+/merchant/payments
+Endpoint ini digunakan untuk membuat permintaan pembayaran baru.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer Your API Key	Yes
+x-api-key	Your API Key	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+Request Parameters
+Parameter	Type	Required	Description
+order_id	string	Yes	Unique order identifier
+amount	integer	Yes	Payment amount in IDR
+description	string	No	Payment description
+return_url	string	No	URL redirect setelah payment
+product_detail	array	No	Array of product items
+customer_detail	object	No	Customer information
+Request Body Example
+JSON
+
+Copy
+{
+    "order_id": "ORD-0019-8864",
+    "amount": 50000,
+    "description": "Topup Saldo",
+    "return_url": "https://veripay.site/callback",
+    "product_detail": [
+        {
+            "name": "Topup Saldo",
+            "price": 50000,
+            "qty": 1
+        }
+    ],
+    "customer_detail": {
+        "name": "Rahmat Jaya",
+        "email": "test@gmail.com",
+        "phone": "081341439895"
+    }
+}
+Get Payment Status
+GET
+/merchant/payments/{transaction_ref}
+Endpoint ini digunakan untuk mendapatkan status pembayaran berdasarkan transaction reference.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer Your API Key	Yes
+x-api-key	Your API Key	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+URL Parameters
+Parameter	Description
+transaction_ref	Transaction reference number (contoh: PY-20250930-MKORN8)
+Example Request
+GET /merchant/payments/PY-20250930-MKORN8
+Get Payment Transactions
+GET
+/merchant/payments
+Endpoint ini digunakan untuk mendapatkan daftar transaksi pembayaran.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer Your API Key	Yes
+x-api-key	Your API Key	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+Example Request
+GET /merchant/payments
+Get My Banks
+GET
+/merchant/references/my-banks
+Endpoint ini digunakan untuk mendapatkan daftar bank yang terdaftar untuk merchant.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer Your API Key	Yes
+x-api-key	Your API Key	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+Response Example
+JSON
+
+Copy
+{
+    "success": true,
+    "message": "Payment list",
+    "data": [
+        {
+            "id": 10,
+            "account_name": "Example Merchant",
+            "account_number": "1234567890",
+            "bank_name": "Bank Rakyat Indonesia(BRI)",
+            "bank_code": "002",
+            "description": "Testing payment"
+        }
+    ]
+}
+Payment Payout (Withdraw)
+POST
+/merchant/payments/payout
+Endpoint ini digunakan untuk melakukan penarikan dana (withdraw) ke bank merchant.
+
+Request Headers
+Header	Value	Required
+Authorization	Bearer Your API Key	Yes
+x-api-key	Your API Key	Yes
+x-timestamp	Unix timestamp	Yes
+x-signature	Generated signature	Yes
+Referensi Kode Bank
+Bank	Code
+BCA	014
+BRI	002
+BNI	009
+MANDIRI	008
+SEABANK	535
+OVO	10001
+DANA	10002
+GOPAY	10003
+Request Parameters
+Parameter	Type	Required	Description
+amount	integer	Yes	Payment amount in IDR
+bank_code	string	Yes	Bank Code Payment
+account_number	string	Yes	Bank account number
+account_name	string	Yes	Bank account name (pastikan sesuai dengan KTP)
+notes	string	No	Payment notes
+Request Body Example
+JSON
+
+Copy
+{
+    "amount": 50000,
+    "bank_code": "112",
+    "account_number": "1234567890987",
+    "account_name": "Test"
+    "notes": "Test withdraw"
+}
+Response Format
+Success Response (200 OK)
+Field	Type	Description
+success	boolean	Status response (true/false)
+message	string	Message response
+data	object	Data response
+JSON Response
+
+Copy
+{
+    "success": true,
+    "message": "Payout request successfully",
+    "data": {
+        "order_id": "WD-0019-8864",
+        "transaction_ref": "PY-20250930-MKORN8",
+        "gross_amount": 50000,
+        "net_amount": 49500,
+        "admin_fee": 500,
+        "currency": "IDR",
+        "payment_method": "QRIS",
+        "notes": "Testing payout"
+        "status": "pending"
+    }
+}
+Error Codes
+HTTP Code	Error Code	Description
+400	BAD_REQUEST	Request parameter tidak valid
+401	UNAUTHORIZED	API Key tidak valid atau tidak ditemukan
+403	FORBIDDEN	Tidak memiliki akses ke resource
+404	NOT_FOUND	Resource tidak ditemukan
+422	VALIDATION_ERROR	Validasi data gagal
+500	INTERNAL_ERROR	Kesalahan server internal
+Error Response Example
+JSON
+{
+    "success": false,
+    "message": "Validation error",
+    "errors": {
+        "order_id": ["Order ID is required"],
+        "amount": ["Amount must be greater than 0"]
+    }
+}
+Webhook Notification
+POST
+/client-webhook
+Endpoint ini digunakan sistem Veripay untuk mengirim notifikasi pembayaran secara real-time ke client.
+
+Webhook Headers
+Header	Value	Required
+x-timestamp	Unix timestamp, misal: 1701100000	Yes
+x-signature	Generated signature sesuai secret key	Yes
+Webhook Body Example
+JSON
+
+Copy
+{
+    "order_id": "ORD-0019-8864",
+    "amount": 50000,
+    "status": "PAID",
+    "payment_method": "QRIS",
+    "payment_time": "2025-01-12 10:32:55",
+    "customer_detail": {
+        "name": "Rahmat Jaya",
+        "email": "test@gmail.com",
+        "phone": "081341439895"
+    }
+}
+Signature Verification (PHP)
+PHP
+
+Copy
+<?php
+$config = [
+    'api_key' => 'API_KEY_CLIENT',
+    'secret_key' => 'SECRET_KEY_CLIENT'
+];
+
+function veripay_generate_signature($config, $timestamp) {
+    $payload   = $config['api_key'] . $timestamp;
+    $rawHash   = hash_hmac("sha256", $payload, $config['secret_key'], true);
+    return base64_encode($rawHash);
+}
+
+function veripay_verify_webhook_signature($config, $received_signature, $timestamp) {
+    $expected_signature = veripay_generate_signature($config, $timestamp);
+    return hash_equals($expected_signature, $received_signature);
+}
+
+// === Webhook Handler ===
+$headers = getallheaders();
+$timestamp = $headers['x-timestamp'] ?? '';
+$signature = $headers['x-signature'] ?? '';
+
+if (!veripay_verify_webhook_signature($config, $signature, $timestamp)) {
+    http_response_code(401);
+    exit("Invalid Signature");
+}
+
+$data = json_decode(file_get_contents("php://input"), true);
+
+// lanjutkan proses sesuai kebutuhan client...
+?>
+Code Examples
+PHP / Laravel
+PHP
+
+Copy
+$timestamp = time();
+$signature = base64_encode(
+    hash_hmac('sha256', $timestamp . env('API_KEY'), env('API_SECRET'))
+);
+
+$response = Http::withHeaders([
+    'x-api-key' => env('API_KEY'),
+    'x-timestamp' => $timestamp,
+    'x-signature' => $signature,
+])->post('https://veripay.site/api/v1/merchant/payments', [
+    'order_id' => 'ORD-0019-8864',
+    'amount' => 50000,
+    'description' => 'Topup Saldo',
+    'return_url' => 'https://veripay.com/callback',
+    'product_detail' => [
+        [
+            'name' => 'Topup Saldo',
+            'price' => 50000,
+            'qty' => 1
+        ]
+    ],
+    'customer_detail' => [
+        'name' => 'Rahmat Jaya',
+        'email' => 'test@gmail.com',
+        'phone' => '081341439895'
+    ]
+]);
+
+if ($response->successful()) {
+    $data = $response->json()['data'];
+    // Redirect ke payment_url
+    return redirect($data['payment_url']);
+}
+cURL
+Bash
+
+Copy
+curl -X POST https://veripay.site/api/v1/merchant/payments \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-timestamp: $(date +%s)" \
+  -H "x-signature: GENERATED_SIGNATURE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": "ORD-0019-8864",
+    "amount": 50000,
+    "description": "Topup Saldo",
+    "return_url": "https://veripay.com/callback",
+    "product_detail": [
+        {
+            "name": "Topup Saldo",
+            "price": 50000,
+            "qty": 1
+        }
+    ],
+    "customer_detail": {
+        "name": "Rahmat Jaya",
+        "email": "test@gmail.com",
+        "phone": "081341439895"
+    }
+}'
+Download Script PHP
+Download
+Tips & Best Practices
+Simpan API Key dan Secret Key dengan aman dan jangan pernah commit ke repository
+Gunakan HTTPS untuk semua request API demi keamanan data
+Pastikan timestamp dalam format UNIX dan signature di-generate dengan benar
+Implementasikan retry mechanism untuk handle network errors
+Gunakan order_id yang unik untuk setiap transaksi

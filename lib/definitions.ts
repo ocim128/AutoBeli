@@ -19,8 +19,14 @@ export interface Order {
   productId: ObjectId;
   status: "PENDING" | "PAID" | "EXPIRED";
   amountPaid: number;
-  paymentGateway: string; // e.g., 'MOCK', 'DOKU' (future)
-  paymentMetadata?: Record<string, unknown>;
+  paymentGateway: "MOCK" | "VERIPAY";
+  paymentMetadata?: {
+    provider: string;
+    transaction_ref?: string;
+    signature?: string;
+    payment_method?: string;
+    payment_time?: string;
+  };
   customerContact?: string; // Email or WhatsApp number
   createdAt: Date;
   updatedAt: Date;

@@ -19,7 +19,14 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
     setError(null);
 
     if (!contact.trim()) {
-      setError("Please enter your email or WhatsApp number");
+      setError("Please enter your WhatsApp number");
+      return;
+    }
+
+    // Validate phone number format (Indonesian: starts with 08, 10-13 digits)
+    const phoneRegex = /^08\d{8,11}$/;
+    if (!phoneRegex.test(contact.trim())) {
+      setError("Please enter a valid Indonesian phone number (e.g. 08123456789)");
       return;
     }
 
@@ -37,20 +44,30 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
         throw new Error(data.error || "Failed to save contact");
       }
 
-      // Process mock payment
-      const payRes = await fetch("/api/payment/mock/pay", {
+      // Create payment with Veripay
+      const payRes = await fetch("/api/payment/veripay/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
       });
 
+      const payData = await payRes.json();
+
       if (!payRes.ok) {
-        const data = await payRes.json();
-        throw new Error(data.error || "Payment failed");
+        throw new Error(payData.error || "Payment creation failed");
       }
 
-      // Redirect to order page
-      router.push(`/order/${orderId}`);
+      // Redirect to Veripay payment page
+      if (payData.payment_url) {
+        // Save order ID to localStorage to help user find it later if redirect fails
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lastOrderId", orderId);
+        }
+        window.location.href = payData.payment_url;
+      } else {
+        // Fallback: redirect to order page (for mock gateway)
+        router.push(`/order/${orderId}`);
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);
@@ -75,14 +92,14 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
 
       <div>
         <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-2">
-          Email or WhatsApp Number
+          WhatsApp Number
         </label>
         <input
-          type="text"
+          type="tel"
           id="contact"
           value={contact}
           onChange={(e) => setContact(e.target.value)}
-          placeholder="e.g. example@mail.com or 08123456789"
+          placeholder="e.g. 08123456789"
           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-gray-900 placeholder-gray-400 ${
             error ? "border-red-300" : "border-gray-300"
           }`}
@@ -92,7 +109,7 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
           aria-describedby="contact-hint"
         />
         <p id="contact-hint" className="text-xs text-gray-500 mt-2">
-          We&apos;ll send order confirmation to this contact
+          We&apos;ll send order confirmation to this WhatsApp number
         </p>
       </div>
 

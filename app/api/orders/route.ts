@@ -56,11 +56,12 @@ export async function POST(request: Request) {
     }
 
     // Create Order (PENDING)
+    const gateway = (process.env.PAYMENT_GATEWAY || "MOCK") as "MOCK" | "VERIPAY";
     const newOrder: Order = {
       productId: product._id!,
       status: "PENDING",
       amountPaid: 0,
-      paymentGateway: "MOCK",
+      paymentGateway: gateway,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
