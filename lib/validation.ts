@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 /**
- * Indonesian phone number regex
- * Matches: 08xxxxxxxxxx (10-13 digits total)
+ * Email regex for customer contact validation
+ * Standard email format validation
  */
-const indonesianPhoneRegex = /^08\d{8,11}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ============================================
 // Order Schemas
@@ -25,11 +25,27 @@ export const updateOrderContactSchema = z.object({
     .regex(/^[a-f0-9]{24}$/, "Invalid order ID format"),
   contact: z
     .string()
-    .min(1, "WhatsApp number is required")
-    .max(15, "Phone number too long")
-    .regex(indonesianPhoneRegex, "Must be a valid Indonesian phone number (08xxxxxxxxxx)")
+    .min(1, "Email is required")
+    .max(254, "Email too long")
+    .regex(emailRegex, "Must be a valid email address")
     .optional(),
 });
+
+export const searchOrderSchema = z
+  .object({
+    orderId: z
+      .string()
+      .regex(/^[a-f0-9]{24}$/, "Invalid order ID format")
+      .optional(),
+    email: z
+      .string()
+      .max(254, "Email too long")
+      .regex(emailRegex, "Must be a valid email address")
+      .optional(),
+  })
+  .refine((data) => data.orderId || data.email, {
+    message: "Either order ID or email is required",
+  });
 
 // ============================================
 // Product Schemas
@@ -112,6 +128,7 @@ export const veripayWebhookSchema = z.object({
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type UpdateOrderContactInput = z.infer<typeof updateOrderContactSchema>;
+export type SearchOrderInput = z.infer<typeof searchOrderSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

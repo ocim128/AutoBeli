@@ -28,7 +28,7 @@ export interface Order {
     payment_method?: string;
     payment_time?: string;
   };
-  customerContact?: string; // Email or WhatsApp number
+  customerContact?: string; // Email for order recovery
   createdAt: Date;
   updatedAt: Date;
 }

@@ -31,8 +31,8 @@ describe("CheckoutForm Component", () => {
   it("renders contact input field", () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    expect(screen.getByLabelText(/whatsapp delivery number/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/08123456789/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/you@example.com/i)).toBeInTheDocument();
   });
 
   it("formats large amounts correctly", () => {
@@ -48,7 +48,7 @@ describe("CheckoutForm Component", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your WhatsApp number");
+      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your email address");
     });
 
     // Fetch should not be called
@@ -58,13 +58,13 @@ describe("CheckoutForm Component", () => {
   it("shows validation error for whitespace-only contact", async () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
+    const input = screen.getByLabelText(/email address/i);
     await userEvent.type(input, "   ");
 
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your WhatsApp number");
+      expect(screen.getByRole("alert")).toHaveTextContent("Please enter your email address");
     });
   });
 
@@ -94,8 +94,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -103,7 +103,7 @@ describe("CheckoutForm Component", () => {
       expect(mockFetch).toHaveBeenCalledWith("/api/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: "order123", contact: "081234567890" }),
+        body: JSON.stringify({ orderId: "order123", contact: "customer@example.com" }),
       });
     });
 
@@ -133,8 +133,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "  081234567890  ");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "  customer@example.com  ");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -142,7 +142,7 @@ describe("CheckoutForm Component", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/orders",
         expect.objectContaining({
-          body: JSON.stringify({ orderId: "order123", contact: "081234567890" }),
+          body: JSON.stringify({ orderId: "order123", contact: "customer@example.com" }),
         })
       );
     });
@@ -153,8 +153,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -174,8 +174,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -194,8 +194,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -210,8 +210,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -222,7 +222,7 @@ describe("CheckoutForm Component", () => {
     });
   });
 
-  it("accepts phone number as contact", async () => {
+  it("accepts valid email as contact", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true }),
@@ -230,8 +230,8 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/whatsapp delivery number/i);
-    await userEvent.type(input, "081234567890");
+    const input = screen.getByLabelText(/email address/i);
+    await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
 
@@ -239,7 +239,7 @@ describe("CheckoutForm Component", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/orders",
         expect.objectContaining({
-          body: JSON.stringify({ orderId: "order123", contact: "081234567890" }),
+          body: JSON.stringify({ orderId: "order123", contact: "customer@example.com" }),
         })
       );
     });

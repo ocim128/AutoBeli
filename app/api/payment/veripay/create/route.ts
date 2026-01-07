@@ -63,10 +63,11 @@ export async function POST(request: Request) {
     const returnUrl = `${baseUrl}/order/${orderId}`;
 
     // Build customer detail - Veripay requires name, phone, AND email
+    // Customer provides email as contact; we use default phone since Veripay requires it
     const customerDetail = {
       name: "Customer", // Default name (required by Veripay)
-      email: `${orderId}@akunlama.com`, // Default email (required by Veripay, per user request)
-      phone: order.customerContact || "08000000000", // Phone is required by Veripay
+      email: order.customerContact || `${orderId}@akunlama.com`, // Customer email or fallback
+      phone: "08000000000", // Default phone (required by Veripay)
     };
 
     // Create payment with Veripay

@@ -38,10 +38,10 @@ test.describe("Checkout Flow", () => {
     // Step 4: Should navigate to checkout page
     await expect(page).toHaveURL(/\/checkout\/.+/);
 
-    // Step 5: Fill in contact information
-    const contactInput = page.getByPlaceholder(/08123456789/i);
+    // Step 5: Fill in contact information (email)
+    const contactInput = page.getByPlaceholder(/you@example.com/i);
     await expect(contactInput).toBeVisible();
-    await contactInput.fill("081234567890");
+    await contactInput.fill("customer@example.com");
 
     // Step 6: Submit payment
     // Mock the payment creation to avoid redirecting to a real external site during tests
@@ -82,14 +82,14 @@ test.describe("Checkout Flow", () => {
 
     await expect(page).toHaveURL(/\/checkout\/.+/);
 
-    // Try to submit without contact
+    // Try to submit without contact (email)
     const payButton = page.getByRole("button", { name: /pay/i });
     await payButton.click();
 
     // Should show error message on page
     const alert = page.locator('form [role="alert"]');
     await alert.waitFor({ state: "visible" });
-    await expect(alert).toContainText(/enter your WhatsApp number/i);
+    await expect(alert).toContainText(/enter your email address/i);
 
     // Should still be on checkout page
     await expect(page).toHaveURL(/\/checkout\/.+/);

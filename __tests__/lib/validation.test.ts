@@ -57,10 +57,10 @@ describe("Validation Schemas", () => {
   describe("updateOrderContactSchema", () => {
     const validOrderId = "a".repeat(24); // 24 hex chars
 
-    it("accepts valid Indonesian phone number", () => {
+    it("accepts valid email address", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: validOrderId,
-        contact: "081234567890",
+        contact: "customer@example.com",
       });
       expect(result.success).toBe(true);
     });
@@ -75,7 +75,7 @@ describe("Validation Schemas", () => {
     it("rejects invalid orderId format", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: "invalid-id",
-        contact: "081234567890",
+        contact: "customer@example.com",
       });
       expect(result.success).toBe(false);
       expect(result.error).toContain("Invalid order ID");
@@ -88,27 +88,27 @@ describe("Validation Schemas", () => {
       expect(result.success).toBe(false);
     });
 
-    it("rejects email (only phone allowed)", () => {
+    it("rejects phone number (only email allowed)", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: validOrderId,
-        contact: "a@b.c", // Short email to bypass max length check
+        contact: "081234567890",
       });
       expect(result.success).toBe(false);
-      expect(result.error).toContain("valid Indonesian phone number");
+      expect(result.error).toContain("valid email address");
     });
 
-    it("rejects phone number not starting with 08", () => {
+    it("rejects invalid email format", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: validOrderId,
-        contact: "628123456789", // Indonesian format with country code
+        contact: "not-an-email",
       });
       expect(result.success).toBe(false);
     });
 
-    it("rejects phone number too short", () => {
+    it("rejects email without domain", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: validOrderId,
-        contact: "08123456", // Only 8 digits
+        contact: "user@",
       });
       expect(result.success).toBe(false);
     });

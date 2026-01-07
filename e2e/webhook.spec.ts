@@ -59,8 +59,8 @@ test.describe("Webhook Processing", () => {
       payment_time: new Date().toISOString(),
       customer_detail: {
         name: "Test User",
-        email: "test@example.com",
-        phone: "081234567890",
+        email: "test@example.com", // Primary contact is now email
+        phone: "08000000000", // Default phone
       },
     };
 

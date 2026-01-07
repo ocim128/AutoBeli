@@ -19,13 +19,13 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
     setError(null);
 
     if (!contact.trim()) {
-      setError("Please enter your WhatsApp number");
+      setError("Please enter your email address");
       return;
     }
 
-    const phoneRegex = /^08\d{8,11}$/;
-    if (!phoneRegex.test(contact.trim())) {
-      setError("Please enter a valid Indonesian phone number (e.g. 08123456789)");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contact.trim())) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -115,19 +115,26 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
             htmlFor="contact"
             className="block text-sm font-black text-gray-700 uppercase tracking-widest mb-3 pl-1"
           >
-            WhatsApp Delivery Number
+            Email Address
           </label>
           <div className="relative group">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold transition-colors group-focus-within:text-indigo-600">
-              +62
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-indigo-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
             </div>
             <input
-              type="tel"
+              type="email"
               id="contact"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              placeholder="08123456789"
-              className={`w-full pl-16 pr-6 py-5 bg-gray-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-600 transition-all text-lg font-bold text-gray-900 placeholder:text-gray-300 ${
+              placeholder="you@example.com"
+              className={`w-full pl-14 pr-6 py-5 bg-gray-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-600 transition-all text-lg font-bold text-gray-900 placeholder:text-gray-300 ${
                 error ? "border-red-200" : "border-gray-100"
               }`}
               disabled={loading}
@@ -136,8 +143,8 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
             />
           </div>
           <p className="text-xs text-gray-400 font-medium mt-4 pl-1">
-            We&apos;ll send the encrypted access token link to this number once payment is
-            confirmed.
+            We&apos;ll send the access link to this email once payment is confirmed. Use this email
+            with your order ID to recover lost access.
           </p>
         </div>
 
