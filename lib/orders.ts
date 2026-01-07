@@ -1,7 +1,10 @@
 import clientPromise from "@/lib/db";
 import { ObjectId } from "mongodb";
-import { Order, Product } from "@/lib/definitions";
+import { Order, Product, AccessToken } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
+import { getPaymentStatus } from "@/lib/veripay";
+import { generateAccessToken } from "@/lib/tokens";
+import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
 export type OrderWithProduct = Order & { product: Product };
 
@@ -37,11 +40,6 @@ export async function getOrderWithProduct(orderId: string): Promise<OrderWithPro
     return null;
   }
 }
-
-import { getPaymentStatus } from "@/lib/veripay";
-import { generateAccessToken } from "@/lib/tokens";
-import { AccessToken } from "@/lib/definitions";
-import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
 export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> {
   if (!ObjectId.isValid(orderId)) return false;

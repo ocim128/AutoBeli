@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useCallback, memo } from "react";
+import Spinner from "@/components/ui/Spinner";
+import { getErrorMessage } from "@/lib/utils";
 
 function ContentViewer({ token }: { token: string }) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleReveal = useCallback(async () => {
     setLoading(true);
@@ -18,11 +21,7 @@ function ContentViewer({ token }: { token: string }) {
 
       setContent(data.content);
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError("An error occurred");
-      }
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -31,13 +30,8 @@ function ContentViewer({ token }: { token: string }) {
   const handleCopy = useCallback(() => {
     if (content) {
       navigator.clipboard.writeText(content);
-      // Small feedback for copy
-      const btn = document.getElementById("copy-btn");
-      if (btn) {
-        const originalText = btn.innerText;
-        btn.innerText = "COPIED!";
-        setTimeout(() => (btn.innerText = originalText), 2000);
-      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   }, [content]);
 
@@ -114,11 +108,10 @@ function ContentViewer({ token }: { token: string }) {
                   Decrypted Data
                 </span>
                 <button
-                  id="copy-btn"
                   onClick={handleCopy}
                   className="bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all text-[10px] font-black tracking-widest uppercase px-4 py-2 rounded-xl border border-white/10"
                 >
-                  COPY TO CLIPBOARD
+                  {copied ? "COPIED!" : "COPY TO CLIPBOARD"}
                 </button>
               </div>
 

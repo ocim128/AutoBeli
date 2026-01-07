@@ -2,6 +2,8 @@
 
 import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
+import { REGEX_PATTERNS } from "@/lib/validation";
+import Spinner from "@/components/ui/Spinner";
 
 interface CheckoutFormProps {
   orderId: string;
@@ -24,8 +26,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
         return;
       }
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(contact.trim())) {
+      if (!REGEX_PATTERNS.email.test(contact.trim())) {
         setError("Please enter a valid email address");
         return;
       }
@@ -56,9 +57,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
         }
 
         if (payData.payment_url) {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("lastOrderId", orderId);
-          }
+          localStorage.setItem("lastOrderId", orderId);
           window.location.href = payData.payment_url;
         } else {
           router.push(`/order/${orderId}`);
@@ -162,22 +161,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
           <div className="relative flex items-center justify-center gap-3">
             {loading ? (
               <>
-                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <Spinner size={24} />
                 <span>Processing...</span>
               </>
             ) : (

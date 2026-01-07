@@ -3,8 +3,9 @@ import { z } from "zod";
 /**
  * Pre-compiled regex patterns for performance
  * Created once at module load time, reused across all validations
+ * Exported for use in client-side components (CheckoutForm, RecoverPage, etc.)
  */
-const REGEX_PATTERNS = {
+export const REGEX_PATTERNS = {
   /** Email format validation */
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   /** Slug format: lowercase letters, numbers, hyphens */
@@ -12,9 +13,6 @@ const REGEX_PATTERNS = {
   /** MongoDB ObjectId format: 24 hex characters */
   objectId: /^[a-f0-9]{24}$/,
 } as const;
-
-// Legacy alias for backward compatibility
-const emailRegex = REGEX_PATTERNS.email;
 
 // ============================================
 // Order Schemas
@@ -25,32 +23,29 @@ export const createOrderSchema = z.object({
     .string()
     .min(1, "Product slug is required")
     .max(100, "Slug too long")
-    .regex(/^[a-z0-9-]+$/, "Invalid slug format"),
+    .regex(REGEX_PATTERNS.slug, "Invalid slug format"),
 });
 
 export const updateOrderContactSchema = z.object({
   orderId: z
     .string()
     .min(1, "Order ID is required")
-    .regex(/^[a-f0-9]{24}$/, "Invalid order ID format"),
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
   contact: z
     .string()
     .min(1, "Email is required")
     .max(254, "Email too long")
-    .regex(emailRegex, "Must be a valid email address")
+    .regex(REGEX_PATTERNS.email, "Must be a valid email address")
     .optional(),
 });
 
 export const searchOrderSchema = z
   .object({
-    orderId: z
-      .string()
-      .regex(/^[a-f0-9]{24}$/, "Invalid order ID format")
-      .optional(),
+    orderId: z.string().regex(REGEX_PATTERNS.objectId, "Invalid order ID format").optional(),
     email: z
       .string()
       .max(254, "Email too long")
-      .regex(emailRegex, "Must be a valid email address")
+      .regex(REGEX_PATTERNS.email, "Must be a valid email address")
       .optional(),
   })
   .refine((data) => data.orderId || data.email, {
@@ -67,7 +62,7 @@ export const createProductSchema = z.object({
     .string()
     .min(1, "Slug is required")
     .max(100, "Slug too long")
-    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+    .regex(REGEX_PATTERNS.slug, "Slug must contain only lowercase letters, numbers, and hyphens"),
   description: z.string().max(2000, "Description too long").optional().default(""),
   priceIdr: z.coerce
     .number()
@@ -83,7 +78,7 @@ export const updateProductSchema = z.object({
     .string()
     .min(1, "Slug is required")
     .max(100, "Slug too long")
-    .regex(/^[a-z0-9-]+$/, "Invalid slug format"),
+    .regex(REGEX_PATTERNS.slug, "Invalid slug format"),
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
   priceIdr: z.coerce.number().int().min(0).max(1000000000).optional(),
@@ -107,14 +102,14 @@ export const mockPaymentSchema = z.object({
   orderId: z
     .string()
     .min(1, "Order ID is required")
-    .regex(/^[a-f0-9]{24}$/, "Invalid order ID format"),
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
 });
 
 export const veripayPaymentSchema = z.object({
   orderId: z
     .string()
     .min(1, "Order ID is required")
-    .regex(/^[a-f0-9]{24}$/, "Invalid order ID format"),
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
 });
 
 export const veripayWebhookSchema = z.object({
@@ -141,7 +136,7 @@ export const updateSettingsSchema = z.object({
   emailFromName: z.string().max(100, "Name too long").optional(),
   emailFromAddress: z
     .string()
-    .regex(emailRegex, "Must be a valid email address")
+    .regex(REGEX_PATTERNS.email, "Must be a valid email address")
     .or(z.literal(""))
     .optional(),
   emailSubjectTemplate: z.string().max(500, "Subject template too long").optional(),

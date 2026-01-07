@@ -52,14 +52,11 @@ export async function updateSettings(updates: Partial<Settings>): Promise<Settin
   const client = await clientPromise;
   const db = client.db();
 
-  // Remove _id from updates if present
-  const { ...settingsToUpdate } = updates;
-
   const result = await db.collection<Settings>("settings").findOneAndUpdate(
     { _id: "app_settings" as unknown as import("mongodb").ObjectId },
     {
       $set: {
-        ...settingsToUpdate,
+        ...updates,
         updatedAt: new Date(),
       },
       $setOnInsert: {

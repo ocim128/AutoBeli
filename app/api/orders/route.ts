@@ -96,22 +96,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "System busy. Try again later." }, { status: 429 });
     }
 
-    // Get Product (only active and not sold)
-    const product = await db
-      .collection<Product>("products")
-      .findOne({ slug, isActive: true, isSold: { $ne: true } });
+    // Get Product (only active, check sold status in code to avoid second query)
+    const product = await db.collection<Product>("products").findOne({ slug, isActive: true });
 
     if (!product) {
-      // Check if product exists but is sold
-      const soldProduct = await db
-        .collection<Product>("products")
-        .findOne({ slug, isActive: true, isSold: true });
-
-      if (soldProduct) {
-        return NextResponse.json({ error: "Product has already been sold" }, { status: 410 });
-      }
-
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Check if product is sold (avoids second DB query)
+    if (product.isSold) {
+      return NextResponse.json({ error: "Product has already been sold" }, { status: 410 });
     }
 
     // Create Order (PENDING)

@@ -152,7 +152,7 @@ export default async function ProductPage({ params }: Props) {
               <span className="text-indigo-400 font-bold mb-1">IDR</span>
             </div>
 
-            <BuyButton slug={product.slug} priceIdr={product.priceIdr} />
+            <BuyButton slug={product.slug} />
 
             <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap justify-center gap-4 opacity-40">
               {/* Simple payment icons placeholders */}
