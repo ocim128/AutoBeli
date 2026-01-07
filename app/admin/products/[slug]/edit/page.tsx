@@ -15,6 +15,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
   const [form, setForm] = useState({
     title: "",
     description: "",
+    imageUrl: "",
     priceIdr: 0,
     content: "",
     isActive: true,
@@ -37,6 +38,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
           setForm({
             title: product.title,
             description: product.description,
+            imageUrl: product.imageUrl || "",
             priceIdr: product.priceIdr,
             content: product.content || "", // Pre-fill decrypted content
             isActive: product.isActive,
@@ -63,9 +65,11 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
     setLoading(true);
     setError("");
 
+    const { imageUrl, ...rest } = form;
     const payload = {
       originalSlug: slug,
-      ...form,
+      ...rest,
+      imageUrl: imageUrl.trim() || undefined,
     };
 
     // Remove content if empty so validation doesn't fail (min 1 char)
@@ -145,6 +149,31 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
             value={form.description}
             onChange={handleChange}
           />
+        </div>
+
+        {/* Image URL */}
+        <div>
+          <label className="block text-sm font-medium">Image URL (Optional)</label>
+          <input
+            type="url"
+            name="imageUrl"
+            placeholder="https://example.com/image.jpg"
+            className="w-full border rounded p-2"
+            value={form.imageUrl}
+            onChange={handleChange}
+          />
+          {form.imageUrl && (
+            <div className="mt-2 text-xs text-gray-500">
+              <span className="block mb-1">Preview:</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={form.imageUrl}
+                alt="Preview"
+                className="h-20 w-auto rounded border"
+                onError={(e) => (e.currentTarget.style.display = "none")}
+              />
+            </div>
+          )}
         </div>
 
         {/* Content */}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, memo } from "react";
-import Spinner from "@/components/ui/Spinner";
 import { getErrorMessage } from "@/lib/utils";
 
 function ContentViewer({ token }: { token: string }) {

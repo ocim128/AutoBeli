@@ -20,6 +20,7 @@ function CreateProductContent() {
     title: "",
     slug: "",
     description: "",
+    imageUrl: "",
     priceIdr: 10000,
     content: "",
     isActive: true,
@@ -38,6 +39,7 @@ function CreateProductContent() {
               title: data.product.title,
               slug: `${data.product.slug}-copy`, // Append copy to avoid collision
               description: data.product.description || "",
+              imageUrl: data.product.imageUrl || "",
               priceIdr: data.product.priceIdr,
               content: data.product.content || "",
               isActive: true,
@@ -64,10 +66,17 @@ function CreateProductContent() {
     setError("");
 
     try {
+      // Remove empty optional string fields before sending
+      const { imageUrl, ...rest } = form;
+      const payload = {
+        ...rest,
+        imageUrl: imageUrl.trim() || undefined,
+      };
+
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -151,6 +160,31 @@ function CreateProductContent() {
             value={form.description}
             onChange={handleChange}
           />
+        </div>
+
+        {/* Image URL */}
+        <div>
+          <label className="block text-sm font-medium">Image URL (Optional)</label>
+          <input
+            type="url"
+            name="imageUrl"
+            placeholder="https://example.com/image.jpg"
+            className="w-full border rounded p-2"
+            value={form.imageUrl}
+            onChange={handleChange}
+          />
+          {form.imageUrl && (
+            <div className="mt-2 text-xs text-gray-500">
+              <span className="block mb-1">Preview:</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={form.imageUrl}
+                alt="Preview"
+                className="h-20 w-auto rounded border"
+                onError={(e) => (e.currentTarget.style.display = "none")}
+              />
+            </div>
+          )}
         </div>
 
         {/* Content */}

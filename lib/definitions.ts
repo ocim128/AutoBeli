@@ -9,6 +9,7 @@ export interface Product {
   description: string;
   priceIdr: number; // Integer
   contentEncrypted: string; // Encrypted text content
+  imageUrl?: string; // Optional product image URL
   isActive: boolean;
   isSold?: boolean; // True when product has been purchased (unique products)
   createdAt: Date;

@@ -32,8 +32,24 @@ export default function AdminSettingsPage() {
   const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (res.status === 401) {
+          router.push("/admin/login");
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to fetch settings");
+        const data = await res.json();
+        setSettings(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    }
     fetchSettings();
-  }, []);
+  }, [router]);
 
   async function handleSendTestEmail() {
     setSendingTest(true);
@@ -56,23 +72,6 @@ export default function AdminSettingsPage() {
       setError(err instanceof Error ? err.message : "Failed to send test email");
     } finally {
       setSendingTest(false);
-    }
-  }
-
-  async function fetchSettings() {
-    try {
-      const res = await fetch("/api/admin/settings");
-      if (res.status === 401) {
-        router.push("/admin/login");
-        return;
-      }
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      const data = await res.json();
-      setSettings(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load settings");
-    } finally {
-      setLoading(false);
     }
   }
 

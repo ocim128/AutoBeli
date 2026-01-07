@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getActiveProducts } from "@/lib/products";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function Home() {
   const products = await getActiveProducts();
@@ -81,18 +81,29 @@ export default async function Home() {
                 <div className="h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-200/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2">
                   {/* Card Media Area */}
                   <div className="h-56 relative overflow-hidden bg-gray-900 group-hover:scale-105 transition-transform duration-700">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/80 via-purple-600/80 to-pink-500/80 opacity-60 mix-blend-overlay z-10" />
-                    <div className="absolute inset-0 flex items-center justify-center p-6 text-white text-center z-20">
-                      <div className="space-y-2">
-                        <div className="w-16 h-1 bg-white/40 mx-auto rounded-full" />
-                        <span className="block text-4xl font-black tracking-tighter opacity-80 drop-shadow-lg">
-                          DIGITAL
-                        </span>
-                        <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-[10px] font-bold tracking-widest uppercase border border-white/20">
-                          {product.slug.split("-")[0] || "ASSET"}
+                    {product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.imageUrl}
+                        alt={product.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                      />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/80 via-purple-600/80 to-pink-500/80 opacity-60 mix-blend-overlay z-10" />
+                        <div className="absolute inset-0 flex items-center justify-center p-6 text-white text-center z-20">
+                          <div className="space-y-2">
+                            <div className="w-16 h-1 bg-white/40 mx-auto rounded-full" />
+                            <span className="block text-4xl font-black tracking-tighter opacity-80 drop-shadow-lg">
+                              DIGITAL
+                            </span>
+                            <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-[10px] font-bold tracking-widest uppercase border border-white/20">
+                              {product.slug.split("-")[0] || "ASSET"}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                     {/* Floating Glow */}
                     <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-white/10 blur-[100px] rounded-full group-hover:translate-x-full transition-transform duration-1000" />
                   </div>

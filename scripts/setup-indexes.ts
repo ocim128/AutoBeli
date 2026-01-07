@@ -98,6 +98,18 @@ async function setupIndexes() {
     await db.collection("orders").createIndex({ createdAt: -1 }, { name: "idx_orders_by_date" });
     console.log("  ✅ Created index: orders.createdAt (descending)");
 
+    // TTL index for unpaid orders (expire after 24 hours)
+    // partialFilterExpression ensures we only delete PENDING orders
+    await db.collection("orders").createIndex(
+      { createdAt: 1 },
+      {
+        expireAfterSeconds: 86400, // 24 hours
+        partialFilterExpression: { status: "PENDING" },
+        name: "idx_orders_ttl_pending",
+      }
+    );
+    console.log("  ✅ Created TTL index: orders.createdAt (24h expiry for PENDING)");
+
     // ========================================
     // ACCESS TOKENS COLLECTION INDEXES
     // ========================================

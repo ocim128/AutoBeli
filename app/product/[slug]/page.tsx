@@ -60,25 +60,47 @@ export default async function ProductPage({ params }: Props) {
         {/* Left side - Visual & Info (7 columns) */}
         <div className="lg:col-span-7 space-y-12">
           <div className="aspect-[16/10] relative overflow-hidden rounded-[3rem] bg-gray-900 shadow-3xl shadow-indigo-500/10 flex items-center justify-center group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-transparent to-pink-600/20 z-10" />
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-
-            <div className="relative text-center p-12 z-20 transform group-hover:scale-110 transition-transform duration-1000">
-              <div className="text-[12rem] font-black tracking-tighter text-white opacity-5 mb-0 select-none">
-                DATA
-              </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
-                <div className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white font-black tracking-widest uppercase text-sm mb-6">
-                  Digital Asset #{product.slug.slice(-4)}
+            {product.imageUrl ? (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={product.imageUrl}
+                  alt={product.title}
+                  className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="relative z-20 w-full h-full flex flex-col justify-end p-8 md:p-12">
+                  <div className="inline-block w-fit px-4 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white/90 font-bold tracking-wider uppercase text-xs mb-4">
+                    Digital Asset #{product.slug.slice(-4)}
+                  </div>
+                  <h2 className="text-3xl md:text-5xl font-black text-white drop-shadow-lg capitalize leading-tight">
+                    {product.title}
+                  </h2>
                 </div>
-                <h2 className="text-4xl font-black text-white drop-shadow-2xl px-6 capitalize">
-                  {product.title}
-                </h2>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-transparent to-pink-600/20 z-10" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
 
-            {/* Animated Glow in Corner */}
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-indigo-500/30 rounded-full blur-[100px] animate-pulse" />
+                <div className="relative text-center p-12 z-20 transform group-hover:scale-110 transition-transform duration-1000">
+                  <div className="text-[12rem] font-black tracking-tighter text-white opacity-5 mb-0 select-none">
+                    DATA
+                  </div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
+                    <div className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white font-black tracking-widest uppercase text-sm mb-6">
+                      Digital Asset #{product.slug.slice(-4)}
+                    </div>
+                    <h2 className="text-4xl font-black text-white drop-shadow-2xl px-6 capitalize">
+                      {product.title}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Animated Glow in Corner */}
+                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-indigo-500/30 rounded-full blur-[100px] animate-pulse" />
+              </>
+            )}
           </div>
 
           <div className="space-y-8 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
