@@ -124,7 +124,6 @@ class MemoryCache {
 
 // Singleton instance with global preservation for HMR in development
 declare global {
-   
   var _memoryCache: MemoryCache | undefined;
 }
 
@@ -149,10 +148,64 @@ export default cache;
 export const CACHE_KEYS = {
   ACTIVE_PRODUCTS: "products:active",
   PRODUCT_BY_SLUG: (slug: string) => `products:slug:${slug}`,
+  SETTINGS: "settings:global",
 } as const;
 
 // Default TTL values (in seconds)
 export const CACHE_TTL = {
   PRODUCTS_LIST: 60, // 1 minute for product listings
   PRODUCT_DETAIL: 120, // 2 minutes for individual products
+  SETTINGS: 300, // 5 minutes for global settings
 } as const;
+
+// ================================================
+// REQUEST DEDUPLICATION
+// Prevents thundering herd problem when multiple
+// requests for the same data arrive simultaneously
+// ================================================
+
+const pendingRequests = new Map<string, Promise<unknown>>();
+
+/**
+ * Deduplicated fetch with caching
+ * If multiple requests for the same key arrive at the same time,
+ * only one fetch is performed and others wait for the result.
+ *
+ * @param key - Cache key
+ * @param fetcher - Async function to fetch data if not cached
+ * @param ttlSeconds - Time to live in seconds
+ */
+export async function getOrFetch<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttlSeconds: number
+): Promise<T> {
+  // 1. Check cache first
+  const cached = cache.get<T>(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  // 2. Check if there's already a pending request for this key
+  const pending = pendingRequests.get(key);
+  if (pending) {
+    return pending as Promise<T>;
+  }
+
+  // 3. Create new fetch promise
+  const fetchPromise = (async () => {
+    try {
+      const data = await fetcher();
+      cache.set(key, data, ttlSeconds);
+      return data;
+    } finally {
+      // Clean up pending request
+      pendingRequests.delete(key);
+    }
+  })();
+
+  // 4. Store as pending
+  pendingRequests.set(key, fetchPromise);
+
+  return fetchPromise;
+}

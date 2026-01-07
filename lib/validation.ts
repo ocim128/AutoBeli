@@ -1,10 +1,20 @@
 import { z } from "zod";
 
 /**
- * Email regex for customer contact validation
- * Standard email format validation
+ * Pre-compiled regex patterns for performance
+ * Created once at module load time, reused across all validations
  */
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REGEX_PATTERNS = {
+  /** Email format validation */
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  /** Slug format: lowercase letters, numbers, hyphens */
+  slug: /^[a-z0-9-]+$/,
+  /** MongoDB ObjectId format: 24 hex characters */
+  objectId: /^[a-f0-9]{24}$/,
+} as const;
+
+// Legacy alias for backward compatibility
+const emailRegex = REGEX_PATTERNS.email;
 
 // ============================================
 // Order Schemas

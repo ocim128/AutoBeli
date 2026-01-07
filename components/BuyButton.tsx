@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 
-export default function BuyButton({ slug }: { slug: string; priceIdr: number }) {
+function BuyButton({ slug }: { slug: string; priceIdr: number }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleBuy = async () => {
+  const handleBuy = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -24,7 +24,7 @@ export default function BuyButton({ slug }: { slug: string; priceIdr: number }) 
       alert("Error creating order. Please try again.");
       setLoading(false);
     }
-  };
+  }, [slug, router]);
 
   return (
     <div className="w-full">
@@ -106,3 +106,5 @@ export default function BuyButton({ slug }: { slug: string; priceIdr: number }) 
     </div>
   );
 }
+
+export default memo(BuyButton);

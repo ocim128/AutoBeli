@@ -1,35 +1,51 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Performance: Remove console logs in production
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+
+  // Performance: Optimize package imports
+  experimental: {
+    optimizePackageImports: ["zod", "jose"],
+  },
+
+  // Performance: Enable React strict mode for better development practices
+  reactStrictMode: true,
+
+  // Performance: Disable x-powered-by header (also reduces response size)
+  poweredByHeader: false,
+
   async headers() {
     return [
       {
         // Apply security headers to all routes
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
           {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
           },
           {
             // Content Security Policy
-            key: 'Content-Security-Policy',
+            key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Required for Next.js
@@ -40,13 +56,12 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",
-            ].join('; ')
-          }
-        ]
-      }
+            ].join("; "),
+          },
+        ],
+      },
     ];
   },
 };
 
 export default nextConfig;
-

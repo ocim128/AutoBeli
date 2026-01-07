@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 
-export default function ContentViewer({ token }: { token: string }) {
+function ContentViewer({ token }: { token: string }) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleReveal = async () => {
+  const handleReveal = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -26,9 +26,9 @@ export default function ContentViewer({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     if (content) {
       navigator.clipboard.writeText(content);
       // Small feedback for copy
@@ -39,7 +39,7 @@ export default function ContentViewer({ token }: { token: string }) {
         setTimeout(() => (btn.innerText = originalText), 2000);
       }
     }
-  };
+  }, [content]);
 
   return (
     <div className="mt-12 group">
@@ -155,3 +155,5 @@ export default function ContentViewer({ token }: { token: string }) {
     </div>
   );
 }
+
+export default memo(ContentViewer);

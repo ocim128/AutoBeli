@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 
 interface CheckoutFormProps {
@@ -8,69 +8,72 @@ interface CheckoutFormProps {
   amount: number;
 }
 
-export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
+function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
 
-    if (!contact.trim()) {
-      setError("Please enter your email address");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contact.trim())) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const contactRes = await fetch("/api/orders", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, contact: contact.trim() }),
-      });
-
-      if (!contactRes.ok) {
-        const data = await contactRes.json();
-        throw new Error(data.error || "Failed to save contact");
+      if (!contact.trim()) {
+        setError("Please enter your email address");
+        return;
       }
 
-      const payRes = await fetch("/api/payment/veripay/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
-      });
-
-      const payData = await payRes.json();
-
-      if (!payRes.ok) {
-        throw new Error(payData.error || "Payment creation failed");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contact.trim())) {
+        setError("Please enter a valid email address");
+        return;
       }
 
-      if (payData.payment_url) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("lastOrderId", orderId);
+      setLoading(true);
+      try {
+        const contactRes = await fetch("/api/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, contact: contact.trim() }),
+        });
+
+        if (!contactRes.ok) {
+          const data = await contactRes.json();
+          throw new Error(data.error || "Failed to save contact");
         }
-        window.location.href = payData.payment_url;
-      } else {
-        router.push(`/order/${orderId}`);
+
+        const payRes = await fetch("/api/payment/veripay/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId }),
+        });
+
+        const payData = await payRes.json();
+
+        if (!payRes.ok) {
+          throw new Error(payData.error || "Payment creation failed");
+        }
+
+        if (payData.payment_url) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("lastOrderId", orderId);
+          }
+          window.location.href = payData.payment_url;
+        } else {
+          router.push(`/order/${orderId}`);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Payment failed. Please try again.");
+        }
+        setLoading(false);
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Payment failed. Please try again.");
-      }
-      setLoading(false);
-    }
-  };
+    },
+    [contact, orderId, router]
+  );
 
   return (
     <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-indigo-100/50">
@@ -213,3 +216,5 @@ export default function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
     </div>
   );
 }
+
+export default memo(CheckoutForm);

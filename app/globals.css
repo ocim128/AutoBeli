@@ -73,16 +73,42 @@ body {
 
 @keyframes float {
   0% {
-    transform: translateY(0px);
+    transform: translateY(0px) translateZ(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-10px) translateZ(0);
   }
   100% {
-    transform: translateY(0px);
+    transform: translateY(0px) translateZ(0);
   }
 }
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU layer */
+}
+
+/* Performance: Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-ping,
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Performance: GPU hints for frequently animated elements */
+.hover\:-translate-y-1:hover,
+.hover\:-translate-y-2:hover,
+.group-hover\:scale-105,
+.group-hover\:translate-x-1\.5,
+.group-hover\:translate-x-2 {
+  will-change: transform;
 }
