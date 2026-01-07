@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/db";
-import { Order } from "@/lib/definitions";
+import { Order, Product } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
 import { generateAccessToken } from "@/lib/tokens";
 import { validate, veripayWebhookSchema } from "@/lib/validation";
 import { verifyWebhookSignature } from "@/lib/veripay";
+import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
 export async function POST(request: Request) {
   try {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
           $set: {
             status: "PAID",
             amountPaid: amount,
+            paidAt: new Date(),
             updatedAt: new Date(),
             paymentMetadata: {
               ...order.paymentMetadata,
@@ -76,6 +78,35 @@ export async function POST(request: Request) {
 
       // Generate access token for content
       await generateAccessToken(order_id);
+
+      // Send order confirmation email (if customer provided email)
+      if (order.customerContact) {
+        try {
+          // Get product info for email
+          const product = await db
+            .collection<Product>("products")
+            .findOne({ _id: order.productId });
+
+          if (product) {
+            await sendOrderConfirmationEmail({
+              orderId: order_id,
+              productTitle: product.title,
+              amountPaid: amount,
+              orderDate: new Date().toLocaleString("en-GB", {
+                day: "numeric",
+                month: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              customerEmail: order.customerContact,
+            });
+          }
+        } catch (emailError) {
+          // Don't fail the webhook if email fails
+          console.error("Failed to send order confirmation email:", emailError);
+        }
+      }
 
       return NextResponse.json({ success: true });
     } else if (status === "EXPIRED" || status === "FAILED") {

@@ -123,6 +123,27 @@ export const veripayWebhookSchema = z.object({
 });
 
 // ============================================
+// Settings Schemas
+// ============================================
+
+export const updateSettingsSchema = z.object({
+  emailEnabled: z.boolean().optional(),
+  emailFromName: z.string().max(100, "Name too long").optional(),
+  emailFromAddress: z
+    .string()
+    .regex(emailRegex, "Must be a valid email address")
+    .or(z.literal(""))
+    .optional(),
+  emailSubjectTemplate: z.string().max(500, "Subject template too long").optional(),
+  emailBodyTemplate: z.string().max(10000, "Body template too long").optional(),
+  mailgunDomain: z.string().max(100, "Domain too long").optional(),
+});
+
+export const sendTestEmailSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+});
+
+// ============================================
 // Utility Types
 // ============================================
 
@@ -135,6 +156,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type MockPaymentInput = z.infer<typeof mockPaymentSchema>;
 export type VeripayPaymentInput = z.infer<typeof veripayPaymentSchema>;
 export type VeripayWebhookInput = z.infer<typeof veripayWebhookSchema>;
+export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 
 // ============================================
 // Validation Helper

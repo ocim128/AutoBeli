@@ -29,6 +29,7 @@ export interface Order {
     payment_time?: string;
   };
   customerContact?: string; // Email for order recovery
+  paidAt?: Date; // When payment was confirmed
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,4 +41,16 @@ export interface AccessToken {
   usageCount: number;
   lastAccessedAt?: Date;
   createdAt: Date;
+}
+
+export interface Settings {
+  _id?: ObjectId;
+  emailEnabled: boolean;
+  emailFromName: string;
+  emailFromAddress: string;
+  emailSubjectTemplate: string;
+  emailBodyTemplate: string;
+  mailgunDomain: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -41,6 +41,7 @@ export async function getOrderWithProduct(orderId: string): Promise<OrderWithPro
 import { getPaymentStatus } from "@/lib/veripay";
 import { generateAccessToken } from "@/lib/tokens";
 import { AccessToken } from "@/lib/definitions";
+import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
 export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> {
   if (!ObjectId.isValid(orderId)) return false;
@@ -102,6 +103,33 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
 
         if (!existingToken) {
           await generateAccessToken(orderId);
+        }
+
+        // 5. Send order confirmation email (if customer provided email)
+        if (order.customerContact) {
+          try {
+            const product = await db
+              .collection<Product>("products")
+              .findOne({ _id: order.productId });
+
+            if (product) {
+              await sendOrderConfirmationEmail({
+                orderId: orderId,
+                productTitle: product.title,
+                amountPaid: veripayStatus.data?.gross_amount || 0,
+                orderDate: new Date().toLocaleString("en-GB", {
+                  day: "numeric",
+                  month: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                customerEmail: order.customerContact,
+              });
+            }
+          } catch (emailError) {
+            console.error("Failed to send order confirmation email:", emailError);
+          }
         }
 
         return true;
