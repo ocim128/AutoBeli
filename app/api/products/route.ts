@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { title, slug, description, priceIdr, content, isActive } = validation.data!;
+    const { title, slug, description, priceIdr, content, imageUrl, isActive } = validation.data!;
 
     const client = await clientPromise;
     const db = client.db();
@@ -125,6 +125,7 @@ export async function POST(request: Request) {
       description: description || "",
       priceIdr,
       contentEncrypted,
+      imageUrl: imageUrl || "",
       isActive: isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -193,7 +194,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { originalSlug, title, description, priceIdr, content, isActive } = body;
+    const { originalSlug, title, description, priceIdr, content, imageUrl, isActive } = body;
 
     // Basic validation for originalSlug
     if (!originalSlug || typeof originalSlug !== "string") {
@@ -205,8 +206,14 @@ export async function PUT(request: Request) {
       slug: originalSlug,
       title,
       description,
-      priceIdr: priceIdr ? parseInt(priceIdr) : undefined,
+      priceIdr:
+        priceIdr !== undefined
+          ? typeof priceIdr === "string"
+            ? parseInt(priceIdr)
+            : priceIdr
+          : undefined,
       content,
+      imageUrl,
       isActive,
     });
 
@@ -224,8 +231,10 @@ export async function PUT(request: Request) {
 
     if (title) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (priceIdr !== undefined) updateData.priceIdr = parseInt(priceIdr);
+    if (priceIdr !== undefined)
+      updateData.priceIdr = typeof priceIdr === "string" ? parseInt(priceIdr) : priceIdr;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
 
     if (content) {
       updateData.contentEncrypted = encryptContent(content);
