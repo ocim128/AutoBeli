@@ -12,15 +12,6 @@ export function Header() {
             AutoBeli
           </span>
         </Link>
-        <nav className="flex items-center gap-6">
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500"></span>
-            Admin Dashboard
-          </Link>
-        </nav>
       </div>
     </header>
   );

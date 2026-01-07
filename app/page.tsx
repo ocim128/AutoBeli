@@ -48,12 +48,6 @@ export default async function Home() {
             >
               Browse Products
             </a>
-            <Link
-              href="/admin"
-              className="px-8 py-4 bg-white text-gray-900 border border-gray-200 rounded-2xl font-bold hover:bg-gray-50 hover:-translate-y-1 transition-all duration-300"
-            >
-              Sell Digital Content
-            </Link>
           </div>
         </div>
       </section>
