@@ -44,8 +44,8 @@ test.describe("Homepage", () => {
   test("has navigation header", async ({ page }) => {
     await page.goto("/");
 
-    // Should have the brand/logo link (visible even on error pages)
-    await expect(page.getByRole("link", { name: /autobeli/i })).toBeVisible();
+    // Should have the brand/logo link in the header (visible even on error pages)
+    await expect(page.locator("header").getByRole("link", { name: /autobeli/i })).toBeVisible();
   });
 
   test("has footer", async ({ page }) => {

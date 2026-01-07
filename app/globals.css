@@ -56,6 +56,7 @@ body {
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -63,21 +64,24 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: linear-gradient(180deg, #94a3b8, #64748b);
 }
 
+/* Float Animation */
 @keyframes float {
   0% {
     transform: translateY(0px) translateZ(0);
   }
+
   50% {
     transform: translateY(-10px) translateZ(0);
   }
+
   100% {
     transform: translateY(0px) translateZ(0);
   }
@@ -86,7 +90,163 @@ body {
 .animate-float {
   animation: float 3s ease-in-out infinite;
   will-change: transform;
-  transform: translateZ(0); /* Force GPU layer */
+  transform: translateZ(0);
+}
+
+/* Slow Spin Animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Shimmer Animation for Skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Slide Up Animation */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+/* Scale In Animation */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+/* Bounce Gentle Animation */
+@keyframes bounce-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 2s ease-in-out infinite;
+}
+
+/* Glow Pulse Animation */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Head Shake Animation for Errors */
+@keyframes head-shake {
+  0% {
+    transform: translateX(0);
+  }
+
+  6.5% {
+    transform: translateX(-6px) rotateY(-9deg);
+  }
+
+  18.5% {
+    transform: translateX(5px) rotateY(7deg);
+  }
+
+  31.5% {
+    transform: translateX(-3px) rotateY(-5deg);
+  }
+
+  43.5% {
+    transform: translateX(2px) rotateY(3deg);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+}
+
+.animate-head-shake {
+  animation: head-shake 0.5s ease-in-out;
+}
+
+/* Gradient Text */
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Selection Color */
+::selection {
+  background: rgba(99, 102, 241, 0.2);
+  color: inherit;
+}
+
+/* Focus Visible Ring */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
 }
 
 /* Performance: Reduce motion for users who prefer it */
@@ -94,7 +254,14 @@ body {
   .animate-float,
   .animate-ping,
   .animate-pulse,
-  .animate-spin {
+  .animate-spin,
+  .animate-spin-slow,
+  .animate-shimmer,
+  .animate-slide-up,
+  .animate-scale-in,
+  .animate-bounce-gentle,
+  .animate-glow-pulse,
+  .animate-head-shake {
     animation: none !important;
   }
 
@@ -107,8 +274,40 @@ body {
 /* Performance: GPU hints for frequently animated elements */
 .hover\:-translate-y-1:hover,
 .hover\:-translate-y-2:hover,
+.hover\:-translate-y-0\.5:hover,
 .group-hover\:scale-105,
+.group-hover\:scale-110,
 .group-hover\:translate-x-1\.5,
-.group-hover\:translate-x-2 {
+.group-hover\:translate-x-2,
+.group-hover\:rotate-12 {
   will-change: transform;
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 300ms,
+    transform 300ms;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.2);
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.98);
 }
