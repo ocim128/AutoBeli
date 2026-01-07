@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function BuyButton({ slug, priceIdr }: { slug: string; priceIdr: number }) {
+export default function BuyButton({ slug }: { slug: string; priceIdr: number }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 

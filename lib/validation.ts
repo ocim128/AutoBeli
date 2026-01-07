@@ -6,11 +6,6 @@ import { z } from "zod";
  */
 const indonesianPhoneRegex = /^08\d{8,11}$/;
 
-/**
- * Simple email regex for basic validation
- */
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 // ============================================
 // Order Schemas
 // ============================================

@@ -6,6 +6,88 @@ import { encryptContent, decryptContent } from "@/lib/crypto";
 import { validate, createProductSchema, updateProductSchema } from "@/lib/validation";
 import { invalidateProductCache } from "@/lib/products";
 
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     description: Returns list of products or a single product by slug
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: slug
+ *         schema:
+ *           type: string
+ *         description: Product slug to fetch specific product
+ *     responses:
+ *       200:
+ *         description: Success
+ *   post:
+ *     description: Create a new product (Admin only)
+ *     tags: [Products]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - slug
+ *               - priceIdr
+ *               - content
+ *             properties:
+ *               title:
+ *                 type: string
+ *               slug:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               priceIdr:
+ *                 type: integer
+ *               content:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Created
+ *       401:
+ *         description: Unauthorized
+ *   put:
+ *     description: Update a product (Admin only)
+ *     tags: [Products]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - originalSlug
+ *             properties:
+ *               originalSlug:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               priceIdr:
+ *                 type: integer
+ *               content:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Updated
+ *       404:
+ *         description: Product not found
+ */
+
 export async function POST(request: Request) {
   // Auth Check
   const session = await getSession();

@@ -5,6 +5,54 @@ import { ObjectId } from "mongodb";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 import { validate, createOrderSchema, updateOrderContactSchema } from "@/lib/validation";
 
+/**
+ * @swagger
+ * /api/orders:
+ *   post:
+ *     description: Create a new order for a product
+ *     tags: [Orders]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slug
+ *             properties:
+ *               slug:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order created
+ *       404:
+ *         description: Product not found
+ *       410:
+ *         description: Product already sold
+ *   patch:
+ *     description: Update order with customer contact info
+ *     tags: [Orders]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderId
+ *               - contact
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *               contact:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Updated
+ *       400:
+ *         description: Invalid input
+ */
+
 export async function POST(request: Request) {
   try {
     // Rate limiting
