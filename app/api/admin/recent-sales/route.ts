@@ -33,7 +33,13 @@ export async function GET(request: Request) {
     const recentSales = await db
       .collection("orders")
       .aggregate([
-        { $match: { status: "PAID" } },
+        {
+          $match: {
+            status: "PAID",
+            customerContact: { $exists: true, $ne: null, $type: "string", $regex: "@" },
+            "paymentMetadata.transaction_ref": { $ne: "test_ref" },
+          },
+        },
         { $sort: { paidAt: -1 } },
         { $limit: 5 },
         {
