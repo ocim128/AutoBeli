@@ -70,7 +70,12 @@ export const createProductSchema = z.object({
     .min(0, "Price cannot be negative")
     .max(1000000000, "Price too high"),
   content: z.string().min(1, "Content is required").max(100000, "Content too large (max 100KB)"),
-  imageUrl: z.string().url("Invalid image URL").max(2000, "URL too long").optional(),
+  imageUrl: z
+    .string()
+    .url("Invalid image URL")
+    .max(2000, "URL too long")
+    .or(z.literal(""))
+    .optional(),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -84,7 +89,7 @@ export const updateProductSchema = z.object({
   description: z.string().max(2000).optional(),
   priceIdr: z.coerce.number().int().min(0).max(1000000000).optional(),
   content: z.string().min(1).max(100000).optional(),
-  imageUrl: z.string().url("Invalid image URL").max(2000).optional(),
+  imageUrl: z.string().url("Invalid image URL").max(2000).or(z.literal("")).optional(),
   isActive: z.boolean().optional(),
 });
 

@@ -70,7 +70,7 @@ function CreateProductContent() {
       const { imageUrl, ...rest } = form;
       const payload = {
         ...rest,
-        imageUrl: imageUrl.trim() || undefined,
+        imageUrl: imageUrl.trim(),
       };
 
       const res = await fetch("/api/products", {

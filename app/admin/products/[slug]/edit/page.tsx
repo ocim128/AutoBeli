@@ -69,7 +69,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
     const payload = {
       originalSlug: slug,
       ...rest,
-      imageUrl: imageUrl.trim() || undefined,
+      imageUrl: imageUrl.trim(),
     };
 
     // Remove content if empty so validation doesn't fail (min 1 char)
