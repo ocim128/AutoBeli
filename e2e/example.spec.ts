@@ -2,12 +2,18 @@ import { test, expect, Page } from "@playwright/test";
 
 /**
  * Helper to check if the page is showing a database/server error
+ * Supports both English and Indonesian error messages
  */
 async function hasAppError(page: Page): Promise<boolean> {
-  return page
+  const enError = await page
     .getByText("Something went wrong")
     .isVisible()
     .catch(() => false);
+  const idError = await page
+    .getByText("Waduh, Ada yang Salah")
+    .isVisible()
+    .catch(() => false);
+  return enError || idError;
 }
 
 test.describe("Homepage", () => {
@@ -24,9 +30,12 @@ test.describe("Homepage", () => {
     const hasError = await hasAppError(page);
     if (hasError) {
       // If there's an error page, just verify it's shown properly
-      await expect(page.getByText("Something went wrong")).toBeVisible();
-      await expect(page.getByRole("button", { name: /try again/i })).toBeVisible();
+      await expect(
+        page.getByText("Something went wrong").or(page.getByText("Waduh, Ada yang Salah"))
+      ).toBeVisible();
+      await expect(page.getByRole("button", { name: /try again|coba lagi/i })).toBeVisible();
     } else {
+      // Check for main heading - matches "Konten Digital." from i18n
       await expect(page.getByRole("heading", { level: 1 })).toContainText("Konten Digital");
       await expect(page.getByText("Pengiriman Instan").first()).toBeVisible();
     }
@@ -37,6 +46,7 @@ test.describe("Homepage", () => {
 
     const hasError = await hasAppError(page);
     if (!hasError) {
+      // Matches "Aset yang Tersedia" from i18n
       await expect(page.getByText("Aset yang Tersedia")).toBeVisible();
     }
   });
@@ -88,12 +98,10 @@ test.describe("Product Page", () => {
       expect(status).toBe(404);
     } else {
       // Check for either 404 content OR error page (DB down)
-      const hasErrorPage = await page
-        .getByText("Something went wrong")
-        .isVisible()
-        .catch(() => false);
+      const hasErrorPage = await hasAppError(page);
+
       const has404 = await page
-        .getByText(/404|not found/i)
+        .getByText(/404|not found|halaman nggak ketemu/i)
         .first()
         .isVisible()
         .catch(() => false);
@@ -109,8 +117,8 @@ test.describe("Product Page", () => {
     if (await productLink.isVisible()) {
       await productLink.click();
 
-      // Should have breadcrumb with Store link
-      await expect(page.getByRole("link", { name: "Toko" })).toBeVisible();
+      // Should have breadcrumb with Store link (Toko)
+      await expect(page.getByRole("link", { name: /Toko|Store/i })).toBeVisible();
     }
   });
 });
@@ -241,10 +249,7 @@ test.describe("Responsive Design", () => {
     await expect(page).toHaveTitle(/AutoBeli/i);
 
     // Either show hero heading OR error page
-    const hasError = await page
-      .getByText("Something went wrong")
-      .isVisible()
-      .catch(() => false);
+    const hasError = await hasAppError(page);
     if (!hasError) {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     }

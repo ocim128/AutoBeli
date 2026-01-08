@@ -1,6 +1,7 @@
 import { getSession, logoutAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import RecentSales from "@/components/admin/RecentSales";
 
 export default async function AdminDashboard() {
   const session = await getSession(); // Verify server-side for extra safety
@@ -21,7 +22,7 @@ export default async function AdminDashboard() {
         </form>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/admin/products"
           className="block rounded-lg border p-6 hover:bg-gray-50 transition"
@@ -44,6 +45,9 @@ export default async function AdminDashboard() {
           <p className="text-gray-500">Configure Mailgun email notifications.</p>
         </Link>
       </div>
+
+      {/* Recent Sales Widget */}
+      <RecentSales />
     </div>
   );
 }
