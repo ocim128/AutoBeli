@@ -51,7 +51,7 @@ describe("CheckoutForm Component", () => {
   it("renders contact input field", () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/your email/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/you@example.com/i)).toBeInTheDocument();
   });
 
@@ -78,7 +78,7 @@ describe("CheckoutForm Component", () => {
   it("shows validation error for whitespace-only contact", async () => {
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "   ");
 
     fireEvent.click(screen.getByRole("button"));
@@ -114,7 +114,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
@@ -153,7 +153,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "  customer@example.com  ");
 
     fireEvent.click(screen.getByRole("button"));
@@ -173,7 +173,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     const button = screen.getByRole("button");
@@ -194,7 +194,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
@@ -214,7 +214,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));
@@ -230,7 +230,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     const button = screen.getByRole("button");
@@ -250,7 +250,7 @@ describe("CheckoutForm Component", () => {
 
     render(<CheckoutForm orderId="order123" amount={50000} />);
 
-    const input = screen.getByLabelText(/email address/i);
+    const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
 
     fireEvent.click(screen.getByRole("button"));

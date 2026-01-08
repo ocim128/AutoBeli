@@ -93,7 +93,7 @@ describe("BuyButton Component", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(button).toHaveTextContent("Securing Access...");
+      expect(button).toHaveTextContent("Securing access...");
       expect(button).toBeDisabled();
     });
   });

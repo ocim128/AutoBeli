@@ -37,7 +37,7 @@ test.describe("Homepage", () => {
 
     const hasError = await hasAppError(page);
     if (!hasError) {
-      await expect(page.getByText("Aset Tersedia")).toBeVisible();
+      await expect(page.getByText("Aset yang Tersedia")).toBeVisible();
     }
   });
 
