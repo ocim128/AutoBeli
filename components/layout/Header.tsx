@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function Header() {
+  const { t, language, setLanguage } = useLanguage();
+
   return (
     <header className="sticky top-0 z-50 w-full">
       {/* Glassmorphism background */}
@@ -20,13 +25,21 @@ export function Header() {
               AutoBeli
             </span>
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-none mt-0.5">
-              Digital Store
+              {t("common.digitalStore")}
             </span>
           </div>
         </Link>
 
         {/* Navigation */}
         <nav className="flex items-center gap-2">
+          {/* Language Toggle */}
+          <button
+            onClick={() => setLanguage(language === "id" ? "en" : "id")}
+            className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-black text-gray-600 transition-colors uppercase tracking-wider"
+          >
+            {language === "id" ? "EN" : "ID"}
+          </button>
+
           {/* Recover Link */}
           <Link
             href="/recover"
@@ -45,7 +58,7 @@ export function Header() {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            <span className="hidden sm:inline">Find My Order</span>
+            <span className="hidden sm:inline">{t("common.findMyOrder")}</span>
           </Link>
 
           {/* Browse Products Button */}
@@ -53,7 +66,7 @@ export function Header() {
             href="/#products"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20 hover:-translate-y-0.5 active:translate-y-0 transition-all"
           >
-            <span className="hidden sm:inline">Browse</span>
+            <span className="hidden sm:inline">{t("common.browse")}</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"

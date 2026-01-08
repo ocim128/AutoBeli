@@ -3,10 +3,12 @@
 import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/ui/Spinner";
+import { useLanguage } from "@/context/LanguageContext";
 
 function BuyButton({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleBuy = useCallback(async () => {
     setLoading(true);
@@ -41,11 +43,11 @@ function BuyButton({ slug }: { slug: string }) {
           {loading ? (
             <>
               <Spinner size={24} className="text-gray-900" />
-              <span>Securing Access...</span>
+              <span>{t("common.securingAccess")}</span>
             </>
           ) : (
             <>
-              <span>Get Access Now</span>
+              <span>{t("common.getAccessNow")}</span>
               <svg
                 className="w-6 h-6 transform group-hover:translate-x-2 transition-transform duration-300"
                 fill="none"
@@ -67,9 +69,9 @@ function BuyButton({ slug }: { slug: string }) {
       <div className="mt-6 flex items-center justify-center gap-6 opacity-60">
         <div className="flex items-center gap-1.5 grayscale">
           <span className="text-[10px] font-black tracking-tighter text-white bg-gray-500 px-1.5 rounded">
-            QRIS
+            {t("common.qris")}
           </span>
-          <span className="text-[10px] font-bold text-gray-400">READY</span>
+          <span className="text-[10px] font-bold text-gray-400">{t("common.ready")}</span>
         </div>
         <div className="w-px h-3 bg-gray-700/20" />
         <div className="flex items-center gap-1.5">
@@ -81,7 +83,7 @@ function BuyButton({ slug }: { slug: string }) {
             />
           </svg>
           <span className="text-[10px] font-black text-gray-500 tracking-widest uppercase">
-            Certified Secure
+            {t("common.certifiedSecure")}
           </span>
         </div>
       </div>

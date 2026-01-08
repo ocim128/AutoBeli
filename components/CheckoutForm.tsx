@@ -4,6 +4,7 @@ import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { REGEX_PATTERNS } from "@/lib/validation";
 import Spinner from "@/components/ui/Spinner";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface CheckoutFormProps {
   orderId: string;
@@ -15,6 +16,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -22,12 +24,12 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
       setError(null);
 
       if (!contact.trim()) {
-        setError("Please enter your email address");
+        setError(t("checkout.emailRequired"));
         return;
       }
 
       if (!REGEX_PATTERNS.email.test(contact.trim())) {
-        setError("Please enter a valid email address");
+        setError(t("checkout.emailInvalid"));
         return;
       }
 
@@ -66,12 +68,12 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
         if (error instanceof Error) {
           setError(error.message);
         } else {
-          setError("Payment failed. Please try again.");
+          setError(t("checkout.paymentFailed"));
         }
         setLoading(false);
       }
     },
-    [contact, orderId, router]
+    [contact, orderId, router, t]
   );
 
   return (
@@ -88,9 +90,11 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
           </svg>
         </div>
         <div>
-          <h2 className="text-xl font-black text-gray-900 leading-tight">Secure Payment</h2>
+          <h2 className="text-xl font-black text-gray-900 leading-tight">
+            {t("checkout.securePayment")}
+          </h2>
           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-            Digital Order #{orderId.slice(-6).toUpperCase()}
+            {t("checkout.digitalOrder")} #{orderId.slice(-6).toUpperCase()}
           </p>
         </div>
       </div>
@@ -117,7 +121,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
             htmlFor="contact"
             className="block text-sm font-black text-gray-700 uppercase tracking-widest mb-3 pl-1"
           >
-            Email Address
+            {t("checkout.emailAddress")}
           </label>
           <div className="relative group">
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-indigo-600">
@@ -135,7 +139,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
               id="contact"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("checkout.emailPlaceholder")}
               className={`w-full pl-14 pr-6 py-5 bg-gray-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-600 transition-all text-lg font-bold text-gray-900 placeholder:text-gray-300 ${
                 error ? "border-red-200" : "border-gray-100"
               }`}
@@ -144,10 +148,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
               aria-required="true"
             />
           </div>
-          <p className="text-xs text-gray-400 font-medium mt-4 pl-1">
-            We&apos;ll send the access link to this email once payment is confirmed. Use this email
-            with your order ID to recover lost access.
-          </p>
+          <p className="text-xs text-gray-400 font-medium mt-4 pl-1">{t("checkout.emailHelp")}</p>
         </div>
 
         <button
@@ -162,11 +163,13 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
             {loading ? (
               <>
                 <Spinner size={24} />
-                <span>Processing...</span>
+                <span>{t("checkout.processing")}</span>
               </>
             ) : (
               <>
-                <span>Pay Rp{amount.toLocaleString("id-ID")}</span>
+                <span>
+                  {t("checkout.pay")} Rp{amount.toLocaleString("id-ID")}
+                </span>
                 <svg
                   className="w-6 h-6 transform group-hover:translate-x-1.5 transition-transform duration-300"
                   fill="none"
@@ -188,7 +191,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
 
       <div className="mt-10 flex flex-col items-center gap-4 border-t border-gray-50 pt-8">
         <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">
-          Supported Payment Methods
+          {t("checkout.supportedMethods")}
         </p>
         <div className="flex gap-6 grayscale opacity-40">
           <span className="font-black text-xs tracking-tighter">QRIS</span>

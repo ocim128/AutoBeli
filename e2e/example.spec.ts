@@ -27,8 +27,8 @@ test.describe("Homepage", () => {
       await expect(page.getByText("Something went wrong")).toBeVisible();
       await expect(page.getByRole("button", { name: /try again/i })).toBeVisible();
     } else {
-      await expect(page.getByRole("heading", { level: 1 })).toContainText("Digital Content");
-      await expect(page.getByText("Instant Delivery")).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Konten Digital");
+      await expect(page.getByText("Pengiriman Instan").first()).toBeVisible();
     }
   });
 
@@ -37,7 +37,7 @@ test.describe("Homepage", () => {
 
     const hasError = await hasAppError(page);
     if (!hasError) {
-      await expect(page.getByText("Available Assets")).toBeVisible();
+      await expect(page.getByText("Aset Tersedia")).toBeVisible();
     }
   });
 
@@ -110,7 +110,7 @@ test.describe("Product Page", () => {
       await productLink.click();
 
       // Should have breadcrumb with Store link
-      await expect(page.getByRole("link", { name: "Store" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Toko" })).toBeVisible();
     }
   });
 });

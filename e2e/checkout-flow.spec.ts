@@ -44,11 +44,12 @@ test.describe("Checkout Flow", () => {
     await expect(page).toHaveURL(/\/product\/.+/);
 
     // Step 2: Verify product page elements
-    await expect(page.getByText("Instant Delivery").first()).toBeVisible();
-    await expect(page.getByText("Secure Encryption", { exact: false }).first()).toBeVisible();
+    // Note: Default language is Indonesian
+    await expect(page.getByText("Akses Instan").first()).toBeVisible();
+    await expect(page.getByText("Enkripsi Aman", { exact: false }).first()).toBeVisible();
 
     // Step 3: Click buy button
-    const buyButton = page.getByRole("button", { name: /Get Access Now/i });
+    const buyButton = page.getByRole("button", { name: /Beli Sekarang/i });
     await expect(buyButton).toBeVisible();
     await buyButton.click();
 
@@ -56,7 +57,7 @@ test.describe("Checkout Flow", () => {
     await expect(page).toHaveURL(/\/checkout\/.+/);
 
     // Step 5: Fill in contact information (email)
-    const contactInput = page.getByPlaceholder(/you@example.com/i);
+    const contactInput = page.getByPlaceholder(/kamu@contoh.com/i);
     await expect(contactInput).toBeVisible();
     await contactInput.fill("customer@example.com");
 
@@ -75,7 +76,7 @@ test.describe("Checkout Flow", () => {
       });
     });
 
-    const payButton = page.getByRole("button", { name: /pay/i });
+    const payButton = page.getByRole("button", { name: /Bayar/i });
     await payButton.click();
 
     // Step 7: Should navigate to order confirmation page
@@ -100,20 +101,20 @@ test.describe("Checkout Flow", () => {
 
     await productLink.click();
 
-    const buyButton = page.getByRole("button", { name: /Get Access Now/i });
+    const buyButton = page.getByRole("button", { name: /Beli Sekarang/i });
     await buyButton.waitFor({ state: "visible" });
     await buyButton.click();
 
     await expect(page).toHaveURL(/\/checkout\/.+/);
 
     // Try to submit without contact (email)
-    const payButton = page.getByRole("button", { name: /pay/i });
+    const payButton = page.getByRole("button", { name: /Bayar/i });
     await payButton.click();
 
     // Should show error message on page
     const alert = page.locator('form [role="alert"]');
     await alert.waitFor({ state: "visible" });
-    await expect(alert).toContainText(/enter your email address/i);
+    await expect(alert).toContainText(/Silakan masukkan alamat email Anda/i);
 
     // Should still be on checkout page
     await expect(page).toHaveURL(/\/checkout\/.+/);
@@ -151,8 +152,8 @@ test.describe("Checkout Flow", () => {
     // Click with noWaitAfter to check loading state immediately
     await buyButton.click({ noWaitAfter: true });
 
-    // The button text should change to "Securing Access..."
-    await expect(buyButton).toContainText("Securing Access", { timeout: 5000 });
+    // The button text should change to "Memproses Akses..."
+    await expect(buyButton).toContainText("Memproses Akses", { timeout: 5000 });
     await expect(buyButton).toHaveAttribute("aria-busy", "true");
   });
 });

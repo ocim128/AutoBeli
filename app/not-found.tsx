@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function NotFound() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
       {/* Animated Background */}
@@ -30,15 +35,14 @@ export default function NotFound() {
       <div className="relative max-w-md mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 border border-red-100 text-red-600 text-xs font-bold uppercase tracking-widest mb-6">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          Page Not Found
+          {t("error.pageNotFound")}
         </div>
 
         <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">
-          Oops! Asset Not Found
+          {t("error.assetNotFound")}
         </h2>
         <p className="text-gray-500 mb-10 font-medium leading-relaxed">
-          The digital content you are looking for does not exist, has been moved, or the URL might
-          be incorrect. Please verify and try again.
+          {t("error.assetNotFoundDesc")}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -59,7 +63,7 @@ export default function NotFound() {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Return to Store
+            {t("error.returnToStore")}
           </Link>
           <Link
             href="/recover"
@@ -73,7 +77,7 @@ export default function NotFound() {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            Find My Order
+            {t("common.findMyOrder")}
           </Link>
         </div>
       </div>

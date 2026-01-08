@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Error({
   error,
@@ -10,6 +11,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error);
@@ -54,16 +57,14 @@ export default function Error({
             </div>
 
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-3 tracking-tight">
-              Something went wrong!
+              {t("error.somethingWentWrong")}
             </h2>
-            <p className="text-gray-500 mb-4 leading-relaxed">
-              We encountered an unexpected error while processing your request. Please try again.
-            </p>
+            <p className="text-gray-500 mb-4 leading-relaxed">{t("error.unexpectedError")}</p>
 
             {error.digest && (
               <div className="mb-8 inline-block">
                 <span className="px-3 py-1.5 rounded-lg bg-gray-100 text-xs font-mono text-gray-500">
-                  Reference: {error.digest}
+                  {t("error.reference")}: {error.digest}
                 </span>
               </div>
             )}
@@ -82,7 +83,7 @@ export default function Error({
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                <span>Try Again</span>
+                <span>{t("error.tryAgain")}</span>
               </button>
               <Link
                 href="/"
@@ -96,7 +97,7 @@ export default function Error({
                     d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
-                Go Back Home
+                {t("error.goBackHome")}
               </Link>
             </div>
           </div>

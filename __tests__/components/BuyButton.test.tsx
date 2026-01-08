@@ -14,6 +14,26 @@ vi.mock("next/navigation", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+vi.mock("@/context/LanguageContext", async () => {
+  const { translations } = await import("@/lib/i18n");
+  return {
+    useLanguage: () => ({
+      t: (path: string) => {
+        const keys = path.split(".");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let current: any = translations.en;
+        for (const key of keys) {
+          if (current === undefined || current[key] === undefined) return path;
+          current = current[key];
+        }
+        return current;
+      },
+      language: "en",
+      setLanguage: vi.fn(),
+    }),
+  };
+});
+
 describe("BuyButton Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
