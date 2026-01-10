@@ -9,6 +9,7 @@ A secure, single-vendor digital product store for text-based content. Built with
 - **Instant Access**: Automated delivery upon payment confirmation.
 - **Admin Dashboard**: Manage products and view orders.
 - **Veripay Payment Gateway**: Integrated with veripay.site for QRIS, Virtual Account, and E-Wallet payments.
+- **Midtrans Payment Gateway**: Integrated with Midtrans Snap for Card, Bank Transfer, E-Wallet, and more.
 - **Mock Payment**: Optional mock gateway for development/testing (set `PAYMENT_GATEWAY=MOCK`).
 
 ## Tech Stack
@@ -31,9 +32,9 @@ A secure, single-vendor digital product store for text-based content. Built with
     - `MONGODB_URI`: Your Atlas connection string.
     - `ADMIN_PASSWORD`: Access key for admin panel.
     - `CONTENT_ENCRYPTION_KEY`: A 32-character random string.
-    - `PAYMENT_GATEWAY`: Set to `VERIPAY` (production) or `MOCK` (development).
-    - `VERIPAY_API_KEY`: Your Veripay API key.
-    - `VERIPAY_SECRET_KEY`: Your Veripay secret key.
+    - `PAYMENT_GATEWAY`: Set to `VERIPAY`, `MIDTRANS`, or `MOCK` (development).
+    - For Veripay: `VERIPAY_API_KEY`, `VERIPAY_SECRET_KEY`
+    - For Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
 
 3.  **Run Locally**
     ```bash

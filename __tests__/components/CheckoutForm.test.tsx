@@ -42,27 +42,27 @@ describe("CheckoutForm Component", () => {
   });
 
   it("renders with amount displayed", () => {
-    render(<CheckoutForm orderId="order123" amount={75000} />);
+    render(<CheckoutForm orderId="order123" amount={75000} paymentGateway="VERIPAY" />);
 
     expect(screen.getByRole("button")).toHaveTextContent("Pay");
     expect(screen.getByRole("button")).toHaveTextContent("75.000");
   });
 
   it("renders contact input field", () => {
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     expect(screen.getByLabelText(/your email/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/you@example.com/i)).toBeInTheDocument();
   });
 
   it("formats large amounts correctly", () => {
-    render(<CheckoutForm orderId="order123" amount={2500000} />);
+    render(<CheckoutForm orderId="order123" amount={2500000} paymentGateway="VERIPAY" />);
 
     expect(screen.getByRole("button")).toHaveTextContent("2.500.000");
   });
 
   it("shows validation error for empty contact", async () => {
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const submitButton = screen.getByRole("button");
     fireEvent.click(submitButton);
@@ -76,7 +76,7 @@ describe("CheckoutForm Component", () => {
   });
 
   it("shows validation error for whitespace-only contact", async () => {
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "   ");
@@ -112,7 +112,7 @@ describe("CheckoutForm Component", () => {
       writable: true,
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -151,7 +151,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ success: true }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "  customer@example.com  ");
@@ -171,7 +171,7 @@ describe("CheckoutForm Component", () => {
   it("shows loading state during submission", async () => {
     mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -192,7 +192,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ error: "Failed to save contact" }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -212,7 +212,7 @@ describe("CheckoutForm Component", () => {
         json: async () => ({ error: "Payment creation failed" }),
       }); // Payment fails
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -228,7 +228,7 @@ describe("CheckoutForm Component", () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
     vi.spyOn(window, "alert").mockImplementation(() => {});
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -248,7 +248,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ success: true }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -263,5 +263,51 @@ describe("CheckoutForm Component", () => {
         })
       );
     });
+  });
+
+  it("uses Midtrans endpoint when paymentGateway is MIDTRANS", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        payment_url: "https://app.sandbox.midtrans.com/snap/123",
+      }),
+    });
+
+    // Mock window.location.href
+    let capturedHref = "";
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, "location");
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        get href() {
+          return capturedHref;
+        },
+        set href(value: string) {
+          capturedHref = value;
+        },
+      },
+      writable: true,
+    });
+
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="MIDTRANS" />);
+
+    const input = screen.getByLabelText(/your email/i);
+    await userEvent.type(input, "customer@example.com");
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith("/api/payment/midtrans/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: "order123" }),
+      });
+    });
+
+    // Restore window.location
+    if (originalDescriptor) {
+      Object.defineProperty(window, "location", originalDescriptor);
+    }
   });
 });

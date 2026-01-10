@@ -134,6 +134,33 @@ export const veripayWebhookSchema = z.object({
     .optional(),
 });
 
+export const midtransPaymentSchema = z.object({
+  orderId: z
+    .string()
+    .min(1, "Order ID is required")
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
+});
+
+export const midtransNotificationSchema = z.object({
+  order_id: z.string().min(1, "Order ID is required"),
+  transaction_status: z.enum([
+    "capture",
+    "settlement",
+    "pending",
+    "deny",
+    "cancel",
+    "expire",
+    "failure",
+  ]),
+  gross_amount: z.string(),
+  signature_key: z.string(),
+  status_code: z.string(),
+  transaction_id: z.string().optional(),
+  payment_type: z.string().optional(),
+  transaction_time: z.string().optional(),
+  fraud_status: z.enum(["accept", "challenge", "deny"]).optional(),
+});
+
 // ============================================
 // Settings Schemas
 // ============================================
@@ -168,6 +195,8 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type MockPaymentInput = z.infer<typeof mockPaymentSchema>;
 export type VeripayPaymentInput = z.infer<typeof veripayPaymentSchema>;
 export type VeripayWebhookInput = z.infer<typeof veripayWebhookSchema>;
+export type MidtransPaymentInput = z.infer<typeof midtransPaymentSchema>;
+export type MidtransNotificationInput = z.infer<typeof midtransNotificationSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 
 // ============================================

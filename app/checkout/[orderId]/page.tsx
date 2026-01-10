@@ -197,7 +197,11 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
               </p>
             </div>
 
-            <CheckoutForm orderId={orderId} amount={order.product.priceIdr} />
+            <CheckoutForm
+              orderId={orderId}
+              amount={order.product.priceIdr}
+              paymentGateway={order.paymentGateway}
+            />
           </div>
         </div>
       </div>

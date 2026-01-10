@@ -9,14 +9,28 @@ import { useLanguage } from "@/context/LanguageContext";
 interface CheckoutFormProps {
   orderId: string;
   amount: number;
+  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS";
 }
 
-function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
+function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { t } = useLanguage();
+
+  // Get the correct payment endpoint based on gateway
+  const getPaymentEndpoint = useCallback(() => {
+    switch (paymentGateway) {
+      case "MIDTRANS":
+        return "/api/payment/midtrans/create";
+      case "VERIPAY":
+        return "/api/payment/veripay/create";
+      case "MOCK":
+      default:
+        return "/api/payment/mock/initiate";
+    }
+  }, [paymentGateway]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -46,7 +60,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
           throw new Error(data.error || "Failed to save contact");
         }
 
-        const payRes = await fetch("/api/payment/veripay/create", {
+        const payRes = await fetch(getPaymentEndpoint(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId }),
@@ -73,7 +87,7 @@ function CheckoutForm({ orderId, amount }: CheckoutFormProps) {
         setLoading(false);
       }
     },
-    [contact, orderId, router, t]
+    [contact, orderId, router, t, getPaymentEndpoint]
   );
 
   return (
