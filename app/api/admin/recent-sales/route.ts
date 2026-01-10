@@ -59,8 +59,10 @@ export async function GET(request: Request) {
             createdAt: 1,
             customerContact: 1,
             paymentGateway: 1,
+            stockItemId: 1,
             "product.title": 1,
             "product.contentEncrypted": 1,
+            "product.stockItems": 1,
             "product.priceIdr": 1,
           },
         },
@@ -70,19 +72,34 @@ export async function GET(request: Request) {
     // Decrypt content for admin viewing
     const salesWithDecryptedContent = recentSales.map((sale) => {
       let decryptedContent = "";
-      if (sale.product?.contentEncrypted) {
+
+      if (sale.stockItemId && sale.product?.stockItems) {
+        // Stock-based order: find the specific stock item
+        const stockItem = sale.product.stockItems.find(
+          (item: { id: string; contentEncrypted: string }) => item.id === sale.stockItemId
+        );
+        if (stockItem?.contentEncrypted) {
+          try {
+            decryptedContent = decryptContent(stockItem.contentEncrypted);
+          } catch {
+            decryptedContent = "[Failed to decrypt]";
+          }
+        }
+      } else if (sale.product?.contentEncrypted) {
+        // Legacy product
         try {
           decryptedContent = decryptContent(sale.product.contentEncrypted);
         } catch {
           decryptedContent = "[Failed to decrypt]";
         }
       }
+
       return {
         ...sale,
         product: {
-          ...sale.product,
+          title: sale.product?.title,
+          priceIdr: sale.product?.priceIdr,
           content: decryptedContent,
-          contentEncrypted: undefined, // Remove encrypted content from response
         },
       };
     });

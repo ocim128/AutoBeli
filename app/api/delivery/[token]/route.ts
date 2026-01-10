@@ -58,14 +58,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
 
     const product = await db.collection<Product>("products").findOne({ _id: order.productId });
-    if (!product || !product.contentEncrypted) {
+    if (!product) {
       return NextResponse.json({ error: "Content unavailable" }, { status: 404 });
     }
 
-    // 4. Decrypt Content
+    // 4. Decrypt Content - handle both stock items and legacy content
     let content = "";
     try {
-      content = decryptContent(product.contentEncrypted);
+      if (order.stockItemId && product.stockItems) {
+        // Stock-based order: find the specific stock item
+        const stockItem = product.stockItems.find((item) => item.id === order.stockItemId);
+        if (!stockItem || !stockItem.contentEncrypted) {
+          return NextResponse.json({ error: "Stock item content unavailable" }, { status: 404 });
+        }
+        content = decryptContent(stockItem.contentEncrypted);
+      } else if (product.contentEncrypted) {
+        // Legacy product content
+        content = decryptContent(product.contentEncrypted);
+      } else {
+        return NextResponse.json({ error: "Content unavailable" }, { status: 404 });
+      }
     } catch (e) {
       console.error("Decryption failed", e);
       return NextResponse.json({ error: "Decryption error" }, { status: 500 });

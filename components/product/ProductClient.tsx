@@ -10,6 +10,7 @@ interface Product {
   description?: string;
   imageUrl?: string;
   priceIdr: number;
+  availableStock?: number;
 }
 
 export function ProductClient({ product }: { product: Product }) {
@@ -134,11 +135,17 @@ export function ProductClient({ product }: { product: Product }) {
               <span className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-black uppercase tracking-widest">
                 {t("home.instantDeliveryActive")}
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-gray-400">
-                  {t("product.stockAvailable")}
-                </span>
+                {product.availableStock && product.availableStock > 1 ? (
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {product.availableStock} {t("product.stockAvailable")}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {t("product.stockAvailable")}
+                  </span>
+                )}
               </div>
             </div>
 

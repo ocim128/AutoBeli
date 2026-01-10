@@ -164,13 +164,40 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
 
-      // Decrypt content for admin view
+      // Decrypt content for admin view (legacy products)
       if (product.contentEncrypted) {
         // @ts-expect-error Adding decrypted content to Product object for admin response
         product.content = decryptContent(product.contentEncrypted);
       }
 
-      return NextResponse.json({ product });
+      // Calculate stock stats for admin
+      const stockStats = {
+        total: 0,
+        available: 0,
+        sold: 0,
+        hasStockSystem: false,
+      };
+
+      if (product.stockItems && product.stockItems.length > 0) {
+        stockStats.hasStockSystem = true;
+        stockStats.total = product.stockItems.length;
+        stockStats.available = product.stockItems.filter((item) => !item.isSold).length;
+        stockStats.sold = product.stockItems.filter((item) => item.isSold).length;
+      } else if (!product.isSold) {
+        // Legacy product with single content
+        stockStats.total = 1;
+        stockStats.available = 1;
+        stockStats.sold = 0;
+      } else if (product.isSold) {
+        stockStats.total = 1;
+        stockStats.available = 0;
+        stockStats.sold = 1;
+      }
+
+      return NextResponse.json({
+        product,
+        stockStats,
+      });
     }
 
     const products = await db

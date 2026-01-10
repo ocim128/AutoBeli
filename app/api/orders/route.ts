@@ -103,9 +103,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Check if product is sold (avoids second DB query)
-    if (product.isSold) {
-      return NextResponse.json({ error: "Product has already been sold" }, { status: 410 });
+    // Check stock availability
+    let isAvailable = false;
+    if (product.stockItems && product.stockItems.length > 0) {
+      // Stock-based product: check for unsold items
+      const availableStock = product.stockItems.filter((item) => !item.isSold).length;
+      isAvailable = availableStock > 0;
+    } else {
+      // Legacy product: check isSold flag
+      isAvailable = !product.isSold;
+    }
+
+    if (!isAvailable) {
+      return NextResponse.json({ error: "Product is out of stock" }, { status: 410 });
     }
 
     // Create Order (PENDING)

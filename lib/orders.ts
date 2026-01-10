@@ -80,16 +80,59 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
           }
         );
 
-        // 2. Mark product as sold (unique digital products can only be sold once)
-        await db.collection<Product>("products").updateOne(
-          { _id: order.productId },
-          {
-            $set: {
-              isSold: true,
-              updatedAt: new Date(),
-            },
+        // 2. Mark product/stock item as sold
+        const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+
+        if (product?.stockItems && product.stockItems.length > 0) {
+          // Stock-based product: Find the first unsold stock item and mark it as sold
+          // Also store the stock item ID in the order for content delivery
+          const unsoldItemIndex = product.stockItems.findIndex((item) => !item.isSold);
+
+          if (unsoldItemIndex !== -1) {
+            const stockItemId = product.stockItems[unsoldItemIndex].id;
+
+            // Mark the specific stock item as sold
+            await db.collection<Product>("products").updateOne(
+              { _id: order.productId },
+              {
+                $set: {
+                  [`stockItems.${unsoldItemIndex}.isSold`]: true,
+                  [`stockItems.${unsoldItemIndex}.soldAt`]: new Date(),
+                  [`stockItems.${unsoldItemIndex}.orderId`]: new ObjectId(orderId),
+                  updatedAt: new Date(),
+                },
+              }
+            );
+
+            // Store the stock item ID in the order for content delivery
+            await db
+              .collection<Order>("orders")
+              .updateOne({ _id: new ObjectId(orderId) }, { $set: { stockItemId } });
+
+            // Check if all stock items are now sold
+            const remainingStock = product.stockItems.filter(
+              (item, idx) => idx !== unsoldItemIndex && !item.isSold
+            ).length;
+
+            // If no stock left, mark product as sold out
+            if (remainingStock === 0) {
+              await db
+                .collection<Product>("products")
+                .updateOne({ _id: order.productId }, { $set: { isSold: true } });
+            }
           }
-        );
+        } else {
+          // Legacy product: mark entire product as sold
+          await db.collection<Product>("products").updateOne(
+            { _id: order.productId },
+            {
+              $set: {
+                isSold: true,
+                updatedAt: new Date(),
+              },
+            }
+          );
+        }
 
         // 3. Invalidate product cache so the store reflects the sold status
         invalidateProductCache();

@@ -2,10 +2,34 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { Product } from "@/lib/definitions";
+
+interface ProductWithStock {
+  slug: string;
+  title: string;
+  priceIdr: number;
+  isActive: boolean;
+  isSold?: boolean;
+  createdAt: Date;
+  stockItems?: Array<{ isSold: boolean }>;
+}
+
+// Helper to calculate stock
+function getStockInfo(product: ProductWithStock) {
+  if (product.stockItems && product.stockItems.length > 0) {
+    const available = product.stockItems.filter((item) => !item.isSold).length;
+    const total = product.stockItems.length;
+    return { available, total, hasStock: true };
+  }
+  // Legacy product
+  return {
+    available: product.isSold ? 0 : 1,
+    total: 1,
+    hasStock: false,
+  };
+}
 
 export default function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +58,7 @@ export default function ProductList() {
             <tr>
               <th className="p-4">Title</th>
               <th className="p-4">Price</th>
+              <th className="p-4">Stock</th>
               <th className="p-4">Status</th>
               <th className="p-4">Created</th>
               <th className="p-4">
@@ -44,50 +69,76 @@ export default function ProductList() {
           <tbody>
             {products.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
+                <td colSpan={6} className="p-4 text-center text-gray-500">
                   No products found.
                 </td>
               </tr>
             )}
-            {products.map((p) => (
-              <tr key={p.slug} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="p-4">
-                  <div className="font-medium">{p.title}</div>
-                  <div className="text-xs text-gray-400">/{p.slug}</div>
-                </td>
-                <td className="p-4">Rp {p.priceIdr.toLocaleString("id-ID")}</td>
-                <td className="p-4">
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      p.isSold
-                        ? "bg-blue-100 text-blue-800"
-                        : p.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {p.isSold ? "Sold" : p.isActive ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="p-4 text-sm text-gray-500">
-                  {new Date(p.createdAt).toLocaleDateString()}
-                </td>
-                <td className="p-4 text-right">
-                  <Link
-                    href={`/admin/products/${p.slug}/edit`}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                  >
-                    Edit
-                  </Link>
-                  <Link
-                    href={`/admin/products/create?sourceSlug=${p.slug}`}
-                    className="text-gray-600 hover:text-gray-900 text-sm font-medium ml-4"
-                  >
-                    Duplicate
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {products.map((p) => {
+              const stock = getStockInfo(p);
+              const isSoldOut = stock.available === 0;
+
+              return (
+                <tr key={p.slug} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="p-4">
+                    <div className="font-medium">{p.title}</div>
+                    <div className="text-xs text-gray-400">/{p.slug}</div>
+                  </td>
+                  <td className="p-4">Rp {p.priceIdr.toLocaleString("id-ID")}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`font-medium ${isSoldOut ? "text-red-600" : "text-green-600"}`}
+                      >
+                        {stock.available}
+                      </span>
+                      <span className="text-gray-400">/ {stock.total}</span>
+                      {stock.hasStock && (
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                          Multi
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        isSoldOut
+                          ? "bg-blue-100 text-blue-800"
+                          : p.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {isSoldOut ? "Sold Out" : p.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-gray-500">
+                    {new Date(p.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-right space-x-3">
+                    <Link
+                      href={`/admin/products/${p.slug}/edit`}
+                      className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                    >
+                      Edit
+                    </Link>
+                    <Link
+                      href={`/admin/products/${p.slug}/stock`}
+                      className="text-purple-600 hover:text-purple-900 text-sm font-medium"
+                    >
+                      Stock
+                    </Link>
+                    <Link
+                      href={`/admin/products/create?sourceSlug=${p.slug}`}
+                      className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                    >
+                      Duplicate
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
