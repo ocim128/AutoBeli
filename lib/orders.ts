@@ -377,7 +377,9 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
       const product = await db.collection<Product>("products").findOne({ _id: order.productId });
       if (!product) return false;
 
-      const amount = product.priceIdr;
+      // Calculate total amount based on quantity for Pakasir status check
+      const orderQuantity = order.quantity || 1;
+      const amount = product.priceIdr * orderQuantity;
       const statusCheck = await getPakasirStatus(orderId, amount);
 
       if (statusCheck.success && statusCheck.data) {

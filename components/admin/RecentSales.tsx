@@ -9,6 +9,7 @@ interface RecentSale {
   createdAt: string;
   customerContact?: string;
   paymentGateway?: string;
+  quantity?: number;
   product?: {
     title: string;
     content?: string;
@@ -135,6 +136,11 @@ export default function RecentSales() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">
                     {sale.product?.title || "Unknown Product"}
+                    {sale.quantity && sale.quantity > 1 && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold">
+                        x{sale.quantity}
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500">
                     {sale.customerContact ? maskEmail(sale.customerContact) : "Anonymous buyer"}
@@ -183,6 +189,11 @@ export default function RecentSales() {
                     </span>
                     <p className="font-medium text-gray-900">
                       {selectedSale.product?.title || "Unknown"}
+                      {selectedSale.quantity && selectedSale.quantity > 1 && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
+                          {selectedSale.quantity} items
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

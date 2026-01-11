@@ -59,7 +59,9 @@ export async function GET(request: Request) {
             createdAt: 1,
             customerContact: 1,
             paymentGateway: 1,
+            quantity: 1,
             stockItemId: 1,
+            stockItemIds: 1,
             "product.title": 1,
             "product.contentEncrypted": 1,
             "product.stockItems": 1,
@@ -71,26 +73,41 @@ export async function GET(request: Request) {
 
     // Decrypt content for admin viewing
     const salesWithDecryptedContent = recentSales.map((sale) => {
-      let decryptedContent = "";
+      const contents: string[] = [];
 
-      if (sale.stockItemId && sale.product?.stockItems) {
-        // Stock-based order: find the specific stock item
+      if (sale.stockItemIds && sale.stockItemIds.length > 0 && sale.product?.stockItems) {
+        // Multi-stock order: find and decrypt all relevant items
+        const itemIds = sale.stockItemIds;
+        const purchasedItems = sale.product.stockItems.filter(
+          (item: { id: string; contentEncrypted?: string }) => itemIds.includes(item.id)
+        );
+        purchasedItems.forEach((item: { contentEncrypted?: string }) => {
+          if (item.contentEncrypted) {
+            try {
+              contents.push(decryptContent(item.contentEncrypted));
+            } catch {
+              contents.push("[Failed to decrypt]");
+            }
+          }
+        });
+      } else if (sale.stockItemId && sale.product?.stockItems) {
+        // Single-stock order: find the specific stock item
         const stockItem = sale.product.stockItems.find(
           (item: { id: string; contentEncrypted: string }) => item.id === sale.stockItemId
         );
         if (stockItem?.contentEncrypted) {
           try {
-            decryptedContent = decryptContent(stockItem.contentEncrypted);
+            contents.push(decryptContent(stockItem.contentEncrypted));
           } catch {
-            decryptedContent = "[Failed to decrypt]";
+            contents.push("[Failed to decrypt]");
           }
         }
       } else if (sale.product?.contentEncrypted) {
         // Legacy product
         try {
-          decryptedContent = decryptContent(sale.product.contentEncrypted);
+          contents.push(decryptContent(sale.product.contentEncrypted));
         } catch {
-          decryptedContent = "[Failed to decrypt]";
+          contents.push("[Failed to decrypt]");
         }
       }
 
@@ -99,7 +116,7 @@ export async function GET(request: Request) {
         product: {
           title: sale.product?.title,
           priceIdr: sale.product?.priceIdr,
-          content: decryptedContent,
+          content: contents.join("\n\n---\n\n"),
         },
       };
     });
