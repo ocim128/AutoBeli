@@ -9,7 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 interface CheckoutFormProps {
   orderId: string;
   amount: number;
-  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS";
+  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS" | "PAKASIR";
 }
 
 function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
@@ -26,6 +26,8 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         return "/api/payment/midtrans/create";
       case "VERIPAY":
         return "/api/payment/veripay/create";
+      case "PAKASIR":
+        return "/api/payment/pakasir/create";
       case "MOCK":
       default:
         return "/api/payment/mock/initiate";

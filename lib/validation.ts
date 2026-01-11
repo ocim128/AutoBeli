@@ -161,6 +161,22 @@ export const midtransNotificationSchema = z.object({
   fraud_status: z.enum(["accept", "challenge", "deny"]).optional(),
 });
 
+export const pakasirPaymentSchema = z.object({
+  orderId: z
+    .string()
+    .min(1, "Order ID is required")
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
+});
+
+export const pakasirWebhookSchema = z.object({
+  amount: z.number().int().positive(),
+  order_id: z.string().min(1),
+  project: z.string().min(1),
+  status: z.enum(["completed", "pending", "failed", "expired"]),
+  payment_method: z.string().optional(),
+  completed_at: z.string().optional(),
+});
+
 // ============================================
 // Settings Schemas
 // ============================================

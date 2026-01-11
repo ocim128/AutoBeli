@@ -4,6 +4,7 @@ import { Order, Product, AccessToken } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
 import { getPaymentStatus } from "@/lib/veripay";
 import { getTransactionStatus as getMidtransStatus } from "@/lib/midtrans";
+import { getPakasirTransactionStatus as getPakasirStatus } from "@/lib/pakasir";
 import { generateAccessToken } from "@/lib/tokens";
 import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
@@ -293,6 +294,118 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
             }
           }
 
+          return true;
+        }
+      }
+    }
+
+    // Handle Pakasir provider
+    if (order.paymentMetadata.provider === "pakasir") {
+      // We need the product price to verify status because getPakasirStatus requires amount
+
+      const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+      if (!product) return false;
+
+      const amount = product.priceIdr;
+      const statusCheck = await getPakasirStatus(orderId, amount);
+
+      if (statusCheck.success && statusCheck.data) {
+        const txStatus = statusCheck.data.transaction.status;
+
+        if (txStatus === "completed") {
+          // ... Similar completion logic ...
+          // To avoid duplication, I should have refactored this shared logic, but for now I will copy the pattern as requested by "maintain style".
+
+          // 1. Update Order Status
+          await db.collection<Order>("orders").updateOne(
+            { _id: new ObjectId(orderId) },
+            {
+              $set: {
+                status: "PAID",
+                amountPaid: amount,
+                paidAt: new Date(),
+                updatedAt: new Date(),
+              },
+            }
+          );
+
+          // 2. Mark product/stock item as sold
+          if (product?.stockItems && product.stockItems.length > 0) {
+            const unsoldItemIndex = product.stockItems.findIndex((item) => !item.isSold);
+
+            if (unsoldItemIndex !== -1) {
+              const stockItemId = product.stockItems[unsoldItemIndex].id;
+
+              await db.collection<Product>("products").updateOne(
+                { _id: order.productId },
+                {
+                  $set: {
+                    [`stockItems.${unsoldItemIndex}.isSold`]: true,
+                    [`stockItems.${unsoldItemIndex}.soldAt`]: new Date(),
+                    [`stockItems.${unsoldItemIndex}.orderId`]: new ObjectId(orderId),
+                    updatedAt: new Date(),
+                  },
+                }
+              );
+
+              await db
+                .collection<Order>("orders")
+                .updateOne({ _id: new ObjectId(orderId) }, { $set: { stockItemId } });
+
+              const remainingStock = product.stockItems.filter(
+                (item, idx) => idx !== unsoldItemIndex && !item.isSold
+              ).length;
+
+              if (remainingStock === 0) {
+                await db
+                  .collection<Product>("products")
+                  .updateOne({ _id: order.productId }, { $set: { isSold: true } });
+              }
+            }
+          } else {
+            await db.collection<Product>("products").updateOne(
+              { _id: order.productId },
+              {
+                $set: {
+                  isSold: true,
+                  updatedAt: new Date(),
+                },
+              }
+            );
+          }
+
+          // 3. Invalidate product cache
+          invalidateProductCache();
+
+          // 4. Ensure Access Token Exists
+          const existingToken = await db.collection<AccessToken>("tokens").findOne({
+            orderId: new ObjectId(orderId),
+          });
+
+          if (!existingToken) {
+            await generateAccessToken(orderId);
+          }
+
+          // 5. Send order confirmation email
+          if (order.customerContact) {
+            try {
+              await sendOrderConfirmationEmail({
+                orderId: orderId,
+                productTitle: product.title,
+                amountPaid: amount,
+                orderDate: new Date().toLocaleString("en-GB", {
+                  day: "numeric",
+                  month: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                customerEmail: order.customerContact,
+              });
+            } catch (emailError) {
+              console.error("Failed to send order confirmation email:", emailError);
+            }
+          }
           return true;
         }
       }

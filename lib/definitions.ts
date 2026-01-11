@@ -40,7 +40,7 @@ export interface Order {
   stockItemId?: string; // For stock-based products, references the specific stock item purchased
   status: "PENDING" | "PAID" | "EXPIRED";
   amountPaid: number;
-  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS";
+  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS" | "PAKASIR";
   paymentMetadata?: {
     provider: string;
     transaction_ref?: string;

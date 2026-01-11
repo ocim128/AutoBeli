@@ -119,7 +119,11 @@ export async function POST(request: Request) {
     }
 
     // Create Order (PENDING)
-    const gateway = (process.env.PAYMENT_GATEWAY || "MOCK") as "MOCK" | "VERIPAY" | "MIDTRANS";
+    const gateway = (process.env.PAYMENT_GATEWAY || "MOCK") as
+      | "MOCK"
+      | "VERIPAY"
+      | "MIDTRANS"
+      | "PAKASIR";
     const newOrder: Order = {
       productId: product._id!,
       status: "PENDING",
