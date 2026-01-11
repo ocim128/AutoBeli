@@ -36,7 +36,13 @@ export async function GET(request: Request) {
         {
           $match: {
             status: "PAID",
-            customerContact: { $exists: true, $ne: null, $type: "string", $regex: "@" },
+            customerContact: {
+              $exists: true,
+              $ne: null,
+              $type: "string",
+              $regex: "@",
+              $nin: ["customer@example.com"],
+            },
             "paymentMetadata.transaction_ref": { $ne: "test_ref" },
           },
         },
