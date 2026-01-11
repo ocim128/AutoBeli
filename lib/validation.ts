@@ -24,6 +24,12 @@ export const createOrderSchema = z.object({
     .min(1, "Product slug is required")
     .max(100, "Slug too long")
     .regex(REGEX_PATTERNS.slug, "Invalid slug format"),
+  quantity: z
+    .number()
+    .int("Quantity must be a whole number")
+    .min(1, "Quantity must be at least 1")
+    .optional()
+    .default(1),
 });
 
 export const updateOrderContactSchema = z.object({
@@ -76,6 +82,7 @@ export const createProductSchema = z.object({
     .max(2000, "URL too long")
     .or(z.literal(""))
     .optional(),
+  postPurchaseTemplate: z.string().max(2000, "Template too long").optional(),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -90,6 +97,7 @@ export const updateProductSchema = z.object({
   priceIdr: z.coerce.number().int().min(0).max(1000000000).optional(),
   content: z.string().min(1).max(100000).optional(),
   imageUrl: z.string().url("Invalid image URL").max(2000).or(z.literal("")).optional(),
+  postPurchaseTemplate: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
 });
 

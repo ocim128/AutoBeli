@@ -74,7 +74,7 @@ describe("BuyButton Component", () => {
       expect(mockFetch).toHaveBeenCalledWith("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "my-product" }),
+        body: JSON.stringify({ slug: "my-product", quantity: 1 }),
       });
     });
 
@@ -163,7 +163,7 @@ describe("BuyButton Component", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/orders",
         expect.objectContaining({
-          body: JSON.stringify({ slug: "special-product-slug" }),
+          body: JSON.stringify({ slug: "special-product-slug", quantity: 1 }),
         })
       );
     });

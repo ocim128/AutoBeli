@@ -54,16 +54,14 @@ export function isPakasirConfigured(): boolean {
  * Create a transaction in Pakasir
  * Currently defaulting to QRIS, but can be extended
  */
-export async function createPakasirTransaction(
-  request: PakasirTransactionRequest
-): Promise<{
+export async function createPakasirTransaction(request: PakasirTransactionRequest): Promise<{
   success: boolean;
   data?: PakasirTransactionResponse;
   error?: string;
   payment_url?: string;
 }> {
   try {
-    const method = request.payment_method || "qris";
+    // const method = request.payment_method || "qris";
     // const url = `${API_BASE_URL}/transactioncreate/${method}`;
     // const payload = {
     //     project: PAKASIR_PROJECT_SLUG,

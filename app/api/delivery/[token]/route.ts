@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/db";
-import { AccessToken, Product } from "@/lib/definitions";
+import { AccessToken, Product, Order } from "@/lib/definitions";
 import { decryptContent } from "@/lib/crypto";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 
@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
 
     // 3. Get Order & Product
-    const order = await db.collection("orders").findOne({ _id: tokenDoc.orderId });
+    const order = await db.collection<Order>("orders").findOne({ _id: tokenDoc.orderId });
     if (!order || order.status !== "PAID") {
       return NextResponse.json({ error: "Payment not confirmed" }, { status: 403 });
     }
@@ -62,21 +62,46 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
       return NextResponse.json({ error: "Content unavailable" }, { status: 404 });
     }
 
-    // 4. Decrypt Content - handle both stock items and legacy content
+    // 4. Decrypt Content - handle both stock items (multi & single) and legacy content
     let content = "";
     try {
-      if (order.stockItemId && product.stockItems) {
-        // Stock-based order: find the specific stock item
+      const contents: string[] = [];
+
+      // Check for multi-item order first
+      if (order.stockItemIds && order.stockItemIds.length > 0 && product.stockItems) {
+        // Retrieve and decrypt each purchased item
+        const itemIds = order.stockItemIds;
+        const purchasedItems = product.stockItems.filter((item) => itemIds.includes(item.id));
+        purchasedItems.forEach((item) => {
+          if (item.contentEncrypted) {
+            contents.push(decryptContent(item.contentEncrypted));
+          }
+        });
+      }
+      // Check for single stock item (legacy or fallback)
+      else if (order.stockItemId && product.stockItems) {
         const stockItem = product.stockItems.find((item) => item.id === order.stockItemId);
-        if (!stockItem || !stockItem.contentEncrypted) {
-          return NextResponse.json({ error: "Stock item content unavailable" }, { status: 404 });
+        if (stockItem && stockItem.contentEncrypted) {
+          contents.push(decryptContent(stockItem.contentEncrypted));
         }
-        content = decryptContent(stockItem.contentEncrypted);
-      } else if (product.contentEncrypted) {
-        // Legacy product content
-        content = decryptContent(product.contentEncrypted);
-      } else {
+      }
+      // Check for legacy product content
+      else if (product.contentEncrypted) {
+        contents.push(decryptContent(product.contentEncrypted));
+      }
+
+      if (contents.length === 0) {
         return NextResponse.json({ error: "Content unavailable" }, { status: 404 });
+      }
+
+      // Format final content with template if exists
+      const decryptedContent = contents.join("\n\n---\n\n");
+
+      if (product.postPurchaseTemplate) {
+        const template = product.postPurchaseTemplate.replace(/{productTitle}/g, product.title);
+        content = `${template}\n\n${decryptedContent}`;
+      } else {
+        content = decryptedContent;
       }
     } catch (e) {
       console.error("Decryption failed", e);

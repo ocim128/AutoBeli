@@ -88,15 +88,18 @@ export async function POST(request: Request) {
     const returnUrl = `${baseUrl}/order/${orderId}`;
 
     // Create transaction with Midtrans
+    const quantity = order.quantity || 1;
+    const totalAmount = product.priceIdr * quantity;
+
     const transactionResult = await createTransaction({
       order_id: orderId,
-      gross_amount: product.priceIdr,
+      gross_amount: totalAmount,
       item_details: [
         {
           id: product.slug,
           name: product.title,
           price: product.priceIdr,
-          quantity: 1,
+          quantity: quantity,
         },
       ],
       customer_details: {

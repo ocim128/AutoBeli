@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import Spinner from "@/components/ui/Spinner";
 import { useLanguage } from "@/context/LanguageContext";
 
-function BuyButton({ slug }: { slug: string }) {
+interface BuyButtonProps {
+  slug: string;
+  maxQuantity?: number; // Maximum quantity available (for stock products)
+}
+
+function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -16,7 +22,7 @@ function BuyButton({ slug }: { slug: string }) {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ slug, quantity }),
       });
 
       if (!res.ok) throw new Error("Failed to create order");
@@ -27,10 +33,46 @@ function BuyButton({ slug }: { slug: string }) {
       alert("Error creating order. Please try again.");
       setLoading(false);
     }
-  }, [slug, router]);
+  }, [slug, quantity, router]);
+
+  const canIncrement = quantity < maxQuantity;
+  const canDecrement = quantity > 1;
 
   return (
     <div className="w-full">
+      {/* Quantity Selector - only show if maxQuantity > 1 */}
+      {maxQuantity > 1 && (
+        <div className="mb-4 flex items-center justify-center gap-4">
+          <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+            {t("product.quantity") || "Qty"}
+          </span>
+          <div className="flex items-center gap-2 bg-gray-800 rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => canDecrement && setQuantity((q) => q - 1)}
+              disabled={!canDecrement || loading}
+              className="w-10 h-10 rounded-lg bg-gray-700 text-white font-bold text-xl hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              aria-label="Decrease quantity"
+            >
+              −
+            </button>
+            <span className="w-12 text-center text-white font-black text-xl tabular-nums">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => canIncrement && setQuantity((q) => q + 1)}
+              disabled={!canIncrement || loading}
+              className="w-10 h-10 rounded-lg bg-gray-700 text-white font-bold text-xl hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
+          <span className="text-xs text-gray-500">(max {maxQuantity})</span>
+        </div>
+      )}
+
       <button
         onClick={handleBuy}
         disabled={loading}

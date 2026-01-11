@@ -18,6 +18,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
     imageUrl: "",
     priceIdr: 0,
     content: "",
+    postPurchaseTemplate: "",
     isActive: true,
   });
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
             imageUrl: product.imageUrl || "",
             priceIdr: product.priceIdr,
             content: product.content || "", // Pre-fill decrypted content
+            postPurchaseTemplate: product.postPurchaseTemplate || "",
             isActive: product.isActive,
           });
         } else {
@@ -186,6 +188,23 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
             className="w-full border rounded p-2 font-mono text-sm bg-yellow-50"
             placeholder="Enter new content to overwrite..."
             value={form.content}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Post-Purchase Template */}
+        <div>
+          <label className="block text-sm font-medium">Post-Purchase Template</label>
+          <p className="text-xs text-gray-500 mb-1">
+            Optional message shown with all stock items after purchase. Great for &quot;Thank
+            you&quot; messages.
+          </p>
+          <textarea
+            name="postPurchaseTemplate"
+            rows={3}
+            className="w-full border rounded p-2 text-sm bg-green-50"
+            placeholder="e.g., Thanks for ordering {productTitle}! Here's your unique content:"
+            value={form.postPurchaseTemplate}
             onChange={handleChange}
           />
         </div>

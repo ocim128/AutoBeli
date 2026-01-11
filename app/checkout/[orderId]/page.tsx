@@ -24,6 +24,10 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
     redirect(`/order/${orderId}`);
   }
 
+  // Calculate total amount
+  const quantity = order.quantity || 1;
+  const totalAmount = order.product.priceIdr * quantity;
+
   return (
     <div className="min-h-[80vh] py-8 md:py-16">
       {/* Animated Background */}
@@ -108,6 +112,9 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                         <p className="text-white/50 mt-1 text-sm line-clamp-2">
                           {order.product.description}
                         </p>
+                        <p className="text-indigo-400 mt-2 text-xs font-bold uppercase tracking-wider">
+                          Quantity: {quantity}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -115,8 +122,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                   {/* Price Breakdown */}
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-white/60">
-                      <span>Subtotal</span>
-                      <span>Rp {order.product.priceIdr.toLocaleString("id-ID")}</span>
+                      <span>Subtotal ({quantity} items)</span>
+                      <span>Rp {totalAmount.toLocaleString("id-ID")}</span>
                     </div>
                     <div className="flex justify-between text-white/60">
                       <span>Service Fee</span>
@@ -127,7 +134,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                       <span className="text-white/80 font-bold">Total</span>
                       <div className="text-right">
                         <span className="text-3xl font-black text-white tracking-tight">
-                          Rp {order.product.priceIdr.toLocaleString("id-ID")}
+                          Rp {totalAmount.toLocaleString("id-ID")}
                         </span>
                         <span className="block text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">
                           IDR
@@ -199,7 +206,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
 
             <CheckoutForm
               orderId={orderId}
-              amount={order.product.priceIdr}
+              amount={totalAmount}
               paymentGateway={order.paymentGateway}
             />
           </div>

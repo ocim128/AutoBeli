@@ -81,7 +81,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { slug } = validation.data!;
+    const { slug, quantity } = validation.data!;
+    const orderQuantity = quantity || 1;
 
     const client = await clientPromise;
     const db = client.db();
@@ -106,16 +107,22 @@ export async function POST(request: Request) {
     // Check stock availability
     let isAvailable = false;
     if (product.stockItems && product.stockItems.length > 0) {
-      // Stock-based product: check for unsold items
+      // Stock-based product: check for enough unsold items
       const availableStock = product.stockItems.filter((item) => !item.isSold).length;
-      isAvailable = availableStock > 0;
+      isAvailable = availableStock >= orderQuantity;
     } else {
-      // Legacy product: check isSold flag
+      // Legacy product: check isSold flag (only supports quantity 1)
+      if (orderQuantity > 1) {
+        return NextResponse.json(
+          { error: "Only 1 item available for this product" },
+          { status: 400 }
+        );
+      }
       isAvailable = !product.isSold;
     }
 
     if (!isAvailable) {
-      return NextResponse.json({ error: "Product is out of stock" }, { status: 410 });
+      return NextResponse.json({ error: "Not enough stock available" }, { status: 410 });
     }
 
     // Create Order (PENDING)
@@ -126,6 +133,7 @@ export async function POST(request: Request) {
       | "PAKASIR";
     const newOrder: Order = {
       productId: product._id!,
+      quantity: orderQuantity,
       status: "PENDING",
       amountPaid: 0,
       paymentGateway: gateway,

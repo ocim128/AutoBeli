@@ -71,16 +71,19 @@ export async function POST(request: Request) {
     };
 
     // Create payment with Veripay
+    const quantity = order.quantity || 1;
+    const totalAmount = product.priceIdr * quantity;
+
     const paymentResponse = await createPaymentRequest({
       order_id: orderId,
-      amount: product.priceIdr,
+      amount: totalAmount,
       description: `Payment for ${product.title}`,
       return_url: returnUrl,
       product_detail: [
         {
           name: product.title,
           price: product.priceIdr,
-          qty: 1,
+          qty: quantity,
         },
       ],
       customer_detail: customerDetail,

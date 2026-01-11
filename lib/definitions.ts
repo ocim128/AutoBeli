@@ -27,6 +27,10 @@ export interface Product {
   // New stock system: array of stock items with unique content
   stockItems?: StockItem[];
 
+  // Post-purchase template message (shown with all stock items after successful payment)
+  // Example: "Thanks for ordering {productTitle}! Here's your unique content:"
+  postPurchaseTemplate?: string;
+
   imageUrl?: string; // Optional product image URL
   isActive: boolean;
   isSold?: boolean; // True when product has been purchased (all stock sold for legacy, or no stock left)
@@ -37,7 +41,9 @@ export interface Product {
 export interface Order {
   _id?: ObjectId;
   productId: ObjectId;
-  stockItemId?: string; // For stock-based products, references the specific stock item purchased
+  quantity?: number; // Number of items purchased (default 1)
+  stockItemId?: string; // For legacy single stock purchase
+  stockItemIds?: string[]; // For multi-item purchases
   status: "PENDING" | "PAID" | "EXPIRED";
   amountPaid: number;
   paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS" | "PAKASIR";

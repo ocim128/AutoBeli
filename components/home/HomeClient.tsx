@@ -9,6 +9,7 @@ interface Product {
   description?: string;
   imageUrl?: string;
   priceIdr: number;
+  availableStock?: number;
 }
 
 export function HomeClient({ products }: { products: Product[] }) {
@@ -117,10 +118,17 @@ export function HomeClient({ products }: { products: Product[] }) {
 
                   <div className="flex flex-1 flex-col p-8 bg-white relative z-30">
                     <div className="flex-grow">
-                      <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                        {product.title}
-                      </h3>
-                      <p className="mt-3 text-gray-500 leading-relaxed line-clamp-2 text-sm font-medium">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                          {product.title}
+                        </h3>
+                        {product.availableStock && product.availableStock > 1 && (
+                          <span className="shrink-0 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                            {product.availableStock} {t("home.itemsLive").split(" ")[0]}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-gray-500 leading-relaxed line-clamp-2 text-sm font-medium">
                         {product.description || t("product.defaultDescription")}
                       </p>
                     </div>

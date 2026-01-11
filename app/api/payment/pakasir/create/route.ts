@@ -86,9 +86,12 @@ export async function POST(request: Request) {
     // Create transaction with Pakasir
     // We use the URL integration method so we just need to return the URL
     // No need to persist a token like in Midtrans as we just use orderID
+    const quantity = order.quantity || 1;
+    const totalAmount = product.priceIdr * quantity;
+
     const transactionResult = await createPakasirTransaction({
       order_id: orderId,
-      amount: product.priceIdr,
+      amount: totalAmount,
     });
 
     if (!transactionResult.success || !transactionResult.payment_url) {

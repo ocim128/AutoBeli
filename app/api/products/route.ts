@@ -126,6 +126,7 @@ export async function POST(request: Request) {
       priceIdr,
       contentEncrypted,
       imageUrl: imageUrl || "",
+      postPurchaseTemplate: validation.data!.postPurchaseTemplate,
       isActive: isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -221,7 +222,16 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { originalSlug, title, description, priceIdr, content, imageUrl, isActive } = body;
+    const {
+      originalSlug,
+      title,
+      description,
+      priceIdr,
+      content,
+      imageUrl,
+      isActive,
+      postPurchaseTemplate,
+    } = body;
 
     // Basic validation for originalSlug
     if (!originalSlug || typeof originalSlug !== "string") {
@@ -262,6 +272,7 @@ export async function PUT(request: Request) {
       updateData.priceIdr = typeof priceIdr === "string" ? parseInt(priceIdr) : priceIdr;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (postPurchaseTemplate !== undefined) updateData.postPurchaseTemplate = postPurchaseTemplate;
 
     if (content) {
       updateData.contentEncrypted = encryptContent(content);

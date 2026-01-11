@@ -166,7 +166,7 @@ export function ProductClient({ product }: { product: Product }) {
               <span className="text-indigo-400 font-bold mb-1">IDR</span>
             </div>
 
-            <BuyButton slug={product.slug} />
+            <BuyButton slug={product.slug} maxQuantity={product.availableStock || 1} />
 
             <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap justify-center gap-4 opacity-40">
               {/* Simple payment icons placeholders */}

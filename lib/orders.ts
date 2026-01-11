@@ -118,40 +118,53 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
 
         // 2. Mark product/stock item as sold
         const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+        const quantityToSell = order.quantity || 1;
 
         if (product?.stockItems && product.stockItems.length > 0) {
-          // Stock-based product: Find the first unsold stock item and mark it as sold
-          // Also store the stock item ID in the order for content delivery
-          const unsoldItemIndex = product.stockItems.findIndex((item) => !item.isSold);
+          // Stock-based product: Find the N unsold stock items
+          const unsoldIndices = product.stockItems
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => !item.isSold)
+            .slice(0, quantityToSell)
+            .map(({ index }) => index);
 
-          if (unsoldItemIndex !== -1) {
-            const stockItemId = product.stockItems[unsoldItemIndex].id;
+          if (unsoldIndices.length > 0) {
+            const soldStockItemIds: string[] = [];
+            const updateSet: Record<string, boolean | Date | ObjectId> = { updatedAt: new Date() };
 
-            // Mark the specific stock item as sold
-            await db.collection<Product>("products").updateOne(
-              { _id: order.productId },
+            // Prepare update for all sold items
+            unsoldIndices.forEach((index) => {
+              const stockItem = product.stockItems![index];
+              soldStockItemIds.push(stockItem.id);
+              updateSet[`stockItems.${index}.isSold`] = true;
+              updateSet[`stockItems.${index}.soldAt`] = new Date();
+              updateSet[`stockItems.${index}.orderId`] = new ObjectId(orderId);
+            });
+
+            // Mark items as sold
+            await db
+              .collection<Product>("products")
+              .updateOne({ _id: order.productId }, { $set: updateSet });
+
+            // Store stock item IDs in order
+            await db.collection<Order>("orders").updateOne(
+              { _id: new ObjectId(orderId) },
               {
                 $set: {
-                  [`stockItems.${unsoldItemIndex}.isSold`]: true,
-                  [`stockItems.${unsoldItemIndex}.soldAt`]: new Date(),
-                  [`stockItems.${unsoldItemIndex}.orderId`]: new ObjectId(orderId),
-                  updatedAt: new Date(),
+                  stockItemId: soldStockItemIds[0], // Primary item for legacy compat
+                  stockItemIds: soldStockItemIds,
                 },
               }
             );
 
-            // Store the stock item ID in the order for content delivery
-            await db
-              .collection<Order>("orders")
-              .updateOne({ _id: new ObjectId(orderId) }, { $set: { stockItemId } });
-
             // Check if all stock items are now sold
-            const remainingStock = product.stockItems.filter(
-              (item, idx) => idx !== unsoldItemIndex && !item.isSold
-            ).length;
+            // We need to re-fetch or calculate based on what we just did
+            // Simpler: assume we sold some, check if any left
+            const totalStock = product.stockItems.length;
+            const previousSold = product.stockItems.filter((i) => i.isSold).length;
+            const nowSold = previousSold + unsoldIndices.length;
 
-            // If no stock left, mark product as sold out
-            if (remainingStock === 0) {
+            if (nowSold >= totalStock) {
               await db
                 .collection<Product>("products")
                 .updateOne({ _id: order.productId }, { $set: { isSold: true } });
@@ -249,34 +262,48 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
           const product = await db
             .collection<Product>("products")
             .findOne({ _id: order.productId });
+          const quantityToSell = order.quantity || 1;
 
           if (product?.stockItems && product.stockItems.length > 0) {
-            const unsoldItemIndex = product.stockItems.findIndex((item) => !item.isSold);
+            const unsoldIndices = product.stockItems
+              .map((item, index) => ({ item, index }))
+              .filter(({ item }) => !item.isSold)
+              .slice(0, quantityToSell)
+              .map(({ index }) => index);
 
-            if (unsoldItemIndex !== -1) {
-              const stockItemId = product.stockItems[unsoldItemIndex].id;
+            if (unsoldIndices.length > 0) {
+              const soldStockItemIds: string[] = [];
+              const updateSet: Record<string, boolean | Date | ObjectId> = {
+                updatedAt: new Date(),
+              };
 
-              await db.collection<Product>("products").updateOne(
-                { _id: order.productId },
+              unsoldIndices.forEach((index) => {
+                const stockItem = product.stockItems![index];
+                soldStockItemIds.push(stockItem.id);
+                updateSet[`stockItems.${index}.isSold`] = true;
+                updateSet[`stockItems.${index}.soldAt`] = new Date();
+                updateSet[`stockItems.${index}.orderId`] = new ObjectId(orderId);
+              });
+
+              await db
+                .collection<Product>("products")
+                .updateOne({ _id: order.productId }, { $set: updateSet });
+
+              await db.collection<Order>("orders").updateOne(
+                { _id: new ObjectId(orderId) },
                 {
                   $set: {
-                    [`stockItems.${unsoldItemIndex}.isSold`]: true,
-                    [`stockItems.${unsoldItemIndex}.soldAt`]: new Date(),
-                    [`stockItems.${unsoldItemIndex}.orderId`]: new ObjectId(orderId),
-                    updatedAt: new Date(),
+                    stockItemId: soldStockItemIds[0],
+                    stockItemIds: soldStockItemIds,
                   },
                 }
               );
 
-              await db
-                .collection<Order>("orders")
-                .updateOne({ _id: new ObjectId(orderId) }, { $set: { stockItemId } });
+              const totalStock = product.stockItems.length;
+              const previousSold = product.stockItems.filter((i) => i.isSold).length;
+              const nowSold = previousSold + unsoldIndices.length;
 
-              const remainingStock = product.stockItems.filter(
-                (item, idx) => idx !== unsoldItemIndex && !item.isSold
-              ).length;
-
-              if (remainingStock === 0) {
+              if (nowSold >= totalStock) {
                 await db
                   .collection<Product>("products")
                   .updateOne({ _id: order.productId }, { $set: { isSold: true } });
@@ -374,33 +401,48 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
           );
 
           // 2. Mark product/stock item as sold
+          const quantityToSell = order.quantity || 1;
+
           if (product?.stockItems && product.stockItems.length > 0) {
-            const unsoldItemIndex = product.stockItems.findIndex((item) => !item.isSold);
+            const unsoldIndices = product.stockItems
+              .map((item, index) => ({ item, index }))
+              .filter(({ item }) => !item.isSold)
+              .slice(0, quantityToSell)
+              .map(({ index }) => index);
 
-            if (unsoldItemIndex !== -1) {
-              const stockItemId = product.stockItems[unsoldItemIndex].id;
+            if (unsoldIndices.length > 0) {
+              const soldStockItemIds: string[] = [];
+              const updateSet: Record<string, boolean | Date | ObjectId> = {
+                updatedAt: new Date(),
+              };
 
-              await db.collection<Product>("products").updateOne(
-                { _id: order.productId },
+              unsoldIndices.forEach((index) => {
+                const stockItem = product.stockItems![index];
+                soldStockItemIds.push(stockItem.id);
+                updateSet[`stockItems.${index}.isSold`] = true;
+                updateSet[`stockItems.${index}.soldAt`] = new Date();
+                updateSet[`stockItems.${index}.orderId`] = new ObjectId(orderId);
+              });
+
+              await db
+                .collection<Product>("products")
+                .updateOne({ _id: order.productId }, { $set: updateSet });
+
+              await db.collection<Order>("orders").updateOne(
+                { _id: new ObjectId(orderId) },
                 {
                   $set: {
-                    [`stockItems.${unsoldItemIndex}.isSold`]: true,
-                    [`stockItems.${unsoldItemIndex}.soldAt`]: new Date(),
-                    [`stockItems.${unsoldItemIndex}.orderId`]: new ObjectId(orderId),
-                    updatedAt: new Date(),
+                    stockItemId: soldStockItemIds[0],
+                    stockItemIds: soldStockItemIds,
                   },
                 }
               );
 
-              await db
-                .collection<Order>("orders")
-                .updateOne({ _id: new ObjectId(orderId) }, { $set: { stockItemId } });
+              const totalStock = product.stockItems.length;
+              const previousSold = product.stockItems.filter((i) => i.isSold).length;
+              const nowSold = previousSold + unsoldIndices.length;
 
-              const remainingStock = product.stockItems.filter(
-                (item, idx) => idx !== unsoldItemIndex && !item.isSold
-              ).length;
-
-              if (remainingStock === 0) {
+              if (nowSold >= totalStock) {
                 await db
                   .collection<Product>("products")
                   .updateOne({ _id: order.productId }, { $set: { isSold: true } });

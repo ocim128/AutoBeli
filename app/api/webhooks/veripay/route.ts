@@ -7,6 +7,8 @@ import { validate, veripayWebhookSchema } from "@/lib/validation";
 import { verifyWebhookSignature } from "@/lib/veripay";
 import { sendOrderConfirmationEmail } from "@/lib/mailgun";
 
+import { invalidateProductCache } from "@/lib/products";
+
 export async function POST(request: Request) {
   try {
     // Get signature from headers
@@ -75,6 +77,70 @@ export async function POST(request: Request) {
           },
         }
       );
+
+      // Mark product/stock item as sold
+      const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+
+      if (product?.stockItems && product.stockItems.length > 0) {
+        // Stock-based product: Find the N unsold stock items
+        const quantityToSell = order.quantity || 1;
+        const unsoldIndices = product.stockItems
+          .map((item, index) => ({ item, index }))
+          .filter(({ item }) => !item.isSold)
+          .slice(0, quantityToSell)
+          .map(({ index }) => index);
+
+        if (unsoldIndices.length > 0) {
+          const soldStockItemIds: string[] = [];
+          const updateSet: Record<string, boolean | Date | ObjectId> = { updatedAt: new Date() };
+
+          unsoldIndices.forEach((index) => {
+            const stockItem = product.stockItems![index];
+            soldStockItemIds.push(stockItem.id);
+            updateSet[`stockItems.${index}.isSold`] = true;
+            updateSet[`stockItems.${index}.soldAt`] = new Date();
+            updateSet[`stockItems.${index}.orderId`] = orderId;
+          });
+
+          await db
+            .collection<Product>("products")
+            .updateOne({ _id: order.productId }, { $set: updateSet });
+
+          await db.collection<Order>("orders").updateOne(
+            { _id: orderId },
+            {
+              $set: {
+                stockItemId: soldStockItemIds[0],
+                stockItemIds: soldStockItemIds,
+              },
+            }
+          );
+
+          const totalStock = product.stockItems.length;
+          const previousSold = product.stockItems.filter((i) => i.isSold).length;
+          const nowSold = previousSold + unsoldIndices.length;
+
+          if (nowSold >= totalStock) {
+            await db
+              .collection<Product>("products")
+              .updateOne({ _id: order.productId }, { $set: { isSold: true } });
+          }
+        }
+      } else {
+        // Legacy product
+        await db.collection<Product>("products").updateOne(
+          { _id: order.productId },
+          {
+            $set: {
+              isSold: true,
+              updatedAt: new Date(),
+            },
+          }
+        );
+      }
+
+      // Invalidate product cache
+      invalidateProductCache(); // Import this!
 
       // Generate access token for content
       await generateAccessToken(order_id);
