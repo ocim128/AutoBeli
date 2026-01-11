@@ -101,6 +101,11 @@ export async function POST(request: Request) {
               }),
               customerEmail: order.customerContact,
             });
+
+            // Mark email as sent
+            await db
+              .collection<Order>("orders")
+              .updateOne({ _id: orderId }, { $set: { emailSent: true } });
           }
         } catch (emailError) {
           // Don't fail the webhook if email fails

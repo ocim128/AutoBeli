@@ -56,8 +56,42 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
       return false;
     }
 
-    // Only skip if fully synced (PAID and has correct amount)
+    // Only skip if fully synced (PAID and has correct amount AND email was sent)
     if (order.status === "PAID" && order.amountPaid > 0) {
+      // If payment is complete but email wasn't sent, try to send it now
+      if (!order.emailSent && order.customerContact) {
+        try {
+          const product = await db
+            .collection<Product>("products")
+            .findOne({ _id: order.productId });
+
+          if (product) {
+            await sendOrderConfirmationEmail({
+              orderId: orderId,
+              productTitle: product.title,
+              amountPaid: order.amountPaid,
+              orderDate: new Date(order.paidAt || order.createdAt).toLocaleString("en-GB", {
+                day: "numeric",
+                month: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              customerEmail: order.customerContact,
+            });
+
+            // Mark email as sent
+            await db
+              .collection<Order>("orders")
+              .updateOne(
+                { _id: new ObjectId(orderId) },
+                { $set: { emailSent: true, updatedAt: new Date() } }
+              );
+          }
+        } catch (emailError) {
+          console.error("Failed to send order confirmation email on sync:", emailError);
+        }
+      }
       return false;
     }
 
@@ -169,6 +203,11 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
                 }),
                 customerEmail: order.customerContact,
               });
+
+              // Mark email as sent
+              await db
+                .collection<Order>("orders")
+                .updateOne({ _id: new ObjectId(orderId) }, { $set: { emailSent: true } });
             }
           } catch (emailError) {
             console.error("Failed to send order confirmation email:", emailError);
@@ -288,6 +327,11 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
                   }),
                   customerEmail: order.customerContact,
                 });
+
+                // Mark email as sent
+                await db
+                  .collection<Order>("orders")
+                  .updateOne({ _id: new ObjectId(orderId) }, { $set: { emailSent: true } });
               }
             } catch (emailError) {
               console.error("Failed to send order confirmation email:", emailError);
@@ -402,6 +446,11 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
                 }),
                 customerEmail: order.customerContact,
               });
+
+              // Mark email as sent
+              await db
+                .collection<Order>("orders")
+                .updateOne({ _id: new ObjectId(orderId) }, { $set: { emailSent: true } });
             } catch (emailError) {
               console.error("Failed to send order confirmation email:", emailError);
             }

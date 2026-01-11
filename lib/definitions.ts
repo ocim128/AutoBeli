@@ -50,6 +50,7 @@ export interface Order {
   };
   customerContact?: string; // Email for order recovery
   paidAt?: Date; // When payment was confirmed
+  emailSent?: boolean; // True when order confirmation email has been sent
   createdAt: Date;
   updatedAt: Date;
 }
