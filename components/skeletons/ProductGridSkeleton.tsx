@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { KineticOrbitalSVG } from "@/components/ui/KineticOrbitalSVG";
 
 export function ProductGridSkeleton() {
   return (
@@ -12,43 +13,13 @@ export function ProductGridSkeleton() {
             viewBox="0 0 1000 600"
             preserveAspectRatio="xMidYMid slice"
           >
-            <g className="animate-orbit-slow" style={{ transformOrigin: "500px 300px" }}>
-              <circle
-                cx="500"
-                cy="300"
-                r="250"
-                fill="none"
-                stroke="#6366f1"
-                strokeWidth="0.5"
-                strokeOpacity="0.1"
-              />
-              <circle cx="750" cy="300" r="4" fill="#6366f1" fillOpacity="0.15" />
-            </g>
-            <g className="animate-orbit-medium" style={{ transformOrigin: "500px 300px" }}>
-              <circle
-                cx="500"
-                cy="300"
-                r="180"
-                fill="none"
-                stroke="#818cf8"
-                strokeWidth="0.5"
-                strokeOpacity="0.08"
-                strokeDasharray="10 5"
-              />
-              <circle cx="680" cy="300" r="6" fill="#818cf8" fillOpacity="0.2" />
-            </g>
-            <g className="animate-orbit-reverse" style={{ transformOrigin: "500px 300px" }}>
-              <circle
-                cx="500"
-                cy="300"
-                r="100"
-                fill="none"
-                stroke="#a5b4fc"
-                strokeWidth="0.5"
-                strokeOpacity="0.1"
-              />
-              <circle cx="400" cy="300" r="3" fill="#a5b4fc" fillOpacity="0.15" />
-            </g>
+            <KineticOrbitalSVG
+              cx={500}
+              cy={300}
+              scale={0.7}
+              withGlow={false}
+              glowId="heroSkeletonGlow"
+            />
           </svg>
         </div>
 
@@ -67,11 +38,11 @@ export function ProductGridSkeleton() {
               <div
                 className="absolute inset-0 border border-indigo-200/50 rounded-full animate-orbit-slow"
                 style={{ transformOrigin: "center" }}
-              ></div>
+              />
               <div
                 className="absolute inset-2 border border-indigo-300/50 rounded-full animate-orbit-reverse"
                 style={{ transformOrigin: "center" }}
-              ></div>
+              />
               <div className="absolute inset-0 flex items-center justify-center">
                 <Skeleton className="w-3 h-3 rounded-full" />
               </div>
@@ -105,43 +76,13 @@ export function ProductGridSkeleton() {
                     viewBox="0 0 200 200"
                     preserveAspectRatio="xMidYMid slice"
                   >
-                    <g className="animate-orbit-slow" style={{ transformOrigin: "100px 100px" }}>
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="60"
-                        fill="none"
-                        stroke="#6366f1"
-                        strokeWidth="0.5"
-                        strokeOpacity="0.2"
-                      />
-                      <circle cx="160" cy="100" r="3" fill="#6366f1" fillOpacity="0.3" />
-                    </g>
-                    <g className="animate-orbit-medium" style={{ transformOrigin: "100px 100px" }}>
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="40"
-                        fill="none"
-                        stroke="#818cf8"
-                        strokeWidth="0.5"
-                        strokeOpacity="0.25"
-                        strokeDasharray="5 3"
-                      />
-                      <circle cx="140" cy="100" r="4" fill="#818cf8" fillOpacity="0.4" />
-                    </g>
-                    <g className="animate-orbit-reverse" style={{ transformOrigin: "100px 100px" }}>
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="20"
-                        fill="none"
-                        stroke="#a5b4fc"
-                        strokeWidth="0.5"
-                        strokeOpacity="0.3"
-                      />
-                      <circle cx="80" cy="100" r="2" fill="#a5b4fc" fillOpacity="0.5" />
-                    </g>
+                    <KineticOrbitalSVG
+                      cx={100}
+                      cy={100}
+                      scale={0.17}
+                      withGlow={false}
+                      glowId={`cardGlow-${i}`}
+                    />
                     <circle
                       cx="100"
                       cy="100"

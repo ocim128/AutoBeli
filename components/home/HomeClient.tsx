@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { KineticBackground } from "@/components/ui/KineticBackground";
+import { KineticOrbitalSVG } from "@/components/ui/KineticOrbitalSVG";
 
 interface Product {
   slug: string;
@@ -27,8 +28,8 @@ export function HomeClient({ products }: { products: Product[] }) {
           {/* Animated badge with geometric accent */}
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-200 text-indigo-700 text-xs font-semibold uppercase tracking-wider shadow-lg shadow-indigo-500/10">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600" />
             </span>
             {t("home.instantDeliveryActive")}
             <svg
@@ -103,17 +104,17 @@ export function HomeClient({ products }: { products: Product[] }) {
               <div
                 className="absolute inset-0 border border-indigo-200 rounded-full animate-orbit-slow"
                 style={{ transformOrigin: "center" }}
-              ></div>
+              />
               <div
                 className="absolute inset-2 border border-indigo-300 rounded-full animate-orbit-reverse"
                 style={{ transformOrigin: "center" }}
-              ></div>
+              />
               <div
                 className="absolute inset-4 border border-indigo-400 rounded-full animate-orbit-medium"
                 style={{ transformOrigin: "center" }}
-              ></div>
+              />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 bg-indigo-600 rounded-full animate-breathe"></div>
+                <div className="w-2 h-2 bg-indigo-600 rounded-full animate-breathe" />
               </div>
             </div>
           </div>
@@ -148,7 +149,7 @@ export function HomeClient({ products }: { products: Product[] }) {
             </div>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-sm font-medium text-indigo-700">
-            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-breathe"></span>
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-breathe" />
             {products.length} {t("home.itemsLive")}
           </div>
         </div>
@@ -192,60 +193,13 @@ export function HomeClient({ products }: { products: Product[] }) {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        {/* Prominent animated geometric pattern */}
+                        {/* Reusable orbital pattern */}
                         <svg
                           className="absolute inset-0 w-full h-full"
                           viewBox="0 0 200 200"
                           preserveAspectRatio="xMidYMid slice"
                         >
-                          {/* Orbiting rings */}
-                          <g
-                            className="animate-orbit-slow"
-                            style={{ transformOrigin: "100px 100px" }}
-                          >
-                            <circle
-                              cx="100"
-                              cy="100"
-                              r="70"
-                              fill="none"
-                              stroke="#6366f1"
-                              strokeWidth="1"
-                              strokeOpacity="0.3"
-                            />
-                            <circle cx="170" cy="100" r="4" fill="#6366f1" fillOpacity="0.5" />
-                          </g>
-                          <g
-                            className="animate-orbit-medium"
-                            style={{ transformOrigin: "100px 100px" }}
-                          >
-                            <circle
-                              cx="100"
-                              cy="100"
-                              r="50"
-                              fill="none"
-                              stroke="#818cf8"
-                              strokeWidth="1.5"
-                              strokeOpacity="0.4"
-                              strokeDasharray="10 5"
-                            />
-                            <circle cx="150" cy="100" r="5" fill="#818cf8" fillOpacity="0.6" />
-                          </g>
-                          <g
-                            className="animate-orbit-reverse"
-                            style={{ transformOrigin: "100px 100px" }}
-                          >
-                            <circle
-                              cx="100"
-                              cy="100"
-                              r="30"
-                              fill="none"
-                              stroke="#a5b4fc"
-                              strokeWidth="1"
-                              strokeOpacity="0.5"
-                            />
-                            <circle cx="70" cy="100" r="3" fill="#a5b4fc" fillOpacity="0.7" />
-                          </g>
-                          {/* Center point */}
+                          <KineticOrbitalSVG cx={100} cy={100} scale={0.2} withGlow={false} />
                           <circle
                             cx="100"
                             cy="100"

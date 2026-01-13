@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { translations, Language } from "@/lib/i18n";
 
@@ -25,20 +25,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, language]);
 
-  const t = (path: string) => {
-    const keys = path.split(".");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let current: any = translations[language];
-    for (const key of keys) {
-      if (current === undefined || current[key] === undefined) {
-        // Fallback to defaults or English if missing
-        // console.warn(`Translation missing for key: ${path} in language: ${language}`);
-        return path;
+  // Memoize the translation function to prevent recreation on every render
+  const t = useCallback(
+    (path: string) => {
+      const keys = path.split(".");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = translations[language];
+      for (const key of keys) {
+        if (current === undefined || current[key] === undefined) {
+          // Fallback to defaults or English if missing
+          return path;
+        }
+        current = current[key];
       }
-      current = current[key];
-    }
-    return current as string;
-  };
+      return current as string;
+    },
+    [language]
+  );
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

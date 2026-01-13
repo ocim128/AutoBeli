@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { KineticOrbitalSVG, MiniOrbitalSVG } from "@/components/ui/KineticOrbitalSVG";
 
 export function CheckoutSkeleton() {
   return (
@@ -10,51 +11,7 @@ export function CheckoutSkeleton() {
           viewBox="0 0 1000 1000"
           preserveAspectRatio="xMidYMid slice"
         >
-          <defs>
-            <radialGradient id="skeletonGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.05" />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <circle cx="500" cy="500" r="400" fill="url(#skeletonGlow)" />
-
-          <g className="animate-orbit-slow" style={{ transformOrigin: "500px 500px" }}>
-            <circle
-              cx="500"
-              cy="500"
-              r="350"
-              fill="none"
-              stroke="#6366f1"
-              strokeWidth="0.5"
-              strokeOpacity="0.08"
-            />
-            <circle cx="850" cy="500" r="5" fill="#6366f1" fillOpacity="0.1" />
-          </g>
-          <g className="animate-orbit-medium" style={{ transformOrigin: "500px 500px" }}>
-            <circle
-              cx="500"
-              cy="500"
-              r="250"
-              fill="none"
-              stroke="#818cf8"
-              strokeWidth="0.5"
-              strokeOpacity="0.06"
-              strokeDasharray="15 8"
-            />
-            <circle cx="750" cy="500" r="6" fill="#818cf8" fillOpacity="0.12" />
-          </g>
-          <g className="animate-orbit-reverse" style={{ transformOrigin: "500px 500px" }}>
-            <circle
-              cx="500"
-              cy="500"
-              r="150"
-              fill="none"
-              stroke="#a5b4fc"
-              strokeWidth="0.5"
-              strokeOpacity="0.08"
-            />
-            <circle cx="350" cy="500" r="4" fill="#a5b4fc" fillOpacity="0.1" />
-          </g>
+          <KineticOrbitalSVG glowId="skeletonGlow" scale={0.9} />
         </svg>
       </div>
 
@@ -117,31 +74,7 @@ export function CheckoutSkeleton() {
                     viewBox="0 0 300 400"
                     preserveAspectRatio="xMaxYMax slice"
                   >
-                    <g className="animate-orbit-slow" style={{ transformOrigin: "250px 350px" }}>
-                      <circle
-                        cx="250"
-                        cy="350"
-                        r="60"
-                        fill="none"
-                        stroke="#6366f1"
-                        strokeWidth="0.5"
-                        strokeOpacity="0.15"
-                      />
-                      <circle cx="310" cy="350" r="3" fill="#6366f1" fillOpacity="0.2" />
-                    </g>
-                    <g className="animate-orbit-reverse" style={{ transformOrigin: "250px 350px" }}>
-                      <circle
-                        cx="250"
-                        cy="350"
-                        r="35"
-                        fill="none"
-                        stroke="#818cf8"
-                        strokeWidth="0.5"
-                        strokeOpacity="0.2"
-                        strokeDasharray="4 3"
-                      />
-                      <circle cx="215" cy="350" r="2" fill="#818cf8" fillOpacity="0.3" />
-                    </g>
+                    <KineticOrbitalSVG cx={250} cy={350} scale={0.2} withGlow={false} />
                   </svg>
                 </div>
 
@@ -153,7 +86,7 @@ export function CheckoutSkeleton() {
                       <div
                         className="absolute inset-0 border border-indigo-400/20 rounded-xl animate-orbit-fast"
                         style={{ transformOrigin: "center" }}
-                      ></div>
+                      />
                     </div>
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-28 bg-white/10" />
@@ -165,21 +98,7 @@ export function CheckoutSkeleton() {
                   <div className="flex items-start gap-4">
                     <div className="relative w-16 h-16 rounded-2xl overflow-hidden">
                       <Skeleton className="w-full h-full bg-white/10" />
-                      {/* Mini orbital */}
-                      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 64 64">
-                        <g className="animate-orbit-fast" style={{ transformOrigin: "32px 32px" }}>
-                          <circle
-                            cx="32"
-                            cy="32"
-                            r="20"
-                            fill="none"
-                            stroke="#6366f1"
-                            strokeWidth="0.5"
-                            strokeOpacity="0.2"
-                          />
-                          <circle cx="52" cy="32" r="2" fill="#6366f1" fillOpacity="0.3" />
-                        </g>
-                      </svg>
+                      <MiniOrbitalSVG cx={32} cy={32} size={64} />
                     </div>
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-5 w-full bg-white/10" />
@@ -215,7 +134,7 @@ export function CheckoutSkeleton() {
                   >
                     <div className="relative">
                       <Skeleton className="w-10 h-10 rounded-xl" />
-                      <div className="absolute inset-0 border border-indigo-200/50 rounded-xl animate-breathe"></div>
+                      <div className="absolute inset-0 border border-indigo-200/50 rounded-xl animate-breathe" />
                     </div>
                     <div className="space-y-1">
                       <Skeleton className="h-3 w-14" />
