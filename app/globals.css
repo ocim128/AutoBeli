@@ -4,12 +4,30 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
+  /* Primary palette - Indigo accent */
   --color-primary: #6366f1;
   --color-primary-dark: #4f46e5;
   --color-secondary: #ec4899;
   --color-dark-bg: #0a0a0b;
   --color-dark-card: #121214;
   --color-dark-border: #1f1f23;
+
+  /* Golden Ratio Spacing System (Fibonacci-based) */
+  --space-xs: 0.5rem;
+  /* 8px */
+  --space-sm: 0.8125rem;
+  /* 13px */
+  --space-md: 1.3125rem;
+  /* 21px */
+  --space-lg: 2.125rem;
+  /* 34px */
+  --space-xl: 3.4375rem;
+  /* 55px */
+  --space-2xl: 5.5625rem;
+  /* 89px */
+
+  /* Golden ratio */
+  --phi: 1.618;
 }
 
 :root {
@@ -106,6 +124,85 @@ body {
 
 .animate-spin-slow {
   animation: spin-slow 3s linear infinite;
+}
+
+/* Kinetic Geometry Animations */
+@keyframes orbit-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-medium {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes orbit-fast {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* Faster, more noticeable animation durations */
+.animate-orbit-slow {
+  animation: orbit-slow 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-medium {
+  animation: orbit-medium 20s linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-reverse {
+  animation: orbit-reverse 25s linear infinite;
+  will-change: transform;
+}
+
+.animate-orbit-fast {
+  animation: orbit-fast 12s linear infinite;
+  will-change: transform;
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
 }
 
 /* Shimmer Animation for Skeletons */
@@ -261,7 +358,12 @@ body {
   .animate-scale-in,
   .animate-bounce-gentle,
   .animate-glow-pulse,
-  .animate-head-shake {
+  .animate-head-shake,
+  .animate-orbit-slow,
+  .animate-orbit-medium,
+  .animate-orbit-reverse,
+  .animate-orbit-fast,
+  .animate-breathe {
     animation: none !important;
   }
 
@@ -310,4 +412,134 @@ body {
 /* Button press effect */
 .btn-press:active {
   transform: scale(0.98);
+}
+
+/* Scroll-triggered animations */
+@keyframes scroll-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scroll-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scroll-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scroll animation classes */
+.scroll-fade-in {
+  animation: scroll-fade-in 0.6s ease-out both;
+}
+
+.scroll-scale-in {
+  animation: scroll-scale-in 0.5s ease-out both;
+}
+
+.scroll-slide-left {
+  animation: scroll-slide-left 0.6s ease-out both;
+}
+
+.scroll-slide-right {
+  animation: scroll-slide-right 0.6s ease-out both;
+}
+
+/* Staggered animation delays */
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+
+.stagger-5 {
+  animation-delay: 0.5s;
+}
+
+.stagger-6 {
+  animation-delay: 0.6s;
+}
+
+/* Kinetic geometry card hover */
+.kinetic-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kinetic-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.kinetic-card:hover::before {
+  opacity: 1;
+}
+
+.kinetic-card:hover {
+  transform: translateY(-8px);
+  box-shadow:
+    0 25px 50px -12px rgba(99, 102, 241, 0.15),
+    0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+/* Orbital loader container */
+.orbital-loader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
