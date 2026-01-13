@@ -4,13 +4,14 @@ import { getSession } from "@/lib/auth";
 import { Product, StockItem } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
 import { invalidateProductCache } from "@/lib/products";
+import { convertBulkRawInput } from "@/lib/stockConverter";
 import { v4 as uuidv4 } from "uuid";
 
 /**
  * @swagger
  * /api/products/stock:
  *   post:
- *     description: Add a stock item to a product (Admin only)
+ *     description: Add stock item(s) to a product (Admin only). Supports single or bulk addition.
  *     tags: [Products]
  *     security:
  *       - BearerAuth: []
@@ -22,15 +23,18 @@ import { v4 as uuidv4 } from "uuid";
  *             type: object
  *             required:
  *               - slug
- *               - content
  *             properties:
  *               slug:
  *                 type: string
  *               content:
  *                 type: string
+ *                 description: Single stock item content (for single add)
+ *               bulkRaw:
+ *                 type: string
+ *                 description: Raw bulk input (one line per stock item, processed through converter)
  *     responses:
  *       200:
- *         description: Stock item added
+ *         description: Stock item(s) added
  *       404:
  *         description: Product not found
  *   delete:
@@ -75,7 +79,7 @@ import { v4 as uuidv4 } from "uuid";
  *         description: Product not found
  */
 
-// Add a new stock item
+// Add new stock item(s) - supports both single and bulk
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
@@ -84,14 +88,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { slug, content } = body;
+    const { slug, content, bulkRaw } = body;
 
     if (!slug || typeof slug !== "string") {
       return NextResponse.json({ error: "Product slug is required" }, { status: 400 });
-    }
-
-    if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
     const client = await clientPromise;
@@ -101,6 +101,50 @@ export async function POST(request: Request) {
     const product = await collection.findOne({ slug });
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Handle BULK addition
+    if (bulkRaw && typeof bulkRaw === "string" && bulkRaw.trim().length > 0) {
+      const { converted, errors } = convertBulkRawInput(bulkRaw);
+
+      if (converted.length === 0) {
+        return NextResponse.json(
+          { error: "No valid stock items found in bulk input", errors },
+          { status: 400 }
+        );
+      }
+
+      // Create stock items from converted data
+      const newStockItems: StockItem[] = converted.map((item) => ({
+        id: uuidv4(),
+        contentEncrypted: encryptContent(item.rawContent),
+        isSold: false,
+      }));
+
+      // Add all to stockItems array
+      await collection.updateOne(
+        { slug },
+        {
+          $push: { stockItems: { $each: newStockItems } },
+          $set: { updatedAt: new Date(), isSold: false },
+        }
+      );
+
+      // Invalidate cache
+      invalidateProductCache(slug);
+
+      return NextResponse.json({
+        success: true,
+        mode: "bulk",
+        addedCount: newStockItems.length,
+        stockCount: (product.stockItems?.length || 0) + newStockItems.length,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    }
+
+    // Handle SINGLE addition (original behavior)
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
+      return NextResponse.json({ error: "Content or bulkRaw is required" }, { status: 400 });
     }
 
     // Create new stock item
@@ -124,6 +168,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      mode: "single",
       stockItemId: newStockItem.id,
       stockCount: (product.stockItems?.length || 0) + 1,
     });

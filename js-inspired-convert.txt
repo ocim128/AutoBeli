@@ -1,0 +1,191 @@
+javascript: (() => {
+    const style = ".awesome-container{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f1f1f1;padding:20px;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,.2);z-index:1000;width:50%;max-width:90%;resize:both;overflow:auto}.awesome-title{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px}.awesome-input,.awesome-output{width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:5px;font-size:14px;resize:none;margin-bottom:10px}.awesome-button{display:block;width:100%;padding:10px;border:none;border-radius:5px;color:#fff;cursor:pointer;font-size:16px;margin-top:10px}.awesome-submit-button{background-color:#007bff}.awesome-close-button{background-color:#dc3545}.awesome-drag-handle{cursor:move;background-color:#ddd;padding:5px;border-radius:5px;margin-bottom:10px;text-align:center}";
+    const styleEl = document.createElement("style");
+    styleEl.textContent = style;
+    document.head.appendChild(styleEl);
+    const container = document.createElement("div");
+    container.classList.add("awesome-container");
+    const title = document.createElement("div");
+    title.classList.add("awesome-title");
+    title.textContent = "Enter Unparsed Data";
+    container.appendChild(title);
+    const dragHandle = document.createElement("div");
+    dragHandle.classList.add("awesome-drag-handle");
+    dragHandle.textContent = "Drag Here";
+    container.appendChild(dragHandle);
+    const inputArea = document.createElement("textarea");
+    inputArea.classList.add("awesome-input");
+    inputArea.placeholder = "Enter data here...";
+    container.appendChild(inputArea);
+    const outputArea = document.createElement("textarea");
+    outputArea.classList.add("awesome-output");
+    outputArea.placeholder = "Output will appear here...";
+    outputArea.readOnly = true;
+    container.appendChild(outputArea);
+    const submitButton = document.createElement("button");
+    submitButton.classList.add("awesome-button", "awesome-submit-button");
+    submitButton.textContent = "Submit";
+    submitButton.addEventListener("click", () => {
+        const raw = inputArea.value.trim();
+        const lines = raw.split("\n").map(l => l.trim()).filter(l => l !== "" && !l.startsWith("//"));
+        const results = [];
+        for (const line of lines) {
+            if (line === "") continue;
+            let processed = false;
+            if (line.includes("auth_token=")) {
+                const email_match = line.match(/\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b/i);
+                const email = email_match ? email_match[0] : null;
+                const email_username = email ? email.split("@")[0] : null;
+                const email_suffix = email_username ? email_username.slice(-3) : null;
+                const auth_token_match = line.match(/auth_token=(\w+)/);
+                const auth_token = auth_token_match ? auth_token_match[1] : null;
+                let username = null;
+                if (line.includes("@")) {
+                    const allUserMatches = line.match(/@\S+/g);
+                    if (allUserMatches && allUserMatches.length > 0) {
+                        const domainPart = email ? email.split("@")[1] : "";
+                        let candidate = null;
+                        for (let u of allUserMatches) {
+                            const uPart = u.replace("@", "");
+                            if (uPart !== domainPart) {
+                                candidate = uPart;
+                            }
+                        }
+                        username = candidate;
+                    }
+                }
+                const post_match = line.match(/^(\d+)♠/);
+                const post = post_match ? post_match[1] : "0";
+                const follower_match = line.match(/(\d+)~/);
+                const follower = follower_match ? follower_match[1] : "0";
+                const year_match = line.match(/~\s*(\d+)/);
+                const year = year_match ? year_match[1] : "N/A";
+                const password_line = `password: ${email_suffix?"charming@"+email_suffix:"N/A"}`;
+                if (email) {
+                    let output = `${email}\n${password_line}\ncheck email: https://akunlama.com/inbox/${email_username||"N/A"}\nauth_token=${auth_token||"N/A"}\n\nUsername•Post•Follower•Tahun = ${username||"N/A"}•${post||"N/A"}•${follower||"N/A"}•${year||"N/A"}`;
+                    results.push(output);
+                    processed = true;
+                } else {
+                    results.push("Invalid input");
+                    processed = true;
+                }
+            }
+            if (!processed && line.includes("♦") && line.includes("=")) {
+                const pattern = /^(.*?)♦(\d+)\s*\*(\d+)\s*♠(\S*)\s*@(\S+)\s*=(\S+)(?:\s+(.*))?$/;
+                const match = line.match(pattern);
+                if (match) {
+                    const raw_username = match[1].trim();
+                    const post = match[2];
+                    const follower = match[3];
+                    let year = match[4];
+                    if (!year || year.toLowerCase() === "nan") {
+                        year = "N/A"
+                    }
+                    const extractedUsername = match[5];
+                    const sessionid = match[6];
+                    const passwordSuffix = raw_username.slice(-3);
+                    let password = passwordSuffix + "@asem777";
+                    let twoFASecret = null;
+                    if (match[7]) {
+                        const trimmed = match[7].trim();
+                        const twoFAIndex = trimmed.indexOf("2FA:");
+                        if (twoFAIndex !== -1) {
+                            const beforeTwoFA = trimmed.substring(0, twoFAIndex).trim();
+                            if (beforeTwoFA) {
+                                password = beforeTwoFA;
+                            }
+                            twoFASecret = trimmed.substring(twoFAIndex + 4).trim();
+                        } else {
+                            password = trimmed;
+                        }
+                    }
+                    const email = raw_username + "@akunlama.com";
+                    let output = `${email}\nusername: ${extractedUsername}\npassword:${password}\nsessionid=${sessionid}\n`;
+                    if (twoFASecret) {
+                        output += `Link Autentikasi: 2fa.akunlama.com/?secret=${twoFASecret}\n`;
+                    }
+                    results.push(output);
+                    processed = true;
+                }
+            }
+            if (!processed) {
+                const email_match = line.match(/\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b/i);
+                const email = email_match ? email_match[0] : null;
+                if (email) {
+                    const email_username = email.split("@")[0];
+                    const email_suffix = email_username ? email_username.slice(-3) : null;
+                    const auth_token_match = line.match(/auth_token=(\w+)/);
+                    const auth_token = auth_token_match ? auth_token_match[1] : null;
+                    const username_match = line.match(/@(\S+)/);
+                    const maybeUser = username_match ? username_match[1] : null;
+                    const post_match = line.match(/^(\d+)♠/);
+                    const post = post_match ? post_match[1] : "0";
+                    const follower_match = line.match(/(\d+)~/);
+                    const follower = follower_match ? follower_match[1] : "0";
+                    const year_match = line.match(/~\s*(\d+)/);
+                    const year = year_match ? year_match[1] : "N/A";
+                    const password_line = `password: ${email_suffix?"charming@"+email_suffix:"N/A"}`;
+                    const sessionid_match = line.match(/sessionid=([\S]+)/);
+                    const sessionid = sessionid_match ? sessionid_match[1] : null;
+                    if (auth_token) {
+                        let output = `${email}\n${password_line}\ncheck email: https://akunlama.com/inbox/${email_username||"N/A"}\nauth_token=${auth_token||"N/A"}\n\nUsername•Post•Follower•Tahun = ${maybeUser||"N/A"}•${post||"N/A"}•${follower||"N/A"}•${year||"N/A"}`;
+                        results.push(output);
+                    } else if (sessionid) {
+                        let output = `${email}\nusername: ${maybeUser||"N/A"}\n${password_line}\nsessionid=${sessionid}\n`;
+                        results.push(output);
+                    } else {
+                        results.push("Invalid input");
+                    }
+                } else {
+                    results.push("Invalid input");
+                }
+            }
+        }
+        outputArea.value = results.join("\n\n");
+        inputArea.value = "";
+        inputArea.focus();
+    });
+    container.appendChild(submitButton);
+    const closeButton = document.createElement("button");
+    closeButton.classList.add("awesome-button", "awesome-close-button");
+    closeButton.textContent = "Close";
+    closeButton.addEventListener("click", () => {
+        document.body.removeChild(container);
+        document.head.removeChild(styleEl);
+    });
+    container.appendChild(closeButton);
+    document.body.appendChild(container);
+    let offsetX = 0,
+        offsetY = 0,
+        isDown = false;
+    dragHandle.addEventListener("mousedown", e => {
+        e.preventDefault();
+        isDown = true;
+        offsetX = e.clientX - container.offsetLeft;
+        offsetY = e.clientY - container.offsetTop;
+        container.style.opacity = "0.8";
+    });
+    document.addEventListener("mousemove", e => {
+        if (isDown) {
+            container.style.left = e.clientX - offsetX + "px";
+            container.style.top = e.clientY - offsetY + "px";
+        }
+    });
+    document.addEventListener("mouseup", () => {
+        isDown = false;
+        container.style.opacity = "1";
+    });
+    inputArea.focus();
+    document.addEventListener("keydown", e => {
+        if (e.ctrlKey && e.key === "a") {
+            e.preventDefault();
+            outputArea.select();
+        }
+        if (e.ctrlKey && e.key === "Enter") {
+            submitButton.click();
+        }
+        if (e.ctrlKey && e.key === "Escape") {
+            closeButton.click();
+        }
+    });
+})();

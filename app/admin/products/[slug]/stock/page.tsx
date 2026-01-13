@@ -16,6 +16,20 @@ interface StockPageProps {
   params: Promise<{ slug: string }>;
 }
 
+interface BulkPreviewItem {
+  email: string;
+  username: string;
+  password: string;
+  sessionid: string;
+  twoFALink?: string;
+  rawContent: string;
+}
+
+interface BulkError {
+  line: number;
+  content: string;
+}
+
 export default function StockManagementPage({ params }: StockPageProps) {
   const router = useRouter();
   const [slug, setSlug] = useState<string>("");
@@ -28,6 +42,14 @@ export default function StockManagementPage({ params }: StockPageProps) {
   const [addingStock, setAddingStock] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+
+  // Bulk stock states
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkContent, setBulkContent] = useState("");
+  const [addingBulk, setAddingBulk] = useState(false);
+  const [bulkPreview, setBulkPreview] = useState<BulkPreviewItem[]>([]);
+  const [bulkErrors, setBulkErrors] = useState<BulkError[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Unwrap params
   useEffect(() => {
@@ -175,6 +197,68 @@ export default function StockManagementPage({ params }: StockPageProps) {
     setEditContent("");
   };
 
+  // Bulk stock handlers
+  const handlePreviewBulk = async () => {
+    if (!bulkContent.trim()) return;
+
+    try {
+      // Import the converter dynamically for client-side preview
+      const { convertBulkRawInput } = await import("@/lib/stockConverter");
+      const { converted, errors } = convertBulkRawInput(bulkContent);
+      setBulkPreview(converted);
+      setBulkErrors(errors);
+      setShowPreview(true);
+    } catch (err) {
+      console.error("Preview error:", err);
+      setError("Failed to preview bulk input");
+    }
+  };
+
+  const handleAddBulkStock = async () => {
+    if (!bulkContent.trim()) return;
+
+    setAddingBulk(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/products/stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, bulkRaw: bulkContent.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add bulk stock");
+      }
+
+      // Refresh stock list
+      const stockRes = await fetch(`/api/products/stock?slug=${slug}`);
+      const stockData = await stockRes.json();
+      if (stockData.stockItems) {
+        setStockItems(stockData.stockItems);
+      }
+
+      // Reset bulk form
+      setBulkContent("");
+      setBulkPreview([]);
+      setBulkErrors([]);
+      setShowPreview(false);
+
+      // Show success message with count
+      alert(`Successfully added ${data.addedCount} stock item(s)!`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to add bulk stock");
+      }
+    } finally {
+      setAddingBulk(false);
+    }
+  };
+
   if (loading && !slug) return <div>Initializing...</div>;
   if (loading) return <div>Loading stock data...</div>;
 
@@ -235,29 +319,149 @@ export default function StockManagementPage({ params }: StockPageProps) {
 
       {/* Add New Stock Form */}
       <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Add New Stock Item</h2>
-        <form onSubmit={handleAddStock} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Content (Unique data to sell)</label>
-            <textarea
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-              placeholder="Enter the unique content for this stock item..."
-              rows={4}
-              className="w-full border rounded p-3 font-mono text-sm bg-yellow-50"
-              required
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={addingStock || !newContent.trim()}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-            >
-              {addingStock ? "Adding..." : "+ Add Stock Item"}
-            </button>
-          </div>
-        </form>
+        {/* Mode Tabs */}
+        <div className="flex gap-4 mb-4 border-b">
+          <button
+            onClick={() => setBulkMode(false)}
+            className={`pb-2 px-1 font-semibold ${!bulkMode ? "text-indigo-600 border-b-2 border-indigo-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            📝 Single Stock
+          </button>
+          <button
+            onClick={() => setBulkMode(true)}
+            className={`pb-2 px-1 font-semibold ${bulkMode ? "text-indigo-600 border-b-2 border-indigo-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            📦 Bulk Stock
+          </button>
+        </div>
+
+        {!bulkMode ? (
+          /* Single Stock Form */
+          <>
+            <h2 className="text-lg font-semibold mb-4">Add Single Stock Item</h2>
+            <form onSubmit={handleAddStock} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Content (Unique data to sell)
+                </label>
+                <textarea
+                  value={newContent}
+                  onChange={(e) => setNewContent(e.target.value)}
+                  placeholder="Enter the unique content for this stock item..."
+                  rows={4}
+                  className="w-full border rounded p-3 font-mono text-sm bg-yellow-50"
+                  required
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={addingStock || !newContent.trim()}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                >
+                  {addingStock ? "Adding..." : "+ Add Stock Item"}
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          /* Bulk Stock Form */
+          <>
+            <h2 className="text-lg font-semibold mb-2">Bulk Add Stock Items</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Paste multiple lines of raw data. Each line will be processed and converted to a stock
+              item.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Raw Input (one line = one stock item)
+                </label>
+                <textarea
+                  value={bulkContent}
+                  onChange={(e) => {
+                    setBulkContent(e.target.value);
+                    setShowPreview(false);
+                  }}
+                  placeholder={`catm881100my0♦62 *2152 ♠2016 @hatm881100 =3274316224%3ARD1A7icsUgwZQw%3A10
+csseed240my00♦57 *180 ♠2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem777
+cayleenbarronku15ssrm♦52 *64 ♠2023 @aracelyhooperys10 =58471294198%3AvNXktennj6Xd52%3A0 2FA:MHMZGO4DGK65C4SSMAU74Z2G32IFPGAY`}
+                  rows={6}
+                  className="w-full border rounded p-3 font-mono text-sm bg-blue-50"
+                />
+                <div className="text-xs text-gray-400 mt-1">
+                  Format: email_prefix♦post *follower ♠year @username =sessionid [password]
+                  [2FA:secret]
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={handlePreviewBulk}
+                  disabled={!bulkContent.trim()}
+                  className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded hover:bg-indigo-50 disabled:opacity-50"
+                >
+                  👁️ Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddBulkStock}
+                  disabled={addingBulk || !bulkContent.trim()}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {addingBulk ? "Adding..." : "📦 Add All Stock"}
+                </button>
+              </div>
+
+              {/* Preview Section */}
+              {showPreview && (
+                <div className="mt-4 border-t pt-4">
+                  <h3 className="font-semibold text-sm mb-3">
+                    Preview ({bulkPreview.length} items to add)
+                    {bulkErrors.length > 0 && (
+                      <span className="text-red-600 ml-2">({bulkErrors.length} errors)</span>
+                    )}
+                  </h3>
+
+                  {/* Errors */}
+                  {bulkErrors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+                      <p className="text-red-700 font-medium text-sm mb-2">
+                        Failed to parse {bulkErrors.length} line(s):
+                      </p>
+                      <ul className="text-xs text-red-600 space-y-1">
+                        {bulkErrors.map((err, i) => (
+                          <li key={i}>
+                            <span className="font-mono bg-red-100 px-1 rounded">
+                              Line {err.line}:
+                            </span>{" "}
+                            {err.content.substring(0, 50)}...
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Preview Items */}
+                  <div className="space-y-3 max-h-64 overflow-auto">
+                    {bulkPreview.map((item, index) => (
+                      <div key={index} className="bg-gray-50 rounded p-3 border">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-gray-500">#{index + 1}</span>
+                          <span className="text-sm font-medium text-indigo-700">{item.email}</span>
+                        </div>
+                        <pre className="text-xs text-gray-600 font-mono whitespace-pre-wrap">
+                          {item.rawContent}
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Stock Items List */}

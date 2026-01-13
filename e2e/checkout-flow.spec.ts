@@ -23,6 +23,49 @@ test.describe("Checkout Flow", () => {
   });
 
   test("complete purchase flow - product to order confirmation", async ({ page }) => {
+    // Set up payment mocks at the very beginning - intercept ALL payment endpoints
+    await page.route("**/api/payment/pakasir/create", async (route) => {
+      const body = await route.request().postDataJSON();
+      const orderId = body.orderId;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          payment_url: `/order/${orderId}`,
+          transaction_ref: "test_ref",
+        }),
+      });
+    });
+
+    await page.route("**/api/payment/veripay/create", async (route) => {
+      const body = await route.request().postDataJSON();
+      const orderId = body.orderId;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          payment_url: `/order/${orderId}`,
+          transaction_ref: "test_ref",
+        }),
+      });
+    });
+
+    await page.route("**/api/payment/midtrans/create", async (route) => {
+      const body = await route.request().postDataJSON();
+      const orderId = body.orderId;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          payment_url: `/order/${orderId}`,
+          transaction_ref: "test_ref",
+        }),
+      });
+    });
+
     // Check for app error (DB down)
     const hasError = await hasAppError(page);
     if (hasError) {
@@ -61,21 +104,7 @@ test.describe("Checkout Flow", () => {
     await expect(contactInput).toBeVisible();
     await contactInput.fill("customer@example.com");
 
-    // Step 6: Submit payment
-    // Mock the payment creation to avoid redirecting to a real external site during tests
-    await page.route("**/api/payment/veripay/create", async (route) => {
-      const orderId = page.url().split("/").pop();
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          payment_url: `/order/${orderId}`,
-          transaction_ref: "test_ref",
-        }),
-      });
-    });
-
+    // Step 6: Submit payment (mocks are already set up above)
     const payButton = page.getByRole("button", { name: /Bayar/i });
     await payButton.click();
 
