@@ -120,55 +120,6 @@ export const mockPaymentSchema = z.object({
     .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
 });
 
-export const veripayPaymentSchema = z.object({
-  orderId: z
-    .string()
-    .min(1, "Order ID is required")
-    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
-});
-
-export const veripayWebhookSchema = z.object({
-  order_id: z.string().min(1, "Order ID is required"),
-  amount: z.number().int().positive("Amount must be positive"),
-  status: z.enum(["PAID", "PENDING", "EXPIRED", "FAILED"]),
-  payment_method: z.string().optional(),
-  payment_time: z.string().optional(),
-  customer_detail: z
-    .object({
-      name: z.string().optional(),
-      email: z.string().optional(),
-      phone: z.string().optional(),
-    })
-    .optional(),
-});
-
-export const midtransPaymentSchema = z.object({
-  orderId: z
-    .string()
-    .min(1, "Order ID is required")
-    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
-});
-
-export const midtransNotificationSchema = z.object({
-  order_id: z.string().min(1, "Order ID is required"),
-  transaction_status: z.enum([
-    "capture",
-    "settlement",
-    "pending",
-    "deny",
-    "cancel",
-    "expire",
-    "failure",
-  ]),
-  gross_amount: z.string(),
-  signature_key: z.string(),
-  status_code: z.string(),
-  transaction_id: z.string().optional(),
-  payment_type: z.string().optional(),
-  transaction_time: z.string().optional(),
-  fraud_status: z.enum(["accept", "challenge", "deny"]).optional(),
-});
-
 export const pakasirPaymentSchema = z.object({
   orderId: z
     .string()
@@ -177,7 +128,7 @@ export const pakasirPaymentSchema = z.object({
 });
 
 export const pakasirWebhookSchema = z.object({
-  amount: z.number().int().positive(),
+  amount: z.number().int().positive("Amount must be positive"),
   order_id: z.string().min(1),
   project: z.string().min(1),
   status: z.enum(["completed", "pending", "failed", "expired"]),
@@ -217,10 +168,8 @@ export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type MockPaymentInput = z.infer<typeof mockPaymentSchema>;
-export type VeripayPaymentInput = z.infer<typeof veripayPaymentSchema>;
-export type VeripayWebhookInput = z.infer<typeof veripayWebhookSchema>;
-export type MidtransPaymentInput = z.infer<typeof midtransPaymentSchema>;
-export type MidtransNotificationInput = z.infer<typeof midtransNotificationSchema>;
+export type PakasirPaymentInput = z.infer<typeof pakasirPaymentSchema>;
+export type PakasirWebhookInput = z.infer<typeof pakasirWebhookSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 
 // ============================================

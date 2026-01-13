@@ -42,27 +42,27 @@ describe("CheckoutForm Component", () => {
   });
 
   it("renders with amount displayed", () => {
-    render(<CheckoutForm orderId="order123" amount={75000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={75000} paymentGateway="PAKASIR" />);
 
     expect(screen.getByRole("button")).toHaveTextContent("Pay");
     expect(screen.getByRole("button")).toHaveTextContent("75.000");
   });
 
   it("renders contact input field", () => {
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     expect(screen.getByLabelText(/your email/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/you@example.com/i)).toBeInTheDocument();
   });
 
   it("formats large amounts correctly", () => {
-    render(<CheckoutForm orderId="order123" amount={2500000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={2500000} paymentGateway="PAKASIR" />);
 
     expect(screen.getByRole("button")).toHaveTextContent("2.500.000");
   });
 
   it("shows validation error for empty contact", async () => {
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const submitButton = screen.getByRole("button");
     fireEvent.click(submitButton);
@@ -76,7 +76,7 @@ describe("CheckoutForm Component", () => {
   });
 
   it("shows validation error for whitespace-only contact", async () => {
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "   ");
@@ -93,8 +93,11 @@ describe("CheckoutForm Component", () => {
       .mockResolvedValueOnce({ ok: true }) // PATCH /api/orders
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, payment_url: "https://pay.veripay.site/123" }),
-      }); // POST /api/payment/veripay/create
+        json: async () => ({
+          success: true,
+          payment_url: "https://app.pakasir.com/pay/test/50000",
+        }),
+      }); // POST /api/payment/pakasir/create
 
     // Mock window.location.href using Object.defineProperty
     let capturedHref = "";
@@ -112,7 +115,7 @@ describe("CheckoutForm Component", () => {
       writable: true,
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -128,7 +131,7 @@ describe("CheckoutForm Component", () => {
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/payment/veripay/create", {
+      expect(mockFetch).toHaveBeenCalledWith("/api/payment/pakasir/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: "order123" }),
@@ -136,7 +139,7 @@ describe("CheckoutForm Component", () => {
     });
 
     await waitFor(() => {
-      expect(capturedHref).toBe("https://pay.veripay.site/123");
+      expect(capturedHref).toBe("https://app.pakasir.com/pay/test/50000");
     });
 
     // Restore window.location
@@ -151,7 +154,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ success: true }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "  customer@example.com  ");
@@ -171,7 +174,7 @@ describe("CheckoutForm Component", () => {
   it("shows loading state during submission", async () => {
     mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -192,7 +195,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ error: "Failed to save contact" }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -212,7 +215,7 @@ describe("CheckoutForm Component", () => {
         json: async () => ({ error: "Payment creation failed" }),
       }); // Payment fails
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -228,7 +231,7 @@ describe("CheckoutForm Component", () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
     vi.spyOn(window, "alert").mockImplementation(() => {});
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -248,7 +251,7 @@ describe("CheckoutForm Component", () => {
       json: async () => ({ success: true }),
     });
 
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="VERIPAY" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -265,32 +268,15 @@ describe("CheckoutForm Component", () => {
     });
   });
 
-  it("uses Midtrans endpoint when paymentGateway is MIDTRANS", async () => {
+  it("uses Mock endpoint when paymentGateway is MOCK", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         success: true,
-        payment_url: "https://app.sandbox.midtrans.com/snap/123",
       }),
     });
 
-    // Mock window.location.href
-    let capturedHref = "";
-    const originalDescriptor = Object.getOwnPropertyDescriptor(window, "location");
-    Object.defineProperty(window, "location", {
-      value: {
-        ...window.location,
-        get href() {
-          return capturedHref;
-        },
-        set href(value: string) {
-          capturedHref = value;
-        },
-      },
-      writable: true,
-    });
-
-    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="MIDTRANS" />);
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="MOCK" />);
 
     const input = screen.getByLabelText(/your email/i);
     await userEvent.type(input, "customer@example.com");
@@ -298,16 +284,11 @@ describe("CheckoutForm Component", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/payment/midtrans/create", {
+      expect(mockFetch).toHaveBeenCalledWith("/api/payment/mock/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: "order123" }),
       });
     });
-
-    // Restore window.location
-    if (originalDescriptor) {
-      Object.defineProperty(window, "location", originalDescriptor);
-    }
   });
 });

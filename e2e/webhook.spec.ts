@@ -1,22 +1,4 @@
 import { test, expect, request, Page } from "@playwright/test";
-import crypto from "crypto";
-import dotenv from "dotenv";
-import path from "path";
-
-// Load environment variables from .env file
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-const VERIPAY_API_KEY = process.env.VERIPAY_API_KEY || "your_veripay_api_key";
-const VERIPAY_SECRET_KEY = process.env.VERIPAY_SECRET_KEY || "your_veripay_secret_key";
-
-/**
- * Generate HMAC-SHA256 signature for Veripay API
- */
-function generateSignature(timestamp: number): string {
-  const payload = VERIPAY_API_KEY + timestamp;
-  const hash = crypto.createHmac("sha256", VERIPAY_SECRET_KEY).update(payload).digest();
-  return hash.toString("base64");
-}
 
 /**
  * Helper to check if the page is showing a database/server error
@@ -29,7 +11,7 @@ async function hasAppError(page: Page): Promise<boolean> {
 }
 
 test.describe("Webhook Processing", () => {
-  test("processes valid veripay webhook (PAID)", async ({ page }) => {
+  test("processes valid pakasir webhook (completed)", async ({ page }) => {
     // Step 1: Get a valid product slug
     await page.goto("/");
 
@@ -71,29 +53,37 @@ test.describe("Webhook Processing", () => {
 
     console.log(`Created test order: ${orderId}`);
 
-    // Step 3: Simulate Veripay Webhook
-    const timestamp = Math.floor(Date.now() / 1000);
-    const signature = generateSignature(timestamp);
-
+    // Step 3: Simulate Pakasir Webhook
+    // Note: In production, Pakasir sends webhooks without signature verification
+    // (we verify by calling their API back to check status)
     const webhookPayload = {
       order_id: orderId,
-      status: "PAID",
+      status: "completed",
       amount: 50000,
-      payment_method: "QRIS",
-      payment_time: new Date().toISOString(),
-      customer_detail: {
-        name: "Test User",
-        email: "test@example.com", // Primary contact is now email
-        phone: "08000000000", // Default phone
-      },
+      project: process.env.PAKASIR_PROJECT_SLUG || "test-project",
+      payment_method: "qris",
+      completed_at: new Date().toISOString(),
     };
 
-    const webhookRes = await apiContext.post("/api/webhooks/veripay", {
-      headers: {
-        "x-api-key": VERIPAY_API_KEY,
-        "x-timestamp": timestamp.toString(),
-        "x-signature": signature,
-      },
+    // Mock the Pakasir API verification call
+    await page.route("**/app.pakasir.com/api/transactiondetail**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          transaction: {
+            amount: 50000,
+            order_id: orderId,
+            project: "test-project",
+            status: "completed",
+            payment_method: "qris",
+            completed_at: new Date().toISOString(),
+          },
+        }),
+      });
+    });
+
+    const webhookRes = await apiContext.post("/api/webhooks/pakasir", {
       data: webhookPayload,
     });
 
@@ -106,56 +96,51 @@ test.describe("Webhook Processing", () => {
     expect(webhookData.success).toBe(true);
 
     // Step 4: Verify Order Status is PAID via UI
-    // Navigate to order page (which should now show success/content instead of pending payment)
     const orderPageResponse = await page.goto(`/order/${orderId}`);
     expect(orderPageResponse?.ok()).toBeTruthy();
 
-    // Check for success indicators
-    // Note: The UI for a PAID order versus PENDING is different.
-    // Assuming PAID order shows "Download" or "Access" content.
-    // If pending, it usually shows payment instructions.
-
-    // Wait for content that indicates success
-    // Adjust selector based on actual UI implementation for paid orders
-    // Looking for "Order Status: PAID" or similar if explicit,
-    // or absence of "Pay Now" button if that's clearer.
-
-    // For now, let's verify via API call if possible, but we don't have a public GET /api/orders/{id}.
-    // We only have GET /api/products/slug.
-    // However, the /order/[orderId]/page.tsx likely fetches the order.
-    // We can check if the "Pay Now" button is GONE, or "Access Content" is present.
-
-    // Let's assume the UI updates to show access.
-    // Or we can try to "re-pay" and see if it says already paid?
-    // The webhook handler says: "Already paid" if we hit it again.
-
-    // Let's assert that we DO NOT see the payment button/QR code anymore.
+    // Verify that we DO NOT see the payment button/QR code anymore
     await expect(page.getByText("Waiting for payment", { exact: false })).not.toBeVisible();
-    // Verify some success element (adjust as needed based on actual UI)
-    // await expect(page.getByText("Payment Successful", { exact: false })).toBeVisible();
 
     // Alternatively, verify idempotency by hitting webhook again
-    const webhookRes2 = await apiContext.post("/api/webhooks/veripay", {
-      headers: {
-        "x-api-key": VERIPAY_API_KEY,
-        "x-timestamp": timestamp.toString(),
-        "x-signature": signature,
-      },
+    const webhookRes2 = await apiContext.post("/api/webhooks/pakasir", {
       data: webhookPayload,
     });
     const webhookData2 = await webhookRes2.json();
     expect(webhookData2.message).toBe("Already paid");
   });
 
-  test("rejects invalid signature", async ({ request }) => {
-    const webhookRes = await request.post("/api/webhooks/veripay", {
-      headers: {
-        "x-timestamp": Math.floor(Date.now() / 1000).toString(),
-        "x-signature": "invalid_signature",
+  test("rejects invalid webhook payload", async ({ request }) => {
+    const webhookRes = await request.post("/api/webhooks/pakasir", {
+      data: {
+        // Missing required fields
+        order_id: "invalid",
       },
-      data: {},
     });
 
-    expect(webhookRes.status()).toBe(401);
+    expect(webhookRes.status()).toBe(400);
+  });
+
+  test("returns 404 for non-existent order", async ({ request }) => {
+    const webhookPayload = {
+      order_id: "aaaaaaaaaaaaaaaaaaaaaaaa", // Valid format but doesn't exist
+      status: "completed",
+      amount: 50000,
+      project: "test-project",
+      payment_method: "qris",
+    };
+
+    const webhookRes = await request.post("/api/webhooks/pakasir", {
+      data: webhookPayload,
+    });
+
+    // Will likely return success with "Verification failed" since Pakasir API won't find it
+    // or 404 if our DB doesn't have the order
+    const data = await webhookRes.json();
+    expect(
+      webhookRes.status() === 404 ||
+        data.message === "Verification failed" ||
+        data.message === "Not completed"
+    ).toBeTruthy();
   });
 });

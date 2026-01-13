@@ -23,36 +23,8 @@ test.describe("Checkout Flow", () => {
   });
 
   test("complete purchase flow - product to order confirmation", async ({ page }) => {
-    // Set up payment mocks at the very beginning - intercept ALL payment endpoints
+    // Set up payment mock for Pakasir endpoint
     await page.route("**/api/payment/pakasir/create", async (route) => {
-      const body = await route.request().postDataJSON();
-      const orderId = body.orderId;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          payment_url: `/order/${orderId}`,
-          transaction_ref: "test_ref",
-        }),
-      });
-    });
-
-    await page.route("**/api/payment/veripay/create", async (route) => {
-      const body = await route.request().postDataJSON();
-      const orderId = body.orderId;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          payment_url: `/order/${orderId}`,
-          transaction_ref: "test_ref",
-        }),
-      });
-    });
-
-    await page.route("**/api/payment/midtrans/create", async (route) => {
       const body = await route.request().postDataJSON();
       const orderId = body.orderId;
       await route.fulfill({

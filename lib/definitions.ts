@@ -46,7 +46,7 @@ export interface Order {
   stockItemIds?: string[]; // For multi-item purchases
   status: "PENDING" | "PAID" | "EXPIRED";
   amountPaid: number;
-  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS" | "PAKASIR";
+  paymentGateway: "MOCK" | "PAKASIR";
   paymentMetadata?: {
     provider: string;
     transaction_ref?: string;

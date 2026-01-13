@@ -109,8 +109,6 @@ function processInstagramFormat(line: string): ConvertedStock | null {
   }
 
   const rawUsername = match[1].trim();
-  const post = match[2];
-  const follower = match[3];
   let year = match[4];
   if (!year || year.toLowerCase() === "nan") {
     year = "N/A";

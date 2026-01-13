@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/db";
-import { generateAccessToken } from "@/lib/tokens";
+import { Order, Product } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
+import { handleSuccessfulPayment } from "@/lib/orders";
 
 export async function POST(request: Request) {
   // Disable in production for security
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     const _id = new ObjectId(orderId);
 
     // 2. Check Order Status
-    const order = await db.collection("orders").findOne({ _id });
+    const order = await db.collection<Order>("orders").findOne({ _id });
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -34,21 +35,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: "Already paid" });
     }
 
-    // 3. Update Order to PAID
-    await db.collection("orders").updateOne(
-      { _id },
-      {
-        $set: {
-          status: "PAID",
-          amountPaid: 10000, // In real app, amount from provider
-          updatedAt: new Date(),
-          paymentMetadata: { provider: "mock", signature },
-        },
-      }
-    );
+    // Get Product
+    const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
 
-    // 4. Generate Access Token
-    await generateAccessToken(orderId);
+    // 3. Use shared completion logic
+    // This handles order status, stock marking, cache, tokens, and emails
+    await handleSuccessfulPayment({
+      orderId,
+      order,
+      product,
+      amount: 10000, // Fixed mock amount
+      db,
+      isTest: true,
+    });
 
     return NextResponse.json({ success: true });
   } catch (e) {

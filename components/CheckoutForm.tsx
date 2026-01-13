@@ -9,7 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 interface CheckoutFormProps {
   orderId: string;
   amount: number;
-  paymentGateway: "MOCK" | "VERIPAY" | "MIDTRANS" | "PAKASIR";
+  paymentGateway: "MOCK" | "PAKASIR";
 }
 
 function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
@@ -22,10 +22,6 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
   // Get the correct payment endpoint based on gateway
   const getPaymentEndpoint = useCallback(() => {
     switch (paymentGateway) {
-      case "MIDTRANS":
-        return "/api/payment/midtrans/create";
-      case "VERIPAY":
-        return "/api/payment/veripay/create";
       case "PAKASIR":
         return "/api/payment/pakasir/create";
       case "MOCK":

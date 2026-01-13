@@ -10,8 +10,8 @@ import {
   updateProductSchema,
   loginSchema,
   mockPaymentSchema,
-  veripayPaymentSchema,
-  veripayWebhookSchema,
+  pakasirPaymentSchema,
+  pakasirWebhookSchema,
 } from "@/lib/validation";
 
 describe("Validation Schemas", () => {
@@ -303,88 +303,91 @@ describe("Validation Schemas", () => {
     });
   });
 
-  describe("veripayPaymentSchema", () => {
+  describe("pakasirPaymentSchema", () => {
     const validOrderId = "abcdef123456789012345678"; // 24 hex chars
 
     it("accepts valid orderId", () => {
-      const result = validate(veripayPaymentSchema, { orderId: validOrderId });
+      const result = validate(pakasirPaymentSchema, { orderId: validOrderId });
       expect(result.success).toBe(true);
     });
 
     it("rejects empty orderId", () => {
-      const result = validate(veripayPaymentSchema, { orderId: "" });
+      const result = validate(pakasirPaymentSchema, { orderId: "" });
       expect(result.success).toBe(false);
     });
 
     it("rejects invalid orderId format", () => {
-      const result = validate(veripayPaymentSchema, { orderId: "not-valid-mongo-id" });
+      const result = validate(pakasirPaymentSchema, { orderId: "not-valid-mongo-id" });
       expect(result.success).toBe(false);
       expect(result.error).toContain("Invalid order ID");
     });
   });
 
-  describe("veripayWebhookSchema", () => {
+  describe("pakasirWebhookSchema", () => {
     const validWebhook = {
       order_id: "ORD-123",
       amount: 50000,
-      status: "PAID" as const,
+      project: "my-project",
+      status: "completed" as const,
     };
 
-    it("accepts valid paid webhook", () => {
-      const result = validate(veripayWebhookSchema, validWebhook);
+    it("accepts valid completed webhook", () => {
+      const result = validate(pakasirWebhookSchema, validWebhook);
       expect(result.success).toBe(true);
-      expect(result.data?.status).toBe("PAID");
+      expect(result.data?.status).toBe("completed");
     });
 
     it("accepts valid pending webhook", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, status: "PENDING" });
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, status: "pending" });
       expect(result.success).toBe(true);
     });
 
     it("accepts webhook with optional fields", () => {
-      const result = validate(veripayWebhookSchema, {
+      const result = validate(pakasirWebhookSchema, {
         ...validWebhook,
-        payment_method: "QRIS",
-        payment_time: "2025-01-12 10:32:55",
-        customer_detail: {
-          name: "John Doe",
-          email: "john@example.com",
-          phone: "081234567890",
-        },
+        payment_method: "qris",
+        completed_at: "2025-01-12T10:32:55Z",
       });
       expect(result.success).toBe(true);
-      expect(result.data?.payment_method).toBe("QRIS");
+      expect(result.data?.payment_method).toBe("qris");
     });
 
     it("rejects empty order_id", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, order_id: "" });
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, order_id: "" });
       expect(result.success).toBe(false);
     });
 
     it("rejects zero amount", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, amount: 0 });
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, amount: 0 });
       expect(result.success).toBe(false);
       expect(result.error).toContain("positive");
     });
 
     it("rejects negative amount", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, amount: -100 });
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, amount: -100 });
       expect(result.success).toBe(false);
     });
 
     it("rejects invalid status", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, status: "INVALID" });
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, status: "INVALID" });
       expect(result.success).toBe(false);
     });
 
-    it("accepts EXPIRED status", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, status: "EXPIRED" });
+    it("accepts expired status", () => {
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, status: "expired" });
       expect(result.success).toBe(true);
     });
 
-    it("accepts FAILED status", () => {
-      const result = validate(veripayWebhookSchema, { ...validWebhook, status: "FAILED" });
+    it("accepts failed status", () => {
+      const result = validate(pakasirWebhookSchema, { ...validWebhook, status: "failed" });
       expect(result.success).toBe(true);
+    });
+
+    it("rejects missing project field", () => {
+      const withoutProject = { ...validWebhook } as Record<string, unknown>;
+      delete withoutProject.project;
+      const result = validate(pakasirWebhookSchema, withoutProject);
+      expect(result.success).toBe(false);
     });
   });
 

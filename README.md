@@ -8,8 +8,7 @@ A secure, single-vendor digital product store for text-based content. Built with
 - **Secure Delivery**: Content is **AES-256** encrypted at rest.
 - **Instant Access**: Automated delivery upon payment confirmation.
 - **Admin Dashboard**: Manage products and view orders.
-- **Veripay Payment Gateway**: Integrated with veripay.site for QRIS, Virtual Account, and E-Wallet payments.
-- **Midtrans Payment Gateway**: Integrated with Midtrans Snap for Card, Bank Transfer, E-Wallet, and more.
+- **Pakasir Payment Gateway**: Integrated with Pakasir for QRIS, Virtual Account, and E-Wallet payments.
 - **Mock Payment**: Optional mock gateway for development/testing (set `PAYMENT_GATEWAY=MOCK`).
 
 ## Tech Stack
@@ -30,11 +29,10 @@ A secure, single-vendor digital product store for text-based content. Built with
 2.  **Environment Setup**
     Copy `.env.example` to `.env` and fill in:
     - `MONGODB_URI`: Your Atlas connection string.
-    - `ADMIN_PASSWORD`: Access key for admin panel.
+    - `ADMIN_PASSWORD_HASH`: Hashed access key for admin panel.
     - `CONTENT_ENCRYPTION_KEY`: A 32-character random string.
-    - `PAYMENT_GATEWAY`: Set to `VERIPAY`, `MIDTRANS`, or `MOCK` (development).
-    - For Veripay: `VERIPAY_API_KEY`, `VERIPAY_SECRET_KEY`
-    - For Midtrans: `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
+    - `PAYMENT_GATEWAY`: Set to `PAKASIR` or `MOCK` (development).
+    - For Pakasir: `PAKASIR_API_KEY`, `PAKASIR_PROJECT_SLUG`
 
 3.  **Run Locally**
     ```bash
@@ -44,7 +42,7 @@ A secure, single-vendor digital product store for text-based content. Built with
 ## Admin Access
 
 - URL: `/admin` (Redirects to login)
-- Default Password: See your `.env` `ADMIN_PASSWORD`.
+- Default Password: See your `.env` `ADMIN_PASSWORD_HASH`.
 
 ## Security Notes
 
