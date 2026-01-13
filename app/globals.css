@@ -508,6 +508,83 @@ body {
     0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
+/* Toast Animations */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.2s ease-in forwards;
+}
+
+/* Optimistic Update Pulse - for optimistic UI feedback */
+@keyframes optimistic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-optimistic {
+  animation: optimistic-pulse 1.5s ease-in-out infinite;
+}
+
+/* Intersection Observer Animations */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Scale variant for scroll animations */
+.animate-on-scroll-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity 0.5s ease-out,
+    transform 0.5s ease-out;
+}
+
+.animate-on-scroll-scale.in-view {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* Orbital loader container */
 .orbital-loader {
   position: relative;

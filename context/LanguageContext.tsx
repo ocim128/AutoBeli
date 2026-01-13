@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { translations, Language } from "@/lib/i18n";
+import { Language } from "@/lib/i18n";
+import { getTranslation } from "@/lib/optimizedI18n";
 
 type LanguageContextType = {
   language: Language;
@@ -25,29 +26,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, language]);
 
-  // Memoize the translation function to prevent recreation on every render
-  const t = useCallback(
-    (path: string) => {
-      const keys = path.split(".");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let current: any = translations[language];
-      for (const key of keys) {
-        if (current === undefined || current[key] === undefined) {
-          // Fallback to defaults or English if missing
-          return path;
-        }
-        current = current[key];
-      }
-      return current as string;
-    },
-    [language]
-  );
+  // Use memoized translation function with optimized O(1) lookups
+  const t = useMemo(() => (path: string) => getTranslation(language, path), [language]);
 
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({ language, setLanguage, t }), [language, t]);
+
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {
