@@ -1,4 +1,4 @@
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { ObjectId, Db } from "mongodb";
 import { Order, Product, AccessToken } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
@@ -12,7 +12,7 @@ export async function getOrderWithProduct(orderId: string): Promise<OrderWithPro
   if (!ObjectId.isValid(orderId)) return null;
 
   try {
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     // Aggregation to join Order with Product
@@ -244,7 +244,7 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
   if (!ObjectId.isValid(orderId)) return false;
 
   try {
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     const order = await db.collection<Order>("orders").findOne({ _id: new ObjectId(orderId) });

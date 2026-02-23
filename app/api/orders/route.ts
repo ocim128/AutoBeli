@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Product, Order } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const { slug, quantity } = validation.data!;
     const orderQuantity = quantity || 1;
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     // Additional DB-based rate limit (global safety cap)
@@ -180,7 +180,7 @@ export async function PATCH(request: Request) {
 
     const { orderId, contact } = validation.data!;
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     await db

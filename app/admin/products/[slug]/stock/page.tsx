@@ -385,13 +385,15 @@ export default function StockManagementPage({ params }: StockPageProps) {
                   }}
                   placeholder={`catm881100my0♦62 *2152 ♠2016 @hatm881100 =3274316224%3ARD1A7icsUgwZQw%3A10
 csseed240my00♦57 *180 ♠2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem777
-cayleenbarronku15ssrm♦52 *64 ♠2023 @aracelyhooperys10 =58471294198%3AvNXktennj6Xd52%3A0 2FA:MHMZGO4DGK65C4SSMAU74Z2G32IFPGAY`}
+cayleenbarronku15ssrm♦52 *64 ♠2023 @aracelyhooperys10 =58471294198%3AvNXktennj6Xd52%3A0 2FA:MHMZGO4DGK65C4SSMAU74Z2G32IFPGAY
+gpx52lo7@akunlama.com♦nurjanahirma9•upsieiclp#71412748854:eyJ...&OKRZBPCRJXCVISDLEXZE65MUB3ORYP6K`}
                   rows={6}
                   className="w-full border rounded p-3 font-mono text-sm bg-blue-50"
                 />
                 <div className="text-xs text-gray-400 mt-1">
-                  Format: email_prefix♦post *follower ♠year @username =sessionid [password]
-                  [2FA:secret]
+                  Format A: email_prefix♦post *follower ♠year @username =sessionid [password]
+                  [2FA:secret] | Format B:
+                  email@akunlama.com♦username•password#sessionid:token&2FASECRET
                 </div>
               </div>
 

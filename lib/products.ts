@@ -1,4 +1,4 @@
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Product } from "@/lib/definitions";
 import cache, { CACHE_KEYS, CACHE_TTL, getOrFetch } from "@/lib/cache";
 
@@ -14,7 +14,7 @@ export async function getActiveProducts(): Promise<(Product & { availableStock?:
   return getOrFetch(
     CACHE_KEYS.ACTIVE_PRODUCTS,
     async () => {
-      const client = await clientPromise;
+      const client = await getMongoClient();
       const db = client.db();
 
       // Get all active products
@@ -54,7 +54,7 @@ export async function getProductBySlug(
   return getOrFetch(
     CACHE_KEYS.PRODUCT_BY_SLUG(slug),
     async () => {
-      const client = await clientPromise;
+      const client = await getMongoClient();
       const db = client.db();
 
       const product = await db

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Order, Product } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     }
 
     const { orderId } = validation.data!;
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     // Get order

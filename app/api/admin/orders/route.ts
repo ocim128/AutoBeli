@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     const orders = await db

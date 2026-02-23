@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Order, Product } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
 import { validate, pakasirWebhookSchema } from "@/lib/validation";
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     const { order_id, amount, project } = validation.data!;
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     // 1. Find order by ID

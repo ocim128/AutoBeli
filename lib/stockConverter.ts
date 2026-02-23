@@ -1,8 +1,11 @@
 /**
  * Stock Converter Utility
- * Converts raw input lines to processed stock data
- * Based on the js-inspired-convert.txt logic
+ * Converts raw input lines to processed stock data.
  */
+
+const DIAMOND = "\u2666";
+const BULLET = "\u2022";
+const SPADE = "\u2660";
 
 export interface ConvertedStock {
   email: string;
@@ -10,12 +13,15 @@ export interface ConvertedStock {
   password: string;
   sessionid: string;
   twoFALink?: string;
-  rawContent: string; // The full formatted content to store
+  rawContent: string;
+}
+
+function normalizeRawLineSymbols(line: string): string {
+  return line.replaceAll("â™¦", DIAMOND).replaceAll("â€¢", BULLET).replaceAll("â™ ", SPADE);
 }
 
 /**
- * Process a single raw line and convert it to stock data
- * Supports the ♦ format: email_prefix♦post *follower ♠year @username =sessionid [password] [2FA:secret]
+ * Process a single raw line and convert it to stock data.
  */
 export function convertRawLine(line: string): ConvertedStock | null {
   const trimmedLine = line.trim();
@@ -25,22 +31,78 @@ export function convertRawLine(line: string): ConvertedStock | null {
     return null;
   }
 
-  // First priority: check for auth_token= format
-  if (trimmedLine.includes("auth_token=")) {
-    return processAuthTokenFormat(trimmedLine);
+  const normalizedLine = normalizeRawLineSymbols(trimmedLine);
+
+  // Priority 1: auth_token format
+  if (normalizedLine.includes("auth_token=")) {
+    return processAuthTokenFormat(normalizedLine);
   }
 
-  // Second priority: check for ♦ and = format (Instagram style)
-  if (trimmedLine.includes("♦") && trimmedLine.includes("=")) {
-    return processInstagramFormat(trimmedLine);
+  // Priority 2: akunlama credential format
+  if (isAkunlamaCredentialFormat(normalizedLine)) {
+    return processAkunlamaCredentialFormat(normalizedLine);
   }
 
-  // Third priority: fallback email processing
-  return processFallbackFormat(trimmedLine);
+  // Priority 3: Instagram style format
+  if (normalizedLine.includes(DIAMOND) && normalizedLine.includes("=")) {
+    return processInstagramFormat(normalizedLine);
+  }
+
+  // Priority 4: fallback email processing
+  return processFallbackFormat(normalizedLine);
+}
+
+function isAkunlamaCredentialFormat(line: string): boolean {
+  const pattern = new RegExp(
+    `^[^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+${DIAMOND}[^\\s${BULLET}]+${BULLET}[^\\s#]+#[^\\s&]+&\\S+$`
+  );
+  return pattern.test(line);
 }
 
 /**
- * Process auth_token format
+ * Format:
+ * email@domain.com♦username•password#sessionid:token&2FASECRET
+ *
+ * Output:
+ * email@domain.com
+ * username: username
+ * password:password
+ * Link Autentikasi: 2fa.akunlama.com/?secret=2FASECRET
+ */
+function processAkunlamaCredentialFormat(line: string): ConvertedStock | null {
+  const pattern = new RegExp(
+    `^([^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+)${DIAMOND}([^\\s${BULLET}]+)${BULLET}([^\\s#]+)#([^\\s&]+)&(\\S+)$`
+  );
+  const match = line.match(pattern);
+
+  if (!match) {
+    return null;
+  }
+
+  const email = match[1];
+  const username = match[2];
+  const password = match[3];
+  const sessionid = match[4];
+  const twoFASecret = match[5];
+  const twoFALink = `2fa.akunlama.com/?secret=${twoFASecret}`;
+
+  const rawContent = `${email}
+username: ${username}
+password:${password}
+Link Autentikasi: ${twoFALink}`;
+
+  return {
+    email,
+    username,
+    password,
+    sessionid,
+    twoFALink,
+    rawContent,
+  };
+}
+
+/**
+ * Process auth_token format.
  */
 function processAuthTokenFormat(line: string): ConvertedStock | null {
   const emailMatch = line.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
@@ -71,13 +133,12 @@ function processAuthTokenFormat(line: string): ConvertedStock | null {
     }
   }
 
-  const postMatch = line.match(/^(\d+)♠/);
+  const postMatch = line.match(new RegExp(`^(\\d+)${SPADE}`));
   const post = postMatch ? postMatch[1] : "0";
   const followerMatch = line.match(/(\d+)~/);
   const follower = followerMatch ? followerMatch[1] : "0";
   const yearMatch = line.match(/~\s*(\d+)/);
   const year = yearMatch ? yearMatch[1] : "N/A";
-
   const password = emailSuffix ? `charming@${emailSuffix}` : "N/A";
 
   const rawContent = `${email}
@@ -85,7 +146,7 @@ password: ${password}
 check email: https://akunlama.com/inbox/${emailUsername || "N/A"}
 auth_token=${authToken || "N/A"}
 
-Username•Post•Follower•Tahun = ${username || "N/A"}•${post || "N/A"}•${follower || "N/A"}•${year || "N/A"}`;
+Username${BULLET}Post${BULLET}Follower${BULLET}Tahun = ${username || "N/A"}${BULLET}${post || "N/A"}${BULLET}${follower || "N/A"}${BULLET}${year || "N/A"}`;
 
   return {
     email,
@@ -97,11 +158,13 @@ Username•Post•Follower•Tahun = ${username || "N/A"}•${post || "N/A"}•$
 }
 
 /**
- * Process Instagram format with ♦ symbol
+ * Process Instagram format.
  * Format: email_prefix♦post *follower ♠year @username =sessionid [password] [2FA:secret]
  */
 function processInstagramFormat(line: string): ConvertedStock | null {
-  const pattern = /^(.*?)♦(\d+)\s*\*(\d+)\s*♠(\S*)\s*@(\S+)\s*=(\S+)(?:\s+(.*))?$/;
+  const pattern = new RegExp(
+    `^(.*?)${DIAMOND}(\\d+)\\s*\\*(\\d+)\\s*${SPADE}(\\S*)\\s*@(\\S+)\\s*=(\\S+)(?:\\s+(.*))?$`
+  );
   const match = line.match(pattern);
 
   if (!match) {
@@ -117,7 +180,7 @@ function processInstagramFormat(line: string): ConvertedStock | null {
   const sessionid = match[6];
   const passwordSuffix = rawUsername.slice(-3);
 
-  let password = passwordSuffix + "@asem777";
+  let password = `${passwordSuffix}@asem777`;
   let twoFASecret: string | null = null;
 
   if (match[7]) {
@@ -134,7 +197,7 @@ function processInstagramFormat(line: string): ConvertedStock | null {
     }
   }
 
-  const email = rawUsername + "@akunlama.com";
+  const email = `${rawUsername}@akunlama.com`;
 
   let rawContent = `${email}
 username: ${extractedUsername}
@@ -159,7 +222,7 @@ sessionid=${sessionid}
 }
 
 /**
- * Fallback processing for other formats containing email
+ * Fallback processing for other formats containing email.
  */
 function processFallbackFormat(line: string): ConvertedStock | null {
   const emailMatch = line.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
@@ -175,7 +238,7 @@ function processFallbackFormat(line: string): ConvertedStock | null {
   const authToken = authTokenMatch ? authTokenMatch[1] : null;
   const usernameMatch = line.match(/@(\S+)/);
   const maybeUser = usernameMatch ? usernameMatch[1] : null;
-  const postMatch = line.match(/^(\d+)♠/);
+  const postMatch = line.match(new RegExp(`^(\\d+)${SPADE}`));
   const post = postMatch ? postMatch[1] : "0";
   const followerMatch = line.match(/(\d+)~/);
   const follower = followerMatch ? followerMatch[1] : "0";
@@ -191,7 +254,7 @@ password: ${password}
 check email: https://akunlama.com/inbox/${emailUsername || "N/A"}
 auth_token=${authToken || "N/A"}
 
-Username•Post•Follower•Tahun = ${maybeUser || "N/A"}•${post || "N/A"}•${follower || "N/A"}•${year || "N/A"}`;
+Username${BULLET}Post${BULLET}Follower${BULLET}Tahun = ${maybeUser || "N/A"}${BULLET}${post || "N/A"}${BULLET}${follower || "N/A"}${BULLET}${year || "N/A"}`;
 
     return {
       email,
@@ -200,7 +263,9 @@ Username•Post•Follower•Tahun = ${maybeUser || "N/A"}•${post || "N/A"}•
       sessionid: `auth_token=${authToken}`,
       rawContent,
     };
-  } else if (sessionid) {
+  }
+
+  if (sessionid) {
     const rawContent = `${email}
 username: ${maybeUser || "N/A"}
 password: ${password}
@@ -219,7 +284,7 @@ sessionid=${sessionid}`;
 }
 
 /**
- * Convert multiple lines of raw input to array of processed stock data
+ * Convert multiple lines of raw input to array of processed stock data.
  */
 export function convertBulkRawInput(rawInput: string): {
   converted: ConvertedStock[];

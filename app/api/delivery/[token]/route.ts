@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { AccessToken, Product, Order } from "@/lib/definitions";
 import { decryptContent } from "@/lib/crypto";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   }
 
   try {
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     // 1. Validate Token

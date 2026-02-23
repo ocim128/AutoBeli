@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Order, Product } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
 import { handleSuccessfulPayment } from "@/lib/orders";
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const _id = new ObjectId(orderId);
 

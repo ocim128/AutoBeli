@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { Product } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     const { title, slug, description, priceIdr, content, imageUrl, isActive } = validation.data!;
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const collection = db.collection<Product>("products");
 
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     if (slug) {
@@ -258,7 +258,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: updateValidation.error }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const collection = db.collection<Product>("products");
 

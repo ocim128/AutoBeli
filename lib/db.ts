@@ -1,52 +1,58 @@
 import { MongoClient, MongoClientOptions } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
+const envMongoUri = process.env.MONGODB_URI;
+if (!envMongoUri) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
+const mongoUri: string = envMongoUri;
 
-const uri = process.env.MONGODB_URI;
 const options: MongoClientOptions = {
-  // Connection timeouts
   connectTimeoutMS: 10000,
   socketTimeoutMS: 45000,
-  serverSelectionTimeoutMS: 5000,
-
-  // Force IPv4 (faster DNS resolution in many environments)
-  family: 4,
-
-  // Connection pool optimization
-  minPoolSize: 2, // Keep minimum connections warm
-  maxPoolSize: 10, // Limit max connections for serverless
-  maxIdleTimeMS: 30000, // Close idle connections after 30s
-
-  // Performance: Enable compression for large payloads
-  compressors: ["zstd", "snappy", "zlib"],
-
-  // Performance: Reduce latency with direct connection when possible
-  directConnection: false,
+  serverSelectionTimeoutMS: 10000,
+  maxPoolSize: 10,
+  maxIdleTimeMS: 30000,
 };
 
-console.log(`[MongoDB] Initializing client...`);
+type MongoGlobal = typeof globalThis & {
+  _mongoClient?: MongoClient;
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+const globalForMongo = globalThis as MongoGlobal;
 
-declare global {
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
+function createClient(): MongoClient {
+  return new MongoClient(mongoUri, options);
 }
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+/**
+ * Lazily connect and recover if a previous connect attempt failed.
+ * This prevents dev mode from getting stuck on a rejected cached promise.
+ */
+export async function getMongoClient(): Promise<MongoClient> {
+  if (globalForMongo._mongoClient) {
+    return globalForMongo._mongoClient;
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
-}
 
-export default clientPromise;
+  if (!globalForMongo._mongoClientPromise) {
+    const client = createClient();
+    globalForMongo._mongoClientPromise = client
+      .connect()
+      .then((connectedClient) => {
+        globalForMongo._mongoClient = connectedClient;
+        return connectedClient;
+      })
+      .catch(async (error) => {
+        globalForMongo._mongoClientPromise = undefined;
+        globalForMongo._mongoClient = undefined;
+        try {
+          await client.close();
+        } catch {
+          // Ignore close failures on failed initial connect.
+        }
+        throw error;
+      });
+  }
+
+  return globalForMongo._mongoClientPromise;
+}

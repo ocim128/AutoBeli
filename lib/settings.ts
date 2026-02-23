@@ -1,4 +1,4 @@
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { Settings } from "@/lib/definitions";
 
 const DEFAULT_SETTINGS: Settings = {
@@ -29,7 +29,7 @@ AutoBeli Store`,
 
 export async function getSettings(): Promise<Settings> {
   try {
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
 
     const settings = await db
@@ -49,7 +49,7 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
-  const client = await clientPromise;
+  const client = await getMongoClient();
   const db = client.db();
 
   const result = await db.collection<Settings>("settings").findOneAndUpdate(

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import { getMongoClient } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { Product, StockItem } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product slug is required" }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const collection = db.collection<Product>("products");
 
@@ -193,7 +193,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Product slug is required" }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const product = await db.collection<Product>("products").findOne({ slug });
 
@@ -247,7 +247,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Stock item ID is required" }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const collection = db.collection<Product>("products");
 
@@ -315,7 +315,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getMongoClient();
     const db = client.db();
     const collection = db.collection<Product>("products");
 
