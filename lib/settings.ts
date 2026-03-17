@@ -3,28 +3,6 @@ import { Settings } from "@/lib/definitions";
 
 const DEFAULT_SETTINGS: Settings = {
   emailEnabled: false,
-  emailFromName: "AutoBeli Store",
-  emailFromAddress: "",
-  emailSubjectTemplate: "Your purchase is complete - {{productTitle}}",
-  emailBodyTemplate: `Hello!
-
-Thank you for your purchase of **{{productTitle}}**.
-
-**Order Details:**
-- Order ID: {{orderId}}
-- Amount Paid: Rp {{amountPaid}}
-- Date: {{orderDate}}
-
-You can access your purchased content anytime at:
-{{orderLink}}
-
-If you have any questions, please reply to this email.
-
-Thank you for shopping with us!
-
-Best regards,
-AutoBeli Store`,
-  mailgunDomain: "",
 };
 
 export async function getSettings(): Promise<Settings> {

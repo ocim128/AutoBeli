@@ -38,7 +38,7 @@ export async function GET() {
  * /api/admin/settings:
  *   put:
  *     summary: Update application settings
- *     description: Updates application settings including email configuration. Requires admin authentication.
+ *     description: Updates application settings including outbound email toggles. Requires admin authentication.
  *     tags: [Admin]
  *     security:
  *       - cookieAuth: []
@@ -51,16 +51,6 @@ export async function GET() {
  *             properties:
  *               emailEnabled:
  *                 type: boolean
- *               emailFromName:
- *                 type: string
- *               emailFromAddress:
- *                 type: string
- *               emailSubjectTemplate:
- *                 type: string
- *               emailBodyTemplate:
- *                 type: string
- *               mailgunDomain:
- *                 type: string
  *     responses:
  *       200:
  *         description: Settings updated successfully

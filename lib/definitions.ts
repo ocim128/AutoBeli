@@ -73,11 +73,6 @@ export interface AccessToken {
 export interface Settings {
   _id?: ObjectId;
   emailEnabled: boolean;
-  emailFromName: string;
-  emailFromAddress: string;
-  emailSubjectTemplate: string;
-  emailBodyTemplate: string;
-  mailgunDomain: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -58,7 +58,7 @@ export default async function AdminDashboard() {
           className="block rounded-lg border p-6 hover:bg-gray-50 transition"
         >
           <h2 className="text-xl font-semibold">Email Settings</h2>
-          <p className="text-gray-500">Configure Mailgun email notifications.</p>
+          <p className="text-gray-500">Review outbound email status and order recovery guidance.</p>
         </Link>
       </div>
 

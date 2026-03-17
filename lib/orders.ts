@@ -4,7 +4,7 @@ import { Order, Product, AccessToken } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
 import { getPakasirTransactionStatus } from "@/lib/pakasir";
 import { generateAccessToken } from "@/lib/tokens";
-import { sendOrderConfirmationEmail } from "@/lib/mailgun";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 export type OrderWithProduct = Order & { product: Product };
 
@@ -60,7 +60,7 @@ export interface PaymentCompletionParams {
  * 2. Mark stock items as sold (skipped if isTest is true)
  * 3. Invalidate product cache
  * 4. Generate access token
- * 5. Send confirmation email (skipped if isTest is true)
+ * 5. Attempt best-effort confirmation email (skipped if isTest is true)
  */
 export async function handleSuccessfulPayment({
   orderId,
@@ -170,10 +170,10 @@ export async function handleSuccessfulPayment({
     await generateAccessToken(orderId);
   }
 
-  // 5. Send order confirmation email (SKIP IF TEST)
+  // 5. Attempt order confirmation email (SKIP IF TEST)
   if (order.customerContact && !isTestOrder) {
     try {
-      await sendOrderConfirmationEmail({
+      const emailResult = await sendOrderConfirmationEmail({
         orderId: orderId,
         productTitle: product.title,
         amountPaid: amount,
@@ -187,10 +187,13 @@ export async function handleSuccessfulPayment({
         customerEmail: order.customerContact,
       });
 
-      // Mark email as sent
-      await db
-        .collection<Order>("orders")
-        .updateOne({ _id: objectId }, { $set: { emailSent: true } });
+      if (emailResult.success) {
+        await db
+          .collection<Order>("orders")
+          .updateOne({ _id: objectId }, { $set: { emailSent: true } });
+      } else {
+        console.warn("Order confirmation email not sent:", emailResult.error);
+      }
     } catch (emailError) {
       console.error("Failed to send order confirmation email:", emailError);
     }
@@ -208,7 +211,7 @@ async function retrySendingEmail(orderId: string, order: Order, db: Db): Promise
       const product = await db.collection<Product>("products").findOne({ _id: order.productId });
 
       if (product) {
-        await sendOrderConfirmationEmail({
+        const emailResult = await sendOrderConfirmationEmail({
           orderId: orderId,
           productTitle: product.title,
           amountPaid: order.amountPaid,
@@ -222,13 +225,16 @@ async function retrySendingEmail(orderId: string, order: Order, db: Db): Promise
           customerEmail: order.customerContact,
         });
 
-        // Mark email as sent
-        await db
-          .collection<Order>("orders")
-          .updateOne(
-            { _id: new ObjectId(orderId) },
-            { $set: { emailSent: true, updatedAt: new Date() } }
-          );
+        if (emailResult.success) {
+          await db
+            .collection<Order>("orders")
+            .updateOne(
+              { _id: new ObjectId(orderId) },
+              { $set: { emailSent: true, updatedAt: new Date() } }
+            );
+        } else {
+          console.warn("Order confirmation email retry skipped:", emailResult.error);
+        }
       }
     } catch (emailError) {
       console.error("Failed to send order confirmation email on sync:", emailError);

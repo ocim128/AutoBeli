@@ -77,7 +77,7 @@ export const translations = {
       emailRequired: "Isi emailmu dulu ya",
       emailInvalid: "Hmm, emailnya kayaknya nggak valid deh",
       emailHelp:
-        "Link akses bakal dikirim ke email ini setelah bayar. Pakai email + ID pesanan kalau mau recover akses yang hilang ya!",
+        "Email ini dipakai buat recovery pesanan dan bantuan support. Setelah bayar, akses utamanya muncul di halaman pesananmu.",
       pay: "Bayar",
       processing: "Diproses...",
       supportedMethods: "Metode Pembayaran",
@@ -160,7 +160,7 @@ export const translations = {
       emailRequired: "Please enter your email address",
       emailInvalid: "Hmm, that email doesn't look right",
       emailHelp:
-        "We'll send the access link to this email after payment. Use this email + your order ID to recover lost access!",
+        "We use this email for order recovery and support. After payment, your primary access appears on the order page.",
       pay: "Pay",
       processing: "Processing...",
       supportedMethods: "Payment Methods",

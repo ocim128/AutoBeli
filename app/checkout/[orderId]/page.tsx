@@ -317,7 +317,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                 Complete Your Order
               </h1>
               <p className="text-gray-500">
-                Enter your email to receive your digital content after payment.
+                Enter your email for order recovery and support. Your access will appear on the
+                order page after payment.
               </p>
             </div>
 
