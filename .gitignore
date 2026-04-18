@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/worker/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -25,6 +26,7 @@
 # misc
 .DS_Store
 *.pem
+.tmp/
 
 # debug
 npm-debug.log*
@@ -34,14 +36,20 @@ yarn-error.log*
 
 # env files
 .env
+.env.check
+.env.temp
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+/worker/.env.production
 
 # vercel
 .vercel
+/worker/.wrangler
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

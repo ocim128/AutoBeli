@@ -1,0 +1,23 @@
+# Dedicated Cloudflare Worker for AutoBeli outbound transactional email.
+# This worker is intentionally separate from the akunlama disposable-email worker.
+
+name = "autobeli-outbound-email"
+main = "src/index.js"
+compatibility_date = "2026-04-18"
+workers_dev = true
+
+send_email = [{ name = "OUTBOUND_EMAIL" }]
+
+[vars]
+DEFAULT_FROM_EMAIL = "noreply@akunlama.com"
+DEFAULT_FROM_NAME = "AutoBeli"
+ALLOWED_FROM_DOMAINS = "akunlama.com"
+
+# Required secret:
+# npx wrangler secret put OUTBOUND_EMAIL_API_KEY --config wrangler.autobeli.toml
+#
+# Optional secret or var if you want replies somewhere specific:
+# DEFAULT_REPLY_TO = "support@akunlama.com"
+#
+# Deploy:
+# npx wrangler deploy --config wrangler.autobeli.toml

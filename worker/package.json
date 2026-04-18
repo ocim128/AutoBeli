@@ -1,0 +1,14 @@
+{
+  "name": "autobeli-outbound-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "npx wrangler deploy --config wrangler.autobeli.toml",
+    "tail": "npx wrangler tail --config wrangler.autobeli.toml",
+    "whoami": "npx wrangler whoami",
+    "dev": "npx wrangler dev --config wrangler.autobeli.toml"
+  },
+  "devDependencies": {
+    "wrangler": "^4.11.1"
+  }
+}

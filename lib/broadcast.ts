@@ -16,6 +16,12 @@ export interface BroadcastSendResult {
   warning?: string;
 }
 
+function buildLocalOutboxWarning(message?: string): string | undefined {
+  return message?.includes("local outbox")
+    ? "Email was written to the local outbox instead of being sent through Cloudflare"
+    : undefined;
+}
+
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value || "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -88,7 +94,7 @@ export async function sendProductBroadcastTest(params: {
   const emailResult = await sendPlainTextEmail(params.targetEmail, subject, body);
   const now = new Date();
   const status = emailResult.success ? "COMPLETED" : "FAILED";
-  let warning: string | undefined;
+  let warning = buildLocalOutboxWarning(emailResult.message);
 
   try {
     await logBroadcast(
@@ -178,6 +184,7 @@ export async function sendProductBroadcast(params: {
 
   let sentCount = 0;
   let failedCount = 0;
+  let warning: string | undefined;
   const sentAudienceIds: ObjectId[] = [];
 
   for (let index = 0; index < recipients.length; index += batchSize) {
@@ -195,6 +202,8 @@ export async function sendProductBroadcast(params: {
         if (entry.recipient._id) {
           sentAudienceIds.push(entry.recipient._id);
         }
+
+        warning = warning || buildLocalOutboxWarning(entry.result.message);
       } else {
         failedCount += 1;
       }
@@ -203,7 +212,6 @@ export async function sendProductBroadcast(params: {
 
   const completedAt = new Date();
   const status = failedCount === 0 ? "COMPLETED" : sentCount > 0 ? "PARTIAL" : "FAILED";
-  let warning: string | undefined;
 
   if (sentAudienceIds.length > 0) {
     try {
