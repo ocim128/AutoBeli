@@ -6,7 +6,7 @@ interface EmailData {
   customerEmail: string;
 }
 
-interface EmailSendResult {
+export interface EmailSendResult {
   success: boolean;
   message?: string;
   error?: string;
@@ -38,7 +38,11 @@ function buildBody(data: EmailData): string {
   ].join("\n");
 }
 
-export async function sendOrderConfirmationEmail(data: EmailData): Promise<EmailSendResult> {
+export async function sendPlainTextEmail(
+  to: string,
+  subject: string,
+  text: string
+): Promise<EmailSendResult> {
   const apiUrl = process.env.CLOUDFLARE_EMAIL_API_URL;
   const apiKey = process.env.CLOUDFLARE_EMAIL_API_KEY;
 
@@ -54,11 +58,7 @@ export async function sendOrderConfirmationEmail(data: EmailData): Promise<Email
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        to: data.customerEmail,
-        subject: buildSubject(data),
-        text: buildBody(data),
-      }),
+      body: JSON.stringify({ to, subject, text }),
     });
 
     if (!response.ok) {
@@ -72,4 +72,8 @@ export async function sendOrderConfirmationEmail(data: EmailData): Promise<Email
     console.error("[Email] Failed to call Cloudflare email API:", error);
     return { success: false, error: "Failed to send email" };
   }
+}
+
+export async function sendOrderConfirmationEmail(data: EmailData): Promise<EmailSendResult> {
+  return sendPlainTextEmail(data.customerEmail, buildSubject(data), buildBody(data));
 }

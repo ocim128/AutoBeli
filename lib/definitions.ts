@@ -76,3 +76,36 @@ export interface Settings {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface AudienceContact {
+  _id?: ObjectId;
+  email: string; // canonical active send target, normalized
+  aliases: string[]; // historical normalized emails linked to this audience row
+  allEmails: string[]; // [email, ...aliases], normalized, unique across the whole collection
+  source: "ORDER";
+  status: "ACTIVE" | "EXCLUDED" | "BOUNCED";
+  notes?: string;
+  lastBroadcastAt?: Date;
+  deletedAt?: Date;
+  restoredAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProductBroadcastLog {
+  _id?: ObjectId;
+  mode: "TEST" | "LIVE";
+  productId: ObjectId;
+  productSlug: string;
+  productTitle: string;
+  subject: string;
+  teaser: string;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  recipientsSample?: string[];
+  status: "COMPLETED" | "PARTIAL" | "FAILED";
+  requestedBy: "ADMIN";
+  createdAt: Date;
+  completedAt?: Date;
+}

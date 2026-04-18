@@ -142,4 +142,38 @@ export const RATE_LIMITS = {
   DELIVERY: { limit: 30, windowSeconds: 60 },
   // Order search: 5 requests per minute (security sensitive)
   ORDER_SEARCH: { limit: 5, windowSeconds: 60 },
+  // Audience export: 10 per 10 minutes
+  AUDIENCE_EXPORT: { limit: 10, windowSeconds: 600 },
+  // Broadcast test: 10 per 10 minutes
+  BROADCAST_TEST: { limit: 10, windowSeconds: 600 },
+  // Broadcast live: 3 per 15 minutes (high-risk, requires re-auth)
+  BROADCAST_LIVE: { limit: 3, windowSeconds: 900 },
 } as const;
+
+/**
+ * Verify an admin password matches the current admin password using constant-time comparison.
+ * Used for high-risk actions like live broadcast where re-authentication is required.
+ */
+export function verifyAdminPassword(password: string): boolean {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword || !password) return false;
+
+  // Constant-time comparison to prevent timing attacks
+  if (password.length !== adminPassword.length) {
+    // Still do a comparison to avoid leaking length via timing
+    const maxLen = Math.max(password.length, adminPassword.length);
+    let result = password.length !== adminPassword.length ? 1 : 0;
+    for (let i = 0; i < maxLen; i++) {
+      const a = i < password.length ? password.charCodeAt(i) : 0;
+      const b = i < adminPassword.length ? adminPassword.charCodeAt(i) : 0;
+      result |= a ^ b;
+    }
+    return result === 0;
+  }
+
+  let result = 0;
+  for (let i = 0; i < password.length; i++) {
+    result |= password.charCodeAt(i) ^ adminPassword.charCodeAt(i);
+  }
+  return result === 0;
+}

@@ -38,7 +38,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Quick Stats & Navigation */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <Link
           href="/admin/products"
           className="block rounded-lg border p-6 hover:bg-gray-50 transition"
@@ -59,6 +59,13 @@ export default async function AdminDashboard() {
         >
           <h2 className="text-xl font-semibold">Email Settings</h2>
           <p className="text-gray-500">Review outbound email status and order recovery guidance.</p>
+        </Link>
+        <Link
+          href="/admin/audience"
+          className="block rounded-lg border p-6 hover:bg-gray-50 transition"
+        >
+          <h2 className="text-xl font-semibold">Audience</h2>
+          <p className="text-gray-500">Manage saved customer emails and export the list.</p>
         </Link>
       </div>
 

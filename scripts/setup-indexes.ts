@@ -126,6 +126,47 @@ async function setupIndexes() {
     console.log("  ✅ Created unique index: tokens.token");
 
     // ========================================
+    // AUDIENCES COLLECTION INDEXES
+    // ========================================
+    console.log("\n📄 Setting up AUDIENCES indexes...");
+
+    await db.collection("audiences").createIndex({ email: 1 }, { name: "idx_audience_email" });
+    console.log("  ✅ Created index: audiences.email");
+
+    await db
+      .collection("audiences")
+      .createIndex({ allEmails: 1 }, { unique: true, name: "idx_audience_all_emails_unique" });
+    console.log("  ✅ Created unique multikey index: audiences.allEmails");
+
+    await db.collection("audiences").createIndex({ status: 1 }, { name: "idx_audience_status" });
+    console.log("  ✅ Created index: audiences.status");
+
+    await db
+      .collection("audiences")
+      .createIndex({ deletedAt: 1 }, { sparse: true, name: "idx_audience_deleted" });
+    console.log("  ✅ Created sparse index: audiences.deletedAt");
+
+    await db
+      .collection("audiences")
+      .createIndex({ updatedAt: -1 }, { name: "idx_audience_updated_desc" });
+    console.log("  ✅ Created index: audiences.updatedAt (descending)");
+
+    // ========================================
+    // BROADCASTS COLLECTION INDEXES
+    // ========================================
+    console.log("\n📄 Setting up BROADCASTS indexes...");
+
+    await db
+      .collection("broadcasts")
+      .createIndex({ createdAt: -1 }, { name: "idx_broadcast_created_desc" });
+    console.log("  ✅ Created index: broadcasts.createdAt (descending)");
+
+    await db
+      .collection("broadcasts")
+      .createIndex({ productId: 1 }, { name: "idx_broadcast_product" });
+    console.log("  ✅ Created index: broadcasts.productId");
+
+    // ========================================
     // SUMMARY
     // ========================================
     console.log("\n" + "=".repeat(50));
@@ -135,7 +176,7 @@ async function setupIndexes() {
     // List all indexes
     console.log("\n📊 Current indexes:\n");
 
-    for (const collection of ["products", "orders", "tokens"]) {
+    for (const collection of ["products", "orders", "tokens", "audiences", "broadcasts"]) {
       const indexes = await db.collection(collection).indexes();
       console.log(`  ${collection}:`);
       indexes.forEach((idx) => {

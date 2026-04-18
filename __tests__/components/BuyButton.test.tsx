@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import BuyButton from "@/components/BuyButton";
+import { ToastProvider } from "@/components/ui/Toast";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -40,20 +41,28 @@ describe("BuyButton Component", () => {
     mockFetch.mockReset();
   });
 
+  function renderBuyButton(slug: string) {
+    return render(
+      <ToastProvider>
+        <BuyButton slug={slug} />
+      </ToastProvider>
+    );
+  }
+
   it("renders Get Access Now button", () => {
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     expect(screen.getByRole("button")).toHaveTextContent("Get Access Now");
   });
 
   it("renders Get Access Now for any product", () => {
-    render(<BuyButton slug="premium-product" />);
+    renderBuyButton("premium-product");
 
     expect(screen.getByRole("button")).toHaveTextContent("Get Access Now");
   });
 
   it("shows secure payment messages", () => {
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     expect(screen.getByText(/certified secure/i)).toBeInTheDocument();
     expect(screen.getByText(/qris/i)).toBeInTheDocument();
@@ -65,7 +74,7 @@ describe("BuyButton Component", () => {
       json: async () => ({ orderId: "order123" }),
     });
 
-    render(<BuyButton slug="my-product" />);
+    renderBuyButton("my-product");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -87,7 +96,7 @@ describe("BuyButton Component", () => {
     // Never resolve the fetch to keep loading state
     mockFetch.mockImplementation(() => new Promise(() => {}));
 
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -103,42 +112,37 @@ describe("BuyButton Component", () => {
       ok: false,
     });
 
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
-
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(alertMock).toHaveBeenCalledWith("Error creating order. Please try again.");
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Error creating order. Please try again."
+      );
     });
-
-    alertMock.mockRestore();
   });
 
   it("shows alert on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
-
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(alertMock).toHaveBeenCalledWith("Error creating order. Please try again.");
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Error creating order. Please try again."
+      );
     });
-
-    alertMock.mockRestore();
   });
 
   it("re-enables button after error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
-    vi.spyOn(window, "alert").mockImplementation(() => {});
 
-    render(<BuyButton slug="test-product" />);
+    renderBuyButton("test-product");
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -155,7 +159,7 @@ describe("BuyButton Component", () => {
       json: async () => ({ orderId: "order123" }),
     });
 
-    render(<BuyButton slug="special-product-slug" />);
+    renderBuyButton("special-product-slug");
 
     fireEvent.click(screen.getByRole("button"));
 

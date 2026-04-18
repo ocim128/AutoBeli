@@ -149,6 +149,12 @@ export default function ProductList() {
                         Stock
                       </Link>
                       <Link
+                        href={`/admin/products/${p.slug}/broadcast`}
+                        className="text-emerald-600 hover:text-emerald-900 text-sm font-medium"
+                      >
+                        Broadcast
+                      </Link>
+                      <Link
                         href={`/admin/products/create?sourceSlug=${p.slug}`}
                         className="text-gray-600 hover:text-gray-900 text-sm font-medium"
                       >

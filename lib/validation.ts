@@ -39,10 +39,10 @@ export const updateOrderContactSchema = z.object({
     .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
   contact: z
     .string()
+    .trim()
     .min(1, "Email is required")
     .max(254, "Email too long")
-    .regex(REGEX_PATTERNS.email, "Must be a valid email address")
-    .optional(),
+    .regex(REGEX_PATTERNS.email, "Must be a valid email address"),
 });
 
 export const searchOrderSchema = z
@@ -145,6 +145,78 @@ export const updateSettingsSchema = z.object({
 });
 
 // ============================================
+// Audience Schemas
+// ============================================
+
+export const audienceQuerySchema = z.object({
+  search: z.string().max(254).optional(),
+  status: z.enum(["ACTIVE", "EXCLUDED", "BOUNCED"]).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
+export const updateAudienceSchema = z
+  .object({
+    email: z
+      .string()
+      .min(1)
+      .max(254)
+      .regex(REGEX_PATTERNS.email, "Must be a valid email address")
+      .optional(),
+    status: z.enum(["ACTIVE", "EXCLUDED", "BOUNCED"]).optional(),
+    notes: z.string().max(500).optional(),
+  })
+  .refine(
+    (data) => data.email !== undefined || data.status !== undefined || data.notes !== undefined,
+    {
+      message: "At least one field is required",
+    }
+  );
+
+export const exportAudienceSchema = z.object({
+  includeDeleted: z.enum(["1"]).optional(),
+});
+
+// ============================================
+// Broadcast Schemas
+// ============================================
+
+export const broadcastTestSchema = z
+  .object({
+    productId: z.string().regex(REGEX_PATTERNS.objectId, "Invalid product ID format").optional(),
+    slug: z.string().trim().max(100).regex(REGEX_PATTERNS.slug, "Invalid slug format").optional(),
+    teaser: z
+      .string()
+      .trim()
+      .min(10, "Teaser must be at least 10 characters")
+      .max(160, "Teaser must be at most 160 characters"),
+    targetEmail: z
+      .string()
+      .trim()
+      .min(1)
+      .max(254)
+      .regex(REGEX_PATTERNS.email, "Must be a valid email address"),
+  })
+  .refine((data) => data.productId || data.slug, {
+    message: "Either productId or slug is required",
+  });
+
+export const broadcastLiveSchema = z
+  .object({
+    productId: z.string().regex(REGEX_PATTERNS.objectId, "Invalid product ID format").optional(),
+    slug: z.string().trim().max(100).regex(REGEX_PATTERNS.slug, "Invalid slug format").optional(),
+    teaser: z
+      .string()
+      .trim()
+      .min(10, "Teaser must be at least 10 characters")
+      .max(160, "Teaser must be at most 160 characters"),
+    adminPassword: z.string().min(1, "Admin password is required").max(100),
+  })
+  .refine((data) => data.productId || data.slug, {
+    message: "Either productId or slug is required",
+  });
+
+// ============================================
 // Utility Types
 // ============================================
 
@@ -158,6 +230,11 @@ export type MockPaymentInput = z.infer<typeof mockPaymentSchema>;
 export type PakasirPaymentInput = z.infer<typeof pakasirPaymentSchema>;
 export type PakasirWebhookInput = z.infer<typeof pakasirWebhookSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
+export type AudienceQueryInput = z.infer<typeof audienceQuerySchema>;
+export type UpdateAudienceInput = z.infer<typeof updateAudienceSchema>;
+export type ExportAudienceInput = z.infer<typeof exportAudienceSchema>;
+export type BroadcastTestInput = z.infer<typeof broadcastTestSchema>;
+export type BroadcastLiveInput = z.infer<typeof broadcastLiveSchema>;
 
 // ============================================
 // Validation Helper

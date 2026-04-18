@@ -4,14 +4,19 @@
 import { describe, it, expect } from "vitest";
 import {
   validate,
+  audienceQuerySchema,
+  broadcastLiveSchema,
+  broadcastTestSchema,
   createOrderSchema,
   updateOrderContactSchema,
   createProductSchema,
+  exportAudienceSchema,
   updateProductSchema,
   loginSchema,
   mockPaymentSchema,
   pakasirPaymentSchema,
   pakasirWebhookSchema,
+  updateAudienceSchema,
 } from "@/lib/validation";
 
 describe("Validation Schemas", () => {
@@ -65,11 +70,12 @@ describe("Validation Schemas", () => {
       expect(result.success).toBe(true);
     });
 
-    it("accepts orderId without contact (optional)", () => {
+    it("rejects missing contact", () => {
       const result = validate(updateOrderContactSchema, {
         orderId: validOrderId,
       });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("expected string");
     });
 
     it("rejects invalid orderId format", () => {
@@ -111,6 +117,16 @@ describe("Validation Schemas", () => {
         contact: "user@",
       });
       expect(result.success).toBe(false);
+    });
+
+    it("trims whitespace around valid email", () => {
+      const result = validate(updateOrderContactSchema, {
+        orderId: validOrderId,
+        contact: "  customer@example.com  ",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.contact).toBe("customer@example.com");
     });
   });
 
@@ -388,6 +404,125 @@ describe("Validation Schemas", () => {
       delete withoutProject.project;
       const result = validate(pakasirWebhookSchema, withoutProject);
       expect(result.success).toBe(false);
+    });
+  });
+
+  // ================================================
+  // Audience Schemas
+  // ================================================
+  describe("audienceQuerySchema", () => {
+    it("accepts valid audience query params", () => {
+      const result = validate(audienceQuerySchema, {
+        search: "buyer@example.com",
+        status: "ACTIVE",
+        page: "2",
+        pageSize: "25",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.page).toBe(2);
+      expect(result.data?.pageSize).toBe(25);
+    });
+
+    it("rejects unsupported status", () => {
+      const result = validate(audienceQuerySchema, {
+        status: "DELETED",
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("updateAudienceSchema", () => {
+    it("accepts a valid audience update", () => {
+      const result = validate(updateAudienceSchema, {
+        email: "buyer@example.com",
+        status: "EXCLUDED",
+        notes: "Requested manual suppression",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects empty update payload", () => {
+      const result = validate(updateAudienceSchema, {});
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("At least one field is required");
+    });
+  });
+
+  describe("exportAudienceSchema", () => {
+    it('accepts includeDeleted="1"', () => {
+      const result = validate(exportAudienceSchema, { includeDeleted: "1" });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // ================================================
+  // Broadcast Schemas
+  // ================================================
+  describe("broadcastTestSchema", () => {
+    it("accepts a valid broadcast test payload", () => {
+      const result = validate(broadcastTestSchema, {
+        slug: "new-product",
+        teaser: "Cocok buat yang cari akses cepat tanpa ribet.",
+        targetEmail: "buyer@example.com",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects too-short teaser", () => {
+      const result = validate(broadcastTestSchema, {
+        slug: "new-product",
+        teaser: "Too short",
+        targetEmail: "buyer@example.com",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects teaser that is only whitespace", () => {
+      const result = validate(broadcastTestSchema, {
+        slug: "new-product",
+        teaser: "          ",
+        targetEmail: "buyer@example.com",
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("broadcastLiveSchema", () => {
+    it("accepts a valid live broadcast payload", () => {
+      const result = validate(broadcastLiveSchema, {
+        productId: "abcdef123456789012345678",
+        teaser: "Stock baru sudah ready dan bisa langsung dicek.",
+        adminPassword: "supersecret",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("requires either productId or slug", () => {
+      const result = validate(broadcastLiveSchema, {
+        teaser: "Stock baru sudah ready dan bisa langsung dicek.",
+        adminPassword: "supersecret",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Either productId or slug is required");
+    });
+
+    it("trims teaser input before validation", () => {
+      const result = validate(broadcastLiveSchema, {
+        slug: "new-product",
+        teaser: "   Stock baru sudah ready dan bisa langsung dicek.   ",
+        adminPassword: "supersecret",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.teaser).toBe("Stock baru sudah ready dan bisa langsung dicek.");
     });
   });
 

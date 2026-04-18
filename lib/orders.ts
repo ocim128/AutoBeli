@@ -5,6 +5,7 @@ import { invalidateProductCache } from "@/lib/products";
 import { getPakasirTransactionStatus } from "@/lib/pakasir";
 import { generateAccessToken } from "@/lib/tokens";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { upsertAudienceFromPaidOrder } from "@/lib/audience";
 
 export type OrderWithProduct = Order & { product: Product };
 
@@ -196,6 +197,15 @@ export async function handleSuccessfulPayment({
       }
     } catch (emailError) {
       console.error("Failed to send order confirmation email:", emailError);
+    }
+  }
+
+  // 6. Auto-sync audience from paid order
+  if (order.customerContact && !isTestOrder) {
+    try {
+      await upsertAudienceFromPaidOrder(order.customerContact, db);
+    } catch (audienceError) {
+      console.error("[Audience] Failed to sync audience from paid order:", audienceError);
     }
   }
 
