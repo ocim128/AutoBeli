@@ -1,4 +1,4 @@
-import { getProductBySlug } from "@/lib/products";
+import { getProductBySlug, serializeProductForClient } from "@/lib/products";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductClient } from "@/components/product/ProductClient";
@@ -44,10 +44,7 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  const serializedProduct = {
-    ...product,
-    _id: product._id?.toString() ?? "",
-  };
+  const serializedProduct = serializeProductForClient(product);
 
   return <ProductClient product={serializedProduct} />;
 }

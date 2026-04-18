@@ -2,6 +2,52 @@ import { getMongoClient } from "@/lib/db";
 import { Product } from "@/lib/definitions";
 import cache, { CACHE_KEYS, CACHE_TTL, getOrFetch } from "@/lib/cache";
 
+export interface SerializedStockItem {
+  id: string;
+  isSold: boolean;
+  soldAt?: string;
+  orderId?: string;
+}
+
+export interface SerializedProduct {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  priceIdr: number;
+  imageUrl?: string;
+  isActive: boolean;
+  isSold?: boolean;
+  availableStock?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  stockItems?: SerializedStockItem[];
+}
+
+export function serializeProductForClient(
+  product: Product & { availableStock?: number }
+): SerializedProduct {
+  return {
+    _id: product._id?.toString() ?? "",
+    title: product.title,
+    slug: product.slug,
+    description: product.description,
+    priceIdr: product.priceIdr,
+    imageUrl: product.imageUrl,
+    isActive: product.isActive,
+    isSold: product.isSold,
+    availableStock: product.availableStock,
+    createdAt: product.createdAt ? new Date(product.createdAt).toISOString() : undefined,
+    updatedAt: product.updatedAt ? new Date(product.updatedAt).toISOString() : undefined,
+    stockItems: product.stockItems?.map((item) => ({
+      id: item.id,
+      isSold: item.isSold,
+      orderId: item.orderId?.toString(),
+      soldAt: item.soldAt ? new Date(item.soldAt).toISOString() : undefined,
+    })),
+  };
+}
+
 /**
  * Get all active products with caching and request deduplication
  * Cache TTL: 1 minute

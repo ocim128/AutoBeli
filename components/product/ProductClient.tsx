@@ -5,17 +5,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import BuyButton from "@/components/BuyButton";
 import { KineticBackground } from "@/components/ui/KineticBackground";
 import ScrollAnimate from "@/components/ui/ScrollAnimate";
+import type { SerializedProduct } from "@/lib/products";
 
-interface Product {
-  slug: string;
-  title: string;
-  description?: string;
-  imageUrl?: string;
-  priceIdr: number;
-  availableStock?: number;
-}
-
-export function ProductClient({ product }: { product: Product }) {
+export function ProductClient({ product }: { product: SerializedProduct }) {
   const { t } = useLanguage();
 
   const features = [
@@ -103,9 +95,9 @@ export function ProductClient({ product }: { product: Product }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Left side - Visual & Info (7 columns) */}
-        <div className="lg:col-span-7 space-y-10">
+        <ScrollAnimate animation="scale" className="lg:col-span-7 min-w-0">
           {/* Product Hero Image with Kinetic Geometry */}
-          <ScrollAnimate animation="scale">
+          <div className="space-y-10">
             <div className="aspect-[16/10] relative overflow-hidden rounded-3xl bg-gray-900 shadow-2xl shadow-indigo-500/20 flex items-center justify-center group">
               {product.imageUrl ? (
                 <>
@@ -196,10 +188,8 @@ export function ProductClient({ product }: { product: Product }) {
                 </>
               )}
             </div>
-          </ScrollAnimate>
 
-          {/* Description Section */}
-          <ScrollAnimate animation="fade-up" delay={100}>
+            {/* Description Section */}
             <div className="space-y-8 bg-white p-8 md:p-10 rounded-3xl border border-gray-100 shadow-lg shadow-gray-100/50">
               <div>
                 <div className="flex items-center gap-3 mb-5">
@@ -250,12 +240,12 @@ export function ProductClient({ product }: { product: Product }) {
                 ))}
               </div>
             </div>
-          </ScrollAnimate>
-        </div>
+          </div>
+        </ScrollAnimate>
 
         {/* Right side - Purchase Box (5 columns) */}
-        <ScrollAnimate animation="slide-right">
-          <div className="lg:col-span-5 sticky top-28 space-y-6">
+        <ScrollAnimate animation="slide-right" className="lg:col-span-5 min-w-0">
+          <div className="sticky top-28 space-y-6">
             {/* Purchase Card with Kinetic Geometry */}
             <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 md:p-10 text-white shadow-2xl shadow-indigo-600/20 overflow-hidden">
               {/* Kinetic geometry accent */}

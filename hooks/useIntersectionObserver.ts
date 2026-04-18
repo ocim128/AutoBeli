@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 
 interface UseIntersectionObserverOptions {
   /** Threshold at which the callback is invoked (0-1) */
@@ -22,9 +22,9 @@ interface UseIntersectionObserverResult {
   hasBeenInView: boolean;
 }
 
-// Check if Intersection Observer is supported (computed once at module level)
-const isIntersectionObserverSupported =
-  typeof window !== "undefined" && typeof IntersectionObserver !== "undefined";
+const subscribe = () => () => {};
+const getServerSnapshot = () => false;
+const getIntersectionObserverSnapshot = () => typeof IntersectionObserver !== "undefined";
 
 /**
  * Custom hook for detecting when an element enters the viewport.
@@ -41,13 +41,18 @@ export function useIntersectionObserver({
   enabled = true,
 }: UseIntersectionObserverOptions = {}): UseIntersectionObserverResult {
   const ref = useRef<HTMLElement | null>(null);
+  const hasIntersectionObserver = useSyncExternalStore(
+    subscribe,
+    getIntersectionObserverSnapshot,
+    getServerSnapshot
+  );
 
-  // Initialize with fallback value for unsupported browsers
-  const [isInView, setIsInView] = useState(() => !isIntersectionObserverSupported);
-  const [hasBeenInView, setHasBeenInView] = useState(() => !isIntersectionObserverSupported);
+  // Keep SSR and the first client render identical to avoid hydration mismatches.
+  const [isInView, setIsInView] = useState(false);
+  const [hasBeenInView, setHasBeenInView] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !isIntersectionObserverSupported) return;
+    if (!enabled || !hasIntersectionObserver) return;
 
     const element = ref.current;
     if (!element) return;
@@ -70,7 +75,11 @@ export function useIntersectionObserver({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [threshold, rootMargin, triggerOnce, enabled]);
+  }, [threshold, rootMargin, triggerOnce, enabled, hasIntersectionObserver]);
 
-  return { ref, isInView, hasBeenInView };
+  return {
+    ref,
+    isInView: hasIntersectionObserver ? isInView : true,
+    hasBeenInView: hasIntersectionObserver ? hasBeenInView : true,
+  };
 }
