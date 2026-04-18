@@ -1,9 +1,38 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { KineticBackground } from "@/components/ui/KineticBackground";
 import { KineticOrbitalSVG } from "@/components/ui/KineticOrbitalSVG";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
+function LazyOrbital({ cx, cy, scale }: { cx: number; cy: number; scale: number }) {
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { ref, hasBeenInView } = useIntersectionObserver({
+    threshold: 0,
+    rootMargin: "100px",
+    triggerOnce: true,
+  });
+
+  // Always render the static fallback during SSR and initial hydration
+  // to avoid server/client mismatch when element is already in viewport
+  const showAnimated = mounted && hasBeenInView;
+
+  return (
+    <g ref={ref as unknown as React.RefObject<SVGGElement>}>
+      {showAnimated ? (
+        <KineticOrbitalSVG cx={cx} cy={cy} scale={scale} withGlow={false} />
+      ) : (
+        <circle cx={cx} cy={cy} r={20 * scale} fill="#4f46e5" opacity={0.3} />
+      )}
+    </g>
+  );
+}
 
 interface Product {
   slug: string;
@@ -199,7 +228,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                           viewBox="0 0 200 200"
                           preserveAspectRatio="xMidYMid slice"
                         >
-                          <KineticOrbitalSVG cx={100} cy={100} scale={0.2} withGlow={false} />
+                          <LazyOrbital cx={100} cy={100} scale={0.2} />
                           <circle
                             cx="100"
                             cy="100"
@@ -214,7 +243,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                             {product.slug.split("-")[0]?.toUpperCase() || "DIGITAL"}
                           </span>
                           <span className="text-xs text-indigo-300 uppercase tracking-widest">
-                            Rare Asset
+                            {t("home.rareAsset")}
                           </span>
                         </div>
                       </div>

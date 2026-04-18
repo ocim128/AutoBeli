@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Spinner from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 
 interface StockItem {
   id: string;
@@ -32,6 +34,7 @@ interface BulkError {
 
 export default function StockManagementPage({ params }: StockPageProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [slug, setSlug] = useState<string>("");
   const [stockItems, setStockItems] = useState<StockItem[]>([]);
   const [legacyContent, setLegacyContent] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
   const [addingStock, setAddingStock] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Bulk stock states
   const [bulkMode, setBulkMode] = useState(false);
@@ -129,7 +133,13 @@ export default function StockManagementPage({ params }: StockPageProps) {
   };
 
   const handleDeleteStock = async (stockItemId: string) => {
-    if (!confirm("Are you sure you want to delete this stock item?")) return;
+    if (!pendingDeleteId || pendingDeleteId !== stockItemId) {
+      setPendingDeleteId(stockItemId);
+      return;
+    }
+
+    // Confirmed — proceed with delete
+    setPendingDeleteId(null);
 
     try {
       const res = await fetch("/api/products/stock", {
@@ -247,7 +257,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
       setShowPreview(false);
 
       // Show success message with count
-      alert(`Successfully added ${data.addedCount} stock item(s)!`);
+      toast(`Successfully added ${data.addedCount} stock item(s)!`, "success");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -259,8 +269,18 @@ export default function StockManagementPage({ params }: StockPageProps) {
     }
   };
 
-  if (loading && !slug) return <div>Initializing...</div>;
-  if (loading) return <div>Loading stock data...</div>;
+  if (loading && !slug)
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner size={32} />
+      </div>
+    );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner size={32} />
+      </div>
+    );
 
   const availableCount = stockItems.filter((item) => !item.isSold).length;
   const soldCount = stockItems.filter((item) => item.isSold).length;
@@ -288,7 +308,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
       )}
 
       {/* Stock Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white p-6 rounded-lg border shadow-sm">
           <div className="text-3xl font-bold text-gray-900">{stockItems.length}</div>
           <div className="text-sm text-gray-500">Total Stock</div>
@@ -542,19 +562,36 @@ gpx52lo7@akunlama.com♦nurjanahirma9•upsieiclp#71412748854:eyJ...&OKRZBPCRJXC
                   </div>
 
                   {!item.isSold && editingId !== item.id && (
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 items-center">
                       <button
                         onClick={() => startEditing(item)}
                         className="px-3 py-1 text-indigo-600 border border-indigo-200 text-sm rounded hover:bg-indigo-50"
                       >
                         Edit
                       </button>
-                      <button
-                        onClick={() => handleDeleteStock(item.id)}
-                        className="px-3 py-1 text-red-600 border border-red-200 text-sm rounded hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
+                      {pendingDeleteId === item.id ? (
+                        <>
+                          <button
+                            onClick={() => handleDeleteStock(item.id)}
+                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setPendingDeleteId(null)}
+                            className="px-3 py-1 border text-sm rounded hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteStock(item.id)}
+                          className="px-3 py-1 text-red-600 border border-red-200 text-sm rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

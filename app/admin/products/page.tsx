@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Spinner from "@/components/ui/Spinner";
 
 interface ProductWithStock {
   slug: string;
@@ -31,6 +32,7 @@ function getStockInfo(product: ProductWithStock) {
 export default function ProductList() {
   const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/products")
@@ -38,10 +40,26 @@ export default function ProductList() {
       .then((data) => {
         if (data.products) setProducts(data.products);
       })
+      .catch(() => setError("Failed to load products"))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner size={32} />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex justify-between items-center">
+        <span>{error}</span>
+        <button onClick={() => setError("")} className="text-red-500 font-bold hover:text-red-700">
+          &times;
+        </button>
+      </div>
+    );
 
   return (
     <div>
@@ -53,94 +71,96 @@ export default function ProductList() {
       </div>
 
       <div className="bg-white rounded-lg shadow border overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="p-4">Title</th>
-              <th className="p-4">Price</th>
-              <th className="p-4">Stock</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Created</th>
-              <th className="p-4">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
               <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500">
-                  No products found.
-                </td>
+                <th className="p-4">Title</th>
+                <th className="p-4">Price</th>
+                <th className="p-4">Stock</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Created</th>
+                <th className="p-4">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
-            )}
-            {products.map((p) => {
-              const stock = getStockInfo(p);
-              const isSoldOut = stock.available === 0;
-
-              return (
-                <tr key={p.slug} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="p-4">
-                    <div className="font-medium">{p.title}</div>
-                    <div className="text-xs text-gray-400">/{p.slug}</div>
-                  </td>
-                  <td className="p-4">Rp {p.priceIdr.toLocaleString("id-ID")}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`font-medium ${isSoldOut ? "text-red-600" : "text-green-600"}`}
-                      >
-                        {stock.available}
-                      </span>
-                      <span className="text-gray-400">/ {stock.total}</span>
-                      {stock.hasStock && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
-                          Multi
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        isSoldOut
-                          ? "bg-blue-100 text-blue-800"
-                          : p.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {isSoldOut ? "Sold Out" : p.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-500">
-                    {new Date(p.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-right space-x-3">
-                    <Link
-                      href={`/admin/products/${p.slug}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                    >
-                      Edit
-                    </Link>
-                    <Link
-                      href={`/admin/products/${p.slug}/stock`}
-                      className="text-purple-600 hover:text-purple-900 text-sm font-medium"
-                    >
-                      Stock
-                    </Link>
-                    <Link
-                      href={`/admin/products/create?sourceSlug=${p.slug}`}
-                      className="text-gray-600 hover:text-gray-900 text-sm font-medium"
-                    >
-                      Duplicate
-                    </Link>
+            </thead>
+            <tbody>
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-gray-500">
+                    No products found.
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              )}
+              {products.map((p) => {
+                const stock = getStockInfo(p);
+                const isSoldOut = stock.available === 0;
+
+                return (
+                  <tr key={p.slug} className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="font-medium">{p.title}</div>
+                      <div className="text-xs text-gray-400">/{p.slug}</div>
+                    </td>
+                    <td className="p-4">Rp {p.priceIdr.toLocaleString("id-ID")}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-medium ${isSoldOut ? "text-red-600" : "text-green-600"}`}
+                        >
+                          {stock.available}
+                        </span>
+                        <span className="text-gray-400">/ {stock.total}</span>
+                        {stock.hasStock && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                            Multi
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          isSoldOut
+                            ? "bg-blue-100 text-blue-800"
+                            : p.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {isSoldOut ? "Sold Out" : p.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-gray-500">
+                      {new Date(p.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-right space-x-3">
+                      <Link
+                        href={`/admin/products/${p.slug}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                      >
+                        Edit
+                      </Link>
+                      <Link
+                        href={`/admin/products/${p.slug}/stock`}
+                        className="text-purple-600 hover:text-purple-900 text-sm font-medium"
+                      >
+                        Stock
+                      </Link>
+                      <Link
+                        href={`/admin/products/create?sourceSlug=${p.slug}`}
+                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                      >
+                        Duplicate
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

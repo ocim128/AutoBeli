@@ -2,10 +2,18 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Spinner from "@/components/ui/Spinner";
+import FormInput from "@/components/ui/FormInput";
 
 export default function CreateProduct() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-12">
+          <Spinner size={32} />
+        </div>
+      }
+    >
       <CreateProductContent />
     </Suspense>
   );
@@ -103,57 +111,48 @@ function CreateProductContent() {
 
       <form onSubmit={handleSubmit} className="space-y-4 border p-6 rounded-lg bg-white shadow-sm">
         {/* Title */}
-        <div>
-          <label className="block text-sm font-medium">Title</label>
-          <input
-            type="text"
-            name="title"
-            required
-            className="w-full border rounded p-2"
-            value={form.title}
-            onChange={(e) => {
-              // Auto-slug
-              const val = e.target.value;
-              setForm((prev) => ({
-                ...prev,
-                title: val,
-                slug: prev.slug || val.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-              }));
-            }}
-          />
-        </div>
+        <FormInput
+          id="title"
+          label="Title"
+          value={form.title}
+          onChange={(val) => {
+            setForm((prev) => ({
+              ...prev,
+              title: val,
+              slug: prev.slug || val.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            }));
+          }}
+          required
+        />
 
         {/* Slug */}
-        <div>
-          <label className="block text-sm font-medium">Slug (URL)</label>
-          <input
-            type="text"
-            name="slug"
-            required
-            className="w-full border rounded p-2 bg-gray-50"
-            value={form.slug}
-            onChange={handleChange}
-          />
-        </div>
+        <FormInput
+          id="slug"
+          label="Slug (URL)"
+          value={form.slug}
+          onChange={(val) => setForm((prev) => ({ ...prev, slug: val }))}
+          required
+          className="bg-gray-50"
+        />
 
         {/* Price */}
-        <div>
-          <label className="block text-sm font-medium">Price (IDR)</label>
-          <input
-            type="number"
-            name="priceIdr"
-            required
-            min="0"
-            className="w-full border rounded p-2"
-            value={form.priceIdr}
-            onChange={handleChange}
-          />
-        </div>
+        <FormInput
+          id="priceIdr"
+          label="Price (IDR)"
+          type="number"
+          value={String(form.priceIdr)}
+          onChange={(val) => setForm((prev) => ({ ...prev, priceIdr: Number(val) }))}
+          required
+          min={0}
+        />
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium">Description</label>
+          <label htmlFor="description" className="block text-sm font-medium">
+            Description
+          </label>
           <textarea
+            id="description"
             name="description"
             rows={3}
             className="w-full border rounded p-2"
@@ -164,14 +163,13 @@ function CreateProductContent() {
 
         {/* Image URL */}
         <div>
-          <label className="block text-sm font-medium">Image URL (Optional)</label>
-          <input
+          <FormInput
+            id="imageUrl"
+            label="Image URL (Optional)"
             type="url"
-            name="imageUrl"
-            placeholder="https://example.com/image.jpg"
-            className="w-full border rounded p-2"
             value={form.imageUrl}
-            onChange={handleChange}
+            onChange={(val) => setForm((prev) => ({ ...prev, imageUrl: val }))}
+            placeholder="https://example.com/image.jpg"
           />
           {form.imageUrl && (
             <div className="mt-2 text-xs text-gray-500">
@@ -189,11 +187,14 @@ function CreateProductContent() {
 
         {/* Content */}
         <div>
-          <label className="block text-sm font-medium">Content (The Product)</label>
+          <label htmlFor="content" className="block text-sm font-medium">
+            Content (The Product)
+          </label>
           <p className="text-xs text-gray-500 mb-1">
             This text will be encrypted and delivered only after payment.
           </p>
           <textarea
+            id="content"
             name="content"
             required
             rows={6}
@@ -208,11 +209,12 @@ function CreateProductContent() {
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
+            id="isActive"
             checked={form.isActive}
             onChange={handleCheckbox}
             className="h-4 w-4"
           />
-          <label>Active (Visible in store)</label>
+          <label htmlFor="isActive">Active (Visible in store)</label>
         </div>
 
         {error && <div className="text-red-600 text-sm">{error}</div>}

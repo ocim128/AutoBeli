@@ -146,16 +146,3 @@ function LazyImage({
 }
 
 export default memo(LazyImage);
-
-/**
- * Utility to generate a simple blur placeholder color
- * Call this server-side or at build time
- */
-export function generateBlurDataURL(color: string = "#e5e7eb"): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect fill="${color}" width="8" height="8"/></svg>`;
-  if (typeof btoa !== "undefined") {
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
-  }
-  // Node.js fallback
-  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
-}

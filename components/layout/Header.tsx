@@ -41,10 +41,11 @@ export function Header() {
         </Link>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-2" aria-label="Main navigation">
           {/* Language Toggle */}
           <button
             onClick={() => setLanguage(language === "id" ? "en" : "id")}
+            aria-label="Switch language"
             className="relative px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all overflow-hidden group"
           >
             <span className="relative z-10">{language === "id" ? "EN" : "ID"}</span>

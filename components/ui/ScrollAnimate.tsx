@@ -101,23 +101,3 @@ function ScrollAnimate({
 }
 
 export default memo(ScrollAnimate);
-
-/**
- * Pre-styled staggered animation container.
- * Use this with ScrollAnimate children with increasing delay props.
- */
-interface StaggerContainerProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-export const StaggerContainer = memo(function StaggerContainer({
-  children,
-  className,
-  ...props
-}: StaggerContainerProps) {
-  return (
-    <div className={cn("stagger-container", className)} {...props}>
-      {children}
-    </div>
-  );
-});

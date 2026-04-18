@@ -39,7 +39,10 @@ export function Footer() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-6">
+          <nav
+            className="flex flex-wrap items-center justify-center gap-6"
+            aria-label="Footer navigation"
+          >
             <Link
               href="/recover"
               className="flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors group"

@@ -4,6 +4,7 @@ import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/ui/Spinner";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/ui/Toast";
 
 interface BuyButtonProps {
   slug: string;
@@ -15,6 +16,7 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const handleBuy = useCallback(async () => {
     setLoading(true);
@@ -30,10 +32,10 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
       const data = await res.json();
       router.push(`/checkout/${data.orderId}`);
     } catch {
-      alert("Error creating order. Please try again.");
+      toast("Error creating order. Please try again.", "error");
       setLoading(false);
     }
-  }, [slug, quantity, router]);
+  }, [slug, quantity, router, toast]);
 
   const canIncrement = quantity < maxQuantity;
   const canDecrement = quantity > 1;

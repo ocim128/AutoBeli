@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/components/ui/Spinner";
 
 export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
@@ -26,8 +27,6 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
   // Fetch product data
   useEffect(() => {
-    if (!slug) return;
-
     if (!slug) return;
 
     // Fetch specific product (which will return decrypted content for admin)
@@ -55,7 +54,10 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "priceIdr" ? Number(value) : value,
+    }));
   };
 
   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,8 +107,18 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
     }
   };
 
-  if (loading && !slug) return <div>Initializing...</div>;
-  if (loading) return <div>Loading Product...</div>;
+  if (loading && !slug)
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner size={32} />
+      </div>
+    );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner size={32} />
+      </div>
+    );
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -116,9 +128,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
       <form onSubmit={handleSubmit} className="space-y-4 border p-6 rounded-lg bg-white shadow-sm">
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium">Title</label>
+          <label htmlFor="title" className="block text-sm font-medium">
+            Title
+          </label>
           <input
             type="text"
+            id="title"
             name="title"
             required
             className="w-full border rounded p-2"
@@ -129,9 +144,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
         {/* Price */}
         <div>
-          <label className="block text-sm font-medium">Price (IDR)</label>
+          <label htmlFor="priceIdr" className="block text-sm font-medium">
+            Price (IDR)
+          </label>
           <input
             type="number"
+            id="priceIdr"
             name="priceIdr"
             required
             min="0"
@@ -143,8 +161,11 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium">Description</label>
+          <label htmlFor="description" className="block text-sm font-medium">
+            Description
+          </label>
           <textarea
+            id="description"
             name="description"
             rows={3}
             className="w-full border rounded p-2"
@@ -155,9 +176,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
         {/* Image URL */}
         <div>
-          <label className="block text-sm font-medium">Image URL (Optional)</label>
+          <label htmlFor="imageUrl" className="block text-sm font-medium">
+            Image URL (Optional)
+          </label>
           <input
             type="url"
+            id="imageUrl"
             name="imageUrl"
             placeholder="https://example.com/image.jpg"
             className="w-full border rounded p-2"
@@ -180,9 +204,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
         {/* Content */}
         <div>
-          <label className="block text-sm font-medium">Current Content</label>
+          <label htmlFor="content" className="block text-sm font-medium">
+            Current Content
+          </label>
           <p className="text-xs text-gray-500 mb-1">Edit to update encrypted content.</p>
           <textarea
+            id="content"
             name="content"
             rows={6}
             className="w-full border rounded p-2 font-mono text-sm bg-yellow-50"
@@ -194,12 +221,15 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
         {/* Post-Purchase Template */}
         <div>
-          <label className="block text-sm font-medium">Post-Purchase Template</label>
+          <label htmlFor="postPurchaseTemplate" className="block text-sm font-medium">
+            Post-Purchase Template
+          </label>
           <p className="text-xs text-gray-500 mb-1">
             Optional message shown with all stock items after purchase. Great for &quot;Thank
             you&quot; messages.
           </p>
           <textarea
+            id="postPurchaseTemplate"
             name="postPurchaseTemplate"
             rows={3}
             className="w-full border rounded p-2 text-sm bg-green-50"
@@ -213,11 +243,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
+            id="isActive"
             checked={form.isActive}
             onChange={handleCheckbox}
             className="h-4 w-4"
           />
-          <label>Active (Visible in store)</label>
+          <label htmlFor="isActive">Active (Visible in store)</label>
         </div>
 
         <div className="flex justify-end gap-2 text-sm">

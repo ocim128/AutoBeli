@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface UseIntersectionObserverOptions {
   /** Threshold at which the callback is invoked (0-1) */
@@ -73,77 +73,4 @@ export function useIntersectionObserver({
   }, [threshold, rootMargin, triggerOnce, enabled]);
 
   return { ref, isInView, hasBeenInView };
-}
-
-/**
- * Hook for creating a ref callback that can be used with list items.
- * Returns a callback ref function and inView state for a single element.
- */
-export function useIntersectionObserverCallback(options: UseIntersectionObserverOptions = {}): {
-  setRef: (el: HTMLElement | null) => void;
-  isInView: boolean;
-  hasBeenInView: boolean;
-} {
-  const { threshold = 0.1, rootMargin = "0px", triggerOnce = true, enabled = true } = options;
-
-  const elementRef = useRef<HTMLElement | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const [isInView, setIsInView] = useState(() => !isIntersectionObserverSupported);
-  const [hasBeenInView, setHasBeenInView] = useState(() => !isIntersectionObserverSupported);
-
-  // Create observer lazily
-  const getObserver = useCallback(() => {
-    if (!isIntersectionObserverSupported) return null;
-
-    if (!observerRef.current) {
-      observerRef.current = new IntersectionObserver(
-        ([entry]) => {
-          const inView = entry.isIntersecting;
-          setIsInView(inView);
-          if (inView) {
-            setHasBeenInView(true);
-            if (triggerOnce && observerRef.current) {
-              observerRef.current.disconnect();
-            }
-          }
-        },
-        { threshold, rootMargin }
-      );
-    }
-    return observerRef.current;
-  }, [threshold, rootMargin, triggerOnce]);
-
-  const setRef = useCallback(
-    (el: HTMLElement | null) => {
-      if (!enabled || !isIntersectionObserverSupported) return;
-
-      const observer = getObserver();
-      if (!observer) return;
-
-      // Unobserve previous element
-      if (elementRef.current) {
-        observer.unobserve(elementRef.current);
-      }
-
-      elementRef.current = el;
-
-      // Observe new element
-      if (el) {
-        observer.observe(el);
-      }
-    },
-    [enabled, getObserver]
-  );
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  return { setRef, isInView, hasBeenInView };
 }

@@ -11,23 +11,6 @@
   --color-dark-bg: #0a0a0b;
   --color-dark-card: #121214;
   --color-dark-border: #1f1f23;
-
-  /* Golden Ratio Spacing System (Fibonacci-based) */
-  --space-xs: 0.5rem;
-  /* 8px */
-  --space-sm: 0.8125rem;
-  /* 13px */
-  --space-md: 1.3125rem;
-  /* 21px */
-  --space-lg: 2.125rem;
-  /* 34px */
-  --space-xl: 3.4375rem;
-  /* 55px */
-  --space-2xl: 5.5625rem;
-  /* 89px */
-
-  /* Golden ratio */
-  --phi: 1.618;
 }
 
 :root {
@@ -37,15 +20,6 @@
   --card-foreground: #0a0a0b;
   --border: #e2e8f0;
   --ring: #6366f1;
-}
-
-[data-theme="dark"] {
-  --background: #0a0a0b;
-  --foreground: #f8fafc;
-  --card: #121214;
-  --card-foreground: #f8fafc;
-  --border: #1f1f23;
-  --ring: #818cf8;
 }
 
 html {
@@ -61,14 +35,6 @@ body {
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Glassmorphism utility */
-.glass {
-  background: rgba(var(--background), 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
 }
 
 /* Custom Scrollbar */
@@ -233,40 +199,6 @@ body {
   animation: scale-in 0.3s ease-out forwards;
 }
 
-/* Bounce Gentle Animation */
-@keyframes bounce-gentle {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.animate-bounce-gentle {
-  animation: bounce-gentle 2s ease-in-out infinite;
-}
-
-/* Glow Pulse Animation */
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
 /* Head Shake Animation for Errors */
 @keyframes head-shake {
   0% {
@@ -328,8 +260,6 @@ body {
   .animate-shimmer,
   .animate-slide-up,
   .animate-scale-in,
-  .animate-bounce-gentle,
-  .animate-glow-pulse,
   .animate-head-shake,
   .animate-orbit-slow,
   .animate-orbit-medium,
@@ -357,156 +287,7 @@ body {
   will-change: transform;
 }
 
-/* Smooth page transitions */
-.page-transition-enter {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.page-transition-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 300ms,
-    transform 300ms;
-}
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.2);
-}
-
-/* Button press effect */
-.btn-press:active {
-  transform: scale(0.98);
-}
-
-/* Scroll-triggered animations */
-@keyframes scroll-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scroll-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes scroll-slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(-40px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes scroll-slide-right {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Scroll animation classes */
-.scroll-fade-in {
-  animation: scroll-fade-in 0.6s ease-out both;
-}
-
-.scroll-scale-in {
-  animation: scroll-scale-in 0.5s ease-out both;
-}
-
-.scroll-slide-left {
-  animation: scroll-slide-left 0.6s ease-out both;
-}
-
-.scroll-slide-right {
-  animation: scroll-slide-right 0.6s ease-out both;
-}
-
-/* Staggered animation delays */
-.stagger-1 {
-  animation-delay: 0.1s;
-}
-
-.stagger-2 {
-  animation-delay: 0.2s;
-}
-
-.stagger-3 {
-  animation-delay: 0.3s;
-}
-
-.stagger-4 {
-  animation-delay: 0.4s;
-}
-
-.stagger-5 {
-  animation-delay: 0.5s;
-}
-
-.stagger-6 {
-  animation-delay: 0.6s;
-}
-
-/* Kinetic geometry card hover */
-.kinetic-card {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.kinetic-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    rgba(99, 102, 241, 0.1) 0%,
-    transparent 50%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.kinetic-card:hover::before {
-  opacity: 1;
-}
-
-.kinetic-card:hover {
-  transform: translateY(-8px);
-  box-shadow:
-    0 25px 50px -12px rgba(99, 102, 241, 0.15),
-    0 0 0 1px rgba(99, 102, 241, 0.1);
-}
+/* Scroll-triggered animations — kept @keyframes for reference but classes migrated to ScrollAnimate component */
 
 /* Toast Animations */
 @keyframes slide-in-right {
@@ -539,56 +320,4 @@ body {
 
 .animate-slide-out-right {
   animation: slide-out-right 0.2s ease-in forwards;
-}
-
-/* Optimistic Update Pulse - for optimistic UI feedback */
-@keyframes optimistic-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.animate-optimistic {
-  animation: optimistic-pulse 1.5s ease-in-out infinite;
-}
-
-/* Intersection Observer Animations */
-.animate-on-scroll {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity 0.6s ease-out,
-    transform 0.6s ease-out;
-}
-
-.animate-on-scroll.in-view {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Scale variant for scroll animations */
-.animate-on-scroll-scale {
-  opacity: 0;
-  transform: scale(0.95);
-  transition:
-    opacity 0.5s ease-out,
-    transform 0.5s ease-out;
-}
-
-.animate-on-scroll-scale.in-view {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Orbital loader container */
-.orbital-loader {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }

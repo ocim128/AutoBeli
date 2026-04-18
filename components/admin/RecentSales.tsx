@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFocusTrap } from "@/hooks/useKeyboard";
 
 interface RecentSale {
   _id: string;
@@ -62,6 +63,18 @@ export default function RecentSales() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSale, setSelectedSale] = useState<RecentSale | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(modalRef as React.RefObject<HTMLElement>, { enabled: !!selectedSale });
+
+  useEffect(() => {
+    if (!selectedSale) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedSale(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedSale]);
 
   useEffect(() => {
     fetch("/api/admin/recent-sales")
@@ -162,8 +175,18 @@ export default function RecentSales() {
 
       {/* Detail Modal */}
       {selectedSale && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedSale(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Order Details"
+            ref={modalRef}
+          >
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-start">
                 <h3 className="text-xl font-bold text-gray-900">Order Details</h3>

@@ -2,8 +2,10 @@
 
 import { useState, useCallback, memo } from "react";
 import { getErrorMessage } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 function ContentViewer({ token }: { token: string }) {
+  const { t } = useLanguage();
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -78,10 +80,10 @@ function ContentViewer({ token }: { token: string }) {
               </div>
 
               <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">
-                Content Encrypted
+                {t("contentViewer.contentEncrypted")}
               </h2>
               <p className="text-gray-400 mb-10 max-w-sm mx-auto font-medium text-sm leading-relaxed">
-                Click below to initialize secure decryption and retrieve your digital asset.
+                {t("contentViewer.encryptedDesc")}
               </p>
 
               <button
@@ -90,7 +92,7 @@ function ContentViewer({ token }: { token: string }) {
                 className="group relative px-12 py-5 bg-white text-gray-900 font-extrabold rounded-2xl shadow-xl hover:-translate-y-1 active:translate-y-0 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10">
-                  {loading ? "DECRYPTING..." : "UNLOCK CONTENT"}
+                  {loading ? t("contentViewer.decrypting") : t("contentViewer.unlockContent")}
                 </span>
               </button>
 
@@ -104,13 +106,13 @@ function ContentViewer({ token }: { token: string }) {
             <div className="space-y-8 animate-in fade-in zoom-in duration-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                  Decrypted Data
+                  {t("contentViewer.decryptedData")}
                 </span>
                 <button
                   onClick={handleCopy}
                   className="bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all text-[10px] font-black tracking-widest uppercase px-4 py-2 rounded-xl border border-white/10"
                 >
-                  {copied ? "COPIED!" : "COPY TO CLIPBOARD"}
+                  {copied ? t("contentViewer.copied") : t("contentViewer.copyToClipboard")}
                 </button>
               </div>
 
@@ -133,11 +135,11 @@ function ContentViewer({ token }: { token: string }) {
                     </svg>
                   </div>
                   <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-                    Verified Integrity Check Passed
+                    {t("contentViewer.verifiedIntegrity")}
                   </span>
                 </div>
                 <p className="text-[9px] text-gray-600 font-bold max-w-[200px] text-center md:text-right">
-                  This content was delivered via an end-to-end encrypted session.
+                  {t("contentViewer.encryptedSession")}
                 </p>
               </div>
             </div>
