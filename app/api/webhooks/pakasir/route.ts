@@ -72,12 +72,15 @@ export async function POST(request: Request) {
         verifiedStatus = verification.data.transaction.status;
       } else {
         console.error("Pakasir webhook: Transaction verification failed");
-        return NextResponse.json({ success: true, message: "Verification failed" });
+        return NextResponse.json(
+          { success: false, message: "Verification failed, please retry" },
+          { status: 502 }
+        );
       }
     }
 
     if (verifiedStatus !== "completed") {
-      return NextResponse.json({ success: true, message: "Not completed" });
+      return NextResponse.json({ success: false, message: "Not completed" }, { status: 200 });
     }
 
     // 4. Get Product

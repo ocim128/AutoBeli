@@ -76,7 +76,9 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         }
 
         if (payData.payment_url) {
-          localStorage.setItem("lastOrderId", orderId);
+          try {
+            localStorage.setItem("lastOrderId", orderId);
+          } catch {}
           window.location.href = payData.payment_url;
         } else {
           router.push(`/order/${orderId}`);

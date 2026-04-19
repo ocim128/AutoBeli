@@ -86,20 +86,22 @@ export async function getPakasirTransactionStatus(
   amount: number
 ): Promise<{ success: boolean; data?: PakasirStatusResponse; error?: string }> {
   try {
+    // SECURITY: api_key is passed as a query parameter because Pakasir's
+    // transactiondetail endpoint only supports query-param authentication.
     const url = `${API_BASE_URL}/transactiondetail?project=${PAKASIR_PROJECT_SLUG}&amount=${amount}&order_id=${orderId}&api_key=${PAKASIR_API_KEY}`;
 
     const response = await fetch(url, {
       method: "GET",
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
       return {
         success: false,
-        error: "Transaction not found or error",
+        error: `Transaction lookup failed: HTTP ${response.status}`,
       };
     }
+
+    const data = await response.json();
 
     if (!data.transaction) {
       return {

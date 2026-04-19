@@ -204,6 +204,7 @@ export async function GET(request: Request) {
     const products = await db
       .collection<Product>("products")
       .find({})
+      .project({ contentEncrypted: 0, "stockItems.contentEncrypted": 0 })
       .sort({ createdAt: -1 })
       .toArray();
 

@@ -43,14 +43,26 @@ export default function AnalyticsChart() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     fetch("/api/admin/analytics")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch analytics");
         return res.json();
       })
-      .then((data) => setData(data))
-      .catch(() => setError("Failed to load analytics data"))
-      .finally(() => setLoading(false));
+      .then((data) => {
+        if (!cancelled) setData(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load analytics data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {

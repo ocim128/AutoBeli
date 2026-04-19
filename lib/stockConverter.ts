@@ -7,6 +7,18 @@ const DIAMOND = "\u2666";
 const BULLET = "\u2022";
 const SPADE = "\u2660";
 
+// Pre-compiled regex patterns (built from module-level constants)
+const AKUNLAMA_CHECK_PATTERN = new RegExp(
+  `^[^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+${DIAMOND}[^\\s${BULLET}]+${BULLET}[^\\s#]+#[^\\s&]+&\\S+$`
+);
+const AKUNLAMA_PARSE_PATTERN = new RegExp(
+  `^([^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+)${DIAMOND}([^\\s${BULLET}]+)${BULLET}([^\\s#]+)#([^\\s&]+)&(\\S+)$`
+);
+const INSTAGRAM_PARSE_PATTERN = new RegExp(
+  `^(.*?)${DIAMOND}(\\d+)\\s*\\*(\\d+)\\s*${SPADE}(\\S*)\\s*@(\\S+)\\s*=(\\S+)(?:\\s+(.*))?$`
+);
+const POST_PATTERN = new RegExp(`^(\\d+)${SPADE}`);
+
 export interface ConvertedStock {
   email: string;
   username: string;
@@ -53,10 +65,7 @@ export function convertRawLine(line: string): ConvertedStock | null {
 }
 
 function isAkunlamaCredentialFormat(line: string): boolean {
-  const pattern = new RegExp(
-    `^[^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+${DIAMOND}[^\\s${BULLET}]+${BULLET}[^\\s#]+#[^\\s&]+&\\S+$`
-  );
-  return pattern.test(line);
+  return AKUNLAMA_CHECK_PATTERN.test(line);
 }
 
 /**
@@ -70,10 +79,7 @@ function isAkunlamaCredentialFormat(line: string): boolean {
  * Link Autentikasi: 2fa.akunlama.com/?secret=2FASECRET
  */
 function processAkunlamaCredentialFormat(line: string): ConvertedStock | null {
-  const pattern = new RegExp(
-    `^([^\\s${DIAMOND}]+@[^\\s${DIAMOND}]+)${DIAMOND}([^\\s${BULLET}]+)${BULLET}([^\\s#]+)#([^\\s&]+)&(\\S+)$`
-  );
-  const match = line.match(pattern);
+  const match = line.match(AKUNLAMA_PARSE_PATTERN);
 
   if (!match) {
     return null;
@@ -133,7 +139,7 @@ function processAuthTokenFormat(line: string): ConvertedStock | null {
     }
   }
 
-  const postMatch = line.match(new RegExp(`^(\\d+)${SPADE}`));
+  const postMatch = line.match(POST_PATTERN);
   const post = postMatch ? postMatch[1] : "0";
   const followerMatch = line.match(/(\d+)~/);
   const follower = followerMatch ? followerMatch[1] : "0";
@@ -162,10 +168,7 @@ Username${BULLET}Post${BULLET}Follower${BULLET}Tahun = ${username || "N/A"}${BUL
  * Format: email_prefix♦post *follower ♠year @username =sessionid [password] [2FA:secret]
  */
 function processInstagramFormat(line: string): ConvertedStock | null {
-  const pattern = new RegExp(
-    `^(.*?)${DIAMOND}(\\d+)\\s*\\*(\\d+)\\s*${SPADE}(\\S*)\\s*@(\\S+)\\s*=(\\S+)(?:\\s+(.*))?$`
-  );
-  const match = line.match(pattern);
+  const match = line.match(INSTAGRAM_PARSE_PATTERN);
 
   if (!match) {
     return null;
@@ -238,7 +241,7 @@ function processFallbackFormat(line: string): ConvertedStock | null {
   const authToken = authTokenMatch ? authTokenMatch[1] : null;
   const usernameMatch = line.match(/@(\S+)/);
   const maybeUser = usernameMatch ? usernameMatch[1] : null;
-  const postMatch = line.match(new RegExp(`^(\\d+)${SPADE}`));
+  const postMatch = line.match(POST_PATTERN);
   const post = postMatch ? postMatch[1] : "0";
   const followerMatch = line.match(/(\d+)~/);
   const follower = followerMatch ? followerMatch[1] : "0";

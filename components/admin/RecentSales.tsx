@@ -64,16 +64,26 @@ export default function RecentSales() {
   const [selectedSale, setSelectedSale] = useState<RecentSale | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     fetch("/api/admin/recent-sales")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
       })
       .then((data) => {
-        if (data.sales) setSales(data.sales);
+        if (!cancelled && data.sales) setSales(data.sales);
       })
-      .catch(() => setError("Failed to load recent sales"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setError("Failed to load recent sales");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {

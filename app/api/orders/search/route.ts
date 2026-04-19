@@ -80,19 +80,29 @@ export async function POST(request: Request) {
         .limit(10) // Limit results for security
         .toArray();
 
-      // Get product details for each order
+      // Batch product lookup instead of per-order query
+      const productIds = Array.from(
+        new Set<string>(matchingOrders.map((o) => o.productId.toString()))
+      );
+      const productsArr = await db
+        .collection<Product>("products")
+        .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
+        .project<Pick<Product, keyof Product>>({
+          contentEncrypted: 0,
+          "stockItems.contentEncrypted": 0,
+        })
+        .toArray();
+      const productMap = new Map<string, Product>(
+        productsArr.map((p) => [p._id?.toString() ?? "", p])
+      );
+
       for (const order of matchingOrders) {
-        const product = await db.collection<Product>("products").findOne({
-          _id: order.productId,
-        });
+        const product = productMap.get(order.productId.toString());
 
         if (product) {
           orders.push({
             ...order,
-            product: {
-              ...product,
-              contentEncrypted: "", // Never expose encrypted content
-            },
+            product,
           });
         }
       }

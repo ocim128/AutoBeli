@@ -1,29 +1,36 @@
 import { getMongoClient } from "@/lib/db";
 import { Settings } from "@/lib/definitions";
+import cache, { CACHE_KEYS, CACHE_TTL, getOrFetch } from "@/lib/cache";
 
 const DEFAULT_SETTINGS: Settings = {
   emailEnabled: false,
 };
 
 export async function getSettings(): Promise<Settings> {
-  try {
-    const client = await getMongoClient();
-    const db = client.db();
+  return getOrFetch(
+    CACHE_KEYS.SETTINGS,
+    async () => {
+      try {
+        const client = await getMongoClient();
+        const db = client.db();
 
-    const settings = await db
-      .collection<Settings>("settings")
-      .findOne({ _id: "app_settings" as unknown as import("mongodb").ObjectId });
+        const settings = await db
+          .collection<Settings>("settings")
+          .findOne({ _id: "app_settings" as unknown as import("mongodb").ObjectId });
 
-    if (!settings) {
-      return DEFAULT_SETTINGS;
-    }
+        if (!settings) {
+          return DEFAULT_SETTINGS;
+        }
 
-    // Merge with defaults to ensure all fields exist
-    return { ...DEFAULT_SETTINGS, ...settings };
-  } catch (error) {
-    console.error("Failed to fetch settings:", error);
-    return DEFAULT_SETTINGS;
-  }
+        // Merge with defaults to ensure all fields exist
+        return { ...DEFAULT_SETTINGS, ...settings };
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+        return DEFAULT_SETTINGS;
+      }
+    },
+    CACHE_TTL.SETTINGS
+  );
 }
 
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
@@ -46,6 +53,9 @@ export async function updateSettings(updates: Partial<Settings>): Promise<Settin
       returnDocument: "after",
     }
   );
+
+  // Invalidate settings cache so next getSettings() fetches fresh data
+  cache.delete(CACHE_KEYS.SETTINGS);
 
   return result ? { ...DEFAULT_SETTINGS, ...result } : DEFAULT_SETTINGS;
 }

@@ -46,32 +46,50 @@ function buildAudienceFilter(params: {
   return { $and: filters };
 }
 
-async function getOrderStatsForEmails(emails: string[], db: Db): Promise<AudienceOrderStats> {
-  if (emails.length === 0) {
-    return {
-      totalPaidOrders: 0,
-      firstPaidOrderAt: null,
-      lastPaidOrderAt: null,
-    };
+/**
+ * Batch version: computes order stats for multiple email sets in a single
+ * aggregation instead of N separate queries.
+ */
+async function getBatchOrderStats(
+  rows: { allEmails: string[] }[],
+  db: Db
+): Promise<Map<number, AudienceOrderStats>> {
+  const EMPTY: AudienceOrderStats = {
+    totalPaidOrders: 0,
+    firstPaidOrderAt: null,
+    lastPaidOrderAt: null,
+  };
+
+  // Collect all unique emails across all rows
+  const allEmails = Array.from(new Set(rows.flatMap((r) => r.allEmails)));
+  if (allEmails.length === 0) {
+    return new Map(rows.map((_, i) => [i, EMPTY]));
   }
 
-  const stats = await db
+  // Single aggregation grouped by customerContact
+  const raw = await db
     .collection(ORDER_COLLECTION)
-    .aggregate<AudienceOrderStats>([
+    .aggregate<{
+      customerContact: string;
+      totalPaidOrders: number;
+      firstPaidOrderAt: Date | null;
+      lastPaidOrderAt: Date | null;
+    }>([
       {
         $match: {
           status: "PAID",
-          customerContact: { $in: emails },
+          customerContact: { $in: allEmails },
         },
       },
       {
         $project: {
+          customerContact: 1,
           paidAtOrCreatedAt: { $ifNull: ["$paidAt", "$createdAt"] },
         },
       },
       {
         $group: {
-          _id: null,
+          _id: "$customerContact",
           totalPaidOrders: { $sum: 1 },
           firstPaidOrderAt: { $min: "$paidAtOrCreatedAt" },
           lastPaidOrderAt: { $max: "$paidAtOrCreatedAt" },
@@ -80,6 +98,7 @@ async function getOrderStatsForEmails(emails: string[], db: Db): Promise<Audienc
       {
         $project: {
           _id: 0,
+          customerContact: "$_id",
           totalPaidOrders: 1,
           firstPaidOrderAt: 1,
           lastPaidOrderAt: 1,
@@ -88,13 +107,38 @@ async function getOrderStatsForEmails(emails: string[], db: Db): Promise<Audienc
     ])
     .toArray();
 
-  return (
-    stats[0] || {
-      totalPaidOrders: 0,
-      firstPaidOrderAt: null,
-      lastPaidOrderAt: null,
+  // Build a lookup: email -> stats
+  const byEmail = new Map<string, AudienceOrderStats>();
+  for (const r of raw) {
+    byEmail.set(r.customerContact, {
+      totalPaidOrders: r.totalPaidOrders,
+      firstPaidOrderAt: r.firstPaidOrderAt,
+      lastPaidOrderAt: r.lastPaidOrderAt,
+    });
+  }
+
+  // Merge stats per row (union of all their emails)
+  const result = new Map<number, AudienceOrderStats>();
+  for (let i = 0; i < rows.length; i++) {
+    const emails = rows[i].allEmails;
+    if (emails.length === 0) {
+      result.set(i, EMPTY);
+      continue;
     }
-  );
+    let total = 0;
+    let first: Date | null = null;
+    let last: Date | null = null;
+    for (const e of emails) {
+      const s = byEmail.get(e);
+      if (!s) continue;
+      total += s.totalPaidOrders;
+      if (s.firstPaidOrderAt && (!first || s.firstPaidOrderAt < first)) first = s.firstPaidOrderAt;
+      if (s.lastPaidOrderAt && (!last || s.lastPaidOrderAt > last)) last = s.lastPaidOrderAt;
+    }
+    result.set(i, { totalPaidOrders: total, firstPaidOrderAt: first, lastPaidOrderAt: last });
+  }
+
+  return result;
 }
 
 export async function seedAudienceFromPaidOrdersIfEmpty(db: Db): Promise<number> {
@@ -306,14 +350,21 @@ export async function getAudienceRecipientsForProductBroadcast(
   }
 
   const audienceRows = await db
-    .collection<AudienceContact>(AUDIENCE_COLLECTION)
+    .collection(AUDIENCE_COLLECTION)
     .find({
       status: "ACTIVE",
       ...buildNotDeletedFilter(),
     })
+    .project<Pick<AudienceContact, "_id" | "email" | "allEmails">>({
+      _id: 1,
+      email: 1,
+      allEmails: 1,
+    })
     .toArray();
 
-  return audienceRows.filter((row) => row.allEmails.every((email) => !buyerEmails.has(email)));
+  return audienceRows.filter((row) =>
+    row.allEmails.every((email) => !buyerEmails.has(email))
+  ) as AudienceContact[];
 }
 
 export async function softDeleteAudienceContact(id: string, db: Db): Promise<boolean> {
@@ -424,12 +475,13 @@ export async function getAudienceList(
     .limit(params.pageSize)
     .toArray();
 
-  const rowsWithStats = await Promise.all(
-    rows.map(async (row) => ({
+  const rowsWithStats = await (async () => {
+    const statsMap = await getBatchOrderStats(rows, db);
+    return rows.map((row, i) => ({
       ...row,
-      ...(await getOrderStatsForEmails(row.allEmails, db)),
-    }))
-  );
+      ...statsMap.get(i)!,
+    }));
+  })();
 
   return { rows: rowsWithStats, total };
 }
@@ -450,8 +502,11 @@ export async function exportAudienceCsv(db: Db, includeDeleted?: boolean): Promi
 
   const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
-  for (const row of rows) {
-    const stats = await getOrderStatsForEmails(row.allEmails, db);
+  const statsMap = await getBatchOrderStats(rows, db);
+
+  for (let idx = 0; idx < rows.length; idx++) {
+    const row = rows[idx];
+    const stats = statsMap.get(idx)!;
     lines.push(
       [
         escapeCsv(row.email),

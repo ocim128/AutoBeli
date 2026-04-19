@@ -94,6 +94,24 @@ async function setupIndexes() {
     await db.collection("orders").createIndex({ productId: 1 }, { name: "idx_order_product" });
     console.log("  ✅ Created index: orders.productId");
 
+    // Compound index for audience order stats queries (status + customerContact)
+    await db
+      .collection("orders")
+      .createIndex(
+        { status: 1, customerContact: 1 },
+        { sparse: true, name: "idx_order_status_contact" }
+      );
+    console.log("  ✅ Created compound index: orders.{status, customerContact}");
+
+    // Compound index for broadcast buyer exclusion queries
+    await db
+      .collection("orders")
+      .createIndex(
+        { productId: 1, status: 1, customerContact: 1 },
+        { sparse: true, name: "idx_order_product_status_contact" }
+      );
+    console.log("  ✅ Created compound index: orders.{productId, status, customerContact}");
+
     // Compound index for admin order listing
     await db.collection("orders").createIndex({ createdAt: -1 }, { name: "idx_orders_by_date" });
     console.log("  ✅ Created index: orders.createdAt (descending)");

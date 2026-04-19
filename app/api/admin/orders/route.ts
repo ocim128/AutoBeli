@@ -38,7 +38,7 @@ export async function GET(request: Request) {
           },
         },
         { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-        { $project: { "product.contentEncrypted": 0 } },
+        { $project: { "product.contentEncrypted": 0, "product.stockItems.contentEncrypted": 0 } },
       ])
       .toArray();
 
