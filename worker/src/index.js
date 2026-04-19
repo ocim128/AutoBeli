@@ -109,6 +109,21 @@ function getErrorMessage(error) {
   return String(error || "Unknown error");
 }
 
+function safeEqual(a, b) {
+  const aValue = String(a || "");
+  const bValue = String(b || "");
+  const maxLength = Math.max(aValue.length, bValue.length);
+  let result = aValue.length === bValue.length ? 0 : 1;
+
+  for (let i = 0; i < maxLength; i++) {
+    const left = i < aValue.length ? aValue.charCodeAt(i) : 0;
+    const right = i < bValue.length ? bValue.charCodeAt(i) : 0;
+    result |= left ^ right;
+  }
+
+  return result === 0;
+}
+
 async function handleSendEmail(request, env) {
   if (request.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
@@ -117,7 +132,7 @@ async function handleSendEmail(request, env) {
   const expectedApiKey = env.OUTBOUND_EMAIL_API_KEY;
   const providedApiKey = extractApiKey(request);
 
-  if (!expectedApiKey || providedApiKey !== expectedApiKey) {
+  if (!expectedApiKey || !safeEqual(providedApiKey, expectedApiKey)) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
@@ -212,15 +227,11 @@ function handleHealth(env) {
     service: "autobeli-outbound-email",
     configured: {
       sendBinding: Boolean(env.OUTBOUND_EMAIL),
-      apiKey: Boolean(env.OUTBOUND_EMAIL_API_KEY),
-      defaultFromEmail: env.DEFAULT_FROM_EMAIL || null,
-      defaultReplyTo: env.DEFAULT_REPLY_TO || null,
-      allowedFromDomains: parseCommaList(env.ALLOWED_FROM_DOMAINS),
     },
   });
 }
 
-export default {
+const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
 
@@ -242,3 +253,5 @@ export default {
     return jsonResponse({ error: "Not found" }, 404);
   },
 };
+
+export default worker;

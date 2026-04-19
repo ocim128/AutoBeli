@@ -20,14 +20,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const validationResult = validate(updateAudienceSchema, body);
-
-  if (!validationResult.success) {
-    return NextResponse.json({ error: validationResult.error }, { status: 400 });
-  }
-
   try {
+    const body = await request.json();
+    const validationResult = validate(updateAudienceSchema, body);
+
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 });
+    }
+
     const { id } = await params;
     const client = await getMongoClient();
     const db = client.db();

@@ -20,9 +20,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ status: "ok", database: "connected" }, { status: 200 });
   } catch (e) {
     console.error(e);
-    return NextResponse.json(
-      { status: "error", database: "disconnected", error: String(e) },
-      { status: 500 }
-    );
+    return NextResponse.json({ status: "error", database: "disconnected" }, { status: 500 });
   }
 }

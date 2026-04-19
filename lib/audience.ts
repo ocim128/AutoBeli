@@ -373,11 +373,10 @@ export async function updateAudienceContact(
     const aliases = buildAllEmails(current.email, current.aliases).filter(
       (value) => value !== nextEmail
     );
-    const nextAliases = aliases.filter((value) => value !== nextEmail);
-    const allEmails = buildAllEmails(nextEmail, nextAliases);
+    const allEmails = buildAllEmails(nextEmail, aliases);
 
     setObject.email = nextEmail;
-    setObject.aliases = nextAliases;
+    setObject.aliases = aliases;
     setObject.allEmails = allEmails;
   }
 

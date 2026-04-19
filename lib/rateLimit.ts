@@ -34,6 +34,9 @@ function startCleanup() {
       toRemove.forEach(([key]) => rateLimitStore.delete(key));
     }
   }, 60000);
+  if (cleanupInterval.unref) {
+    cleanupInterval.unref();
+  }
 }
 
 // Start cleanup on module load
@@ -109,16 +112,16 @@ export function checkRateLimit(identifier: string, config: RateLimitConfig): Rat
  * Works with Vercel, Cloudflare, and standard proxies
  */
 export function getClientIP(request: Request): string {
-  // Vercel
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
-  }
-
-  // Cloudflare
+  // Cloudflare (verified client IP, preferred over XFF)
   const cfConnectingIP = request.headers.get("cf-connecting-ip");
   if (cfConnectingIP) {
     return cfConnectingIP;
+  }
+
+  // Vercel / standard proxy
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
   }
 
   // Real IP header (nginx)

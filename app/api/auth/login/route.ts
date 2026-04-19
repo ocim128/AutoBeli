@@ -1,7 +1,12 @@
-import { loginAdmin } from "@/lib/auth";
+import { loginAdmin, logoutAdmin } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 import { validate, loginSchema } from "@/lib/validation";
+
+export async function DELETE() {
+  await logoutAdmin();
+  return NextResponse.json({ success: true });
+}
 
 export async function POST(request: Request) {
   try {

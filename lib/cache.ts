@@ -196,7 +196,9 @@ export async function getOrFetch<T>(
   const fetchPromise = (async () => {
     try {
       const data = await fetcher();
-      cache.set(key, data, ttlSeconds);
+      if (data !== null) {
+        cache.set(key, data, ttlSeconds);
+      }
       return data;
     } finally {
       // Clean up pending request

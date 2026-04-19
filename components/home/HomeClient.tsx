@@ -91,7 +91,7 @@ export function HomeClient({ products }: { products: Product[] }) {
 
 function ProductCard({ product }: { product: Product }) {
   const { t } = useLanguage();
-  const inStock = !product.availableStock || product.availableStock > 0;
+  const inStock = product.availableStock === undefined || product.availableStock > 0;
   const preview = formatProductPreview(product.description);
 
   return (

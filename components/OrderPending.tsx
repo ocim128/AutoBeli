@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
 import Spinner from "@/components/ui/Spinner";
+import Link from "next/link";
 
 interface OrderPendingProps {
   orderId: string;
@@ -80,7 +81,7 @@ export default function OrderPending({
 
         {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <a
+          <Link
             href={`/order/${orderId}`}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--accent-foreground)] transition-colors hover:opacity-90"
           >
@@ -93,13 +94,13 @@ export default function OrderPending({
               />
             </svg>
             {t("checkout.checkStatus")}
-          </a>
-          <a
+          </Link>
+          <Link
             href={`/checkout/${orderId}?retry=true`}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-6 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--foreground)]"
           >
             {t("checkout.retryPayment")}
-          </a>
+          </Link>
         </div>
 
         {/* Waiting indicator */}

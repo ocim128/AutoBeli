@@ -32,7 +32,7 @@ export function ProductClient({ product }: { product: SerializedProduct }) {
     },
   ];
 
-  const inStock = !product.availableStock || product.availableStock > 0;
+  const inStock = product.availableStock === undefined || product.availableStock > 0;
   const priceDisplay = product.priceIdr.toLocaleString("id-ID");
 
   return (

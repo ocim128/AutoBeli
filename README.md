@@ -1,54 +1,175 @@
-# AutoBeli - Digital Text Store
+# AutoBeli
 
-A secure, single-vendor digital product store for text-based content. Built with **Next.js 15**, **MongoDB**, & **TypeScript**.
+AutoBeli is a Next.js storefront for selling text-based digital products with secure post-payment delivery, admin operations, audience management, and product broadcast email.
 
-## Features
+## What the app does
 
-- **Public Storefront**: Browse encrypted text products.
-- **Secure Delivery**: Content is **AES-256** encrypted at rest.
-- **Instant Access**: Automated delivery upon payment confirmation.
-- **Admin Dashboard**: Manage products and view orders.
-- **Pakasir Payment Gateway**: Integrated with Pakasir for QRIS, Virtual Account, and E-Wallet payments.
-- **Mock Payment**: Optional mock gateway for development/testing (set `PAYMENT_GATEWAY=MOCK`).
+- Public storefront with localized product browsing and product detail pages
+- Checkout flow that creates `PENDING` orders and supports quantity-based stock
+- Payment integration with Pakasir, plus a mock gateway for local development
+- Order-page-first delivery flow with recovery by email or order ID
+- AES-256 encrypted product content, decrypted only at delivery time
+- Admin dashboard for products, orders, analytics, audience, settings, and broadcast
+- Audience sync from paid orders and product-specific outbound email broadcasts
+- Swagger-backed API docs at `/api-doc`
 
-## Tech Stack
+## Stack
 
-- **Framework**: Next.js 15 (App Router)
-- **Database**: MongoDB (Native Driver for speed)
-- **Styling**: Tailwind CSS v4
-- **Auth**: JWT (Admin), Token-based (Content Access)
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- MongoDB native driver
+- Tailwind CSS v4
+- Vitest + Testing Library
+- Playwright
+- Cloudflare Worker for outbound email delivery
 
-## Getting Started
+## Core flow
 
-1.  **Clone & Install**
+1. Customer browses active products from `app/(store)`.
+2. `POST /api/orders` creates a `PENDING` order and reserves nothing yet.
+3. Customer pays through Pakasir or the local mock gateway.
+4. Webhook or order-page sync marks the order `PAID`, assigns stock, creates an access token, and attempts a confirmation email.
+5. Customer opens `/order/[orderId]`, which fetches the token and unlocks delivery through `/api/delivery/[token]`.
+6. If email is lost, `/recover` lets customers find paid orders by email or order ID.
 
-    ```bash
-    npm install
-    ```
+## Local setup
 
-2.  **Environment Setup**
-    Copy `.env.example` to `.env` and fill in:
-    - `MONGODB_URI`: Your Atlas connection string.
-    - `ADMIN_PASSWORD_HASH`: Hashed access key for admin panel.
-    - `CONTENT_ENCRYPTION_KEY`: A 32-character random string.
-    - `PAYMENT_GATEWAY`: Set to `PAKASIR` or `MOCK` (development).
-    - For Pakasir: `PAKASIR_API_KEY`, `PAKASIR_PROJECT_SLUG`
+### Prerequisites
 
-3.  **Run Locally**
-    ```bash
-    npm run dev
-    ```
+- Node.js 20+
+- MongoDB
+- npm
 
-## Admin Access
+### Install
 
-- URL: `/admin` (Redirects to login)
-- Default Password: See your `.env` `ADMIN_PASSWORD_HASH`.
+```bash
+npm install
+```
 
-## Security Notes
+### Configure environment
 
-- Content is never sent to the client until a valid access token is presented.
-- Access tokens have rate limits (2s cooldown).
-- Content responses use strict `Cache-Control: no-store` headers.
+Copy `.env.example` to `.env`, then set the values below.
+
+Important: the current runtime expects `ADMIN_PASSWORD` and `JWT_SECRET`. The older names shown in some legacy docs are not the active auth variables.
+
+### Initialize indexes
+
+```bash
+npm run db:setup-indexes
+```
+
+If you already have paid orders and want to populate the audience list:
+
+```bash
+npm run db:backfill-audience
+```
+
+### Run locally
+
+```bash
+npm run dev
+```
+
+Open:
+
+- Storefront: `http://localhost:3000`
+- Admin login: `http://localhost:3000/admin/login`
+- API docs: `http://localhost:3000/api-doc`
+
+## Environment variables
+
+### Required
+
+- `NEXT_PUBLIC_BASE_URL`
+  Public base URL used in links and mock payment flow.
+- `MONGODB_URI`
+  MongoDB connection string.
+- `ADMIN_PASSWORD`
+  Plain admin password used for login and broadcast re-auth.
+- `JWT_SECRET`
+  Secret for the admin session cookie.
+- `CONTENT_ENCRYPTION_KEY`
+  Exactly 32 characters for AES-256 content encryption.
+- `PAYMENT_GATEWAY`
+  `PAKASIR` or `MOCK`.
+
+### Required when `PAYMENT_GATEWAY=PAKASIR`
+
+- `PAKASIR_API_KEY`
+- `PAKASIR_PROJECT_SLUG`
+
+### Optional email and broadcast
+
+- `CLOUDFLARE_EMAIL_API_URL`
+- `CLOUDFLARE_EMAIL_API_KEY`
+- `CLOUDFLARE_EMAIL_FROM`
+- `CLOUDFLARE_EMAIL_FROM_NAME`
+- `CLOUDFLARE_EMAIL_REPLY_TO`
+- `EMAIL_DEV_FALLBACK`
+- `EMAIL_DEV_OUTBOX_DIR`
+- `BROADCAST_MAX_RECIPIENTS`
+- `BROADCAST_BATCH_SIZE`
+
+Notes:
+
+- If Cloudflare email is not configured, local development can fall back to `.tmp/email-outbox`.
+- Order delivery does not depend on email. Email is a best-effort copy and recovery aid.
+- Mock payment and mock webhook routes are blocked in production.
+
+## Common commands
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run test:run
+npm run test:coverage
+npm run test:e2e
+npm run db:setup-indexes
+npm run db:backfill-audience
+```
+
+## Key routes
+
+- `/` storefront home
+- `/product/[slug]` product detail
+- `/checkout/[orderId]` checkout
+- `/order/[orderId]` order status and access
+- `/recover` paid-order recovery
+- `/api-doc` interactive API docs
+- `/admin/login` admin auth
+- `/admin/dashboard` admin overview
+- `/admin/products` product management
+- `/admin/orders` order management
+- `/admin/audience` audience management
+
+## Repo layout
+
+```text
+app/           Next.js routes, pages, and API handlers
+components/    Storefront, admin, and shared UI components
+context/       Language provider for public UI
+docs/          Product and design planning docs
+e2e/           Playwright coverage
+lib/           Data, auth, payment, delivery, email, and audience logic
+scripts/       MongoDB index setup and audience backfill scripts
+worker/        Cloudflare outbound email worker
+__tests__/     Vitest unit and component tests
+```
+
+## Email worker
+
+Transactional and broadcast email is sent through the Cloudflare worker in [`worker/`](./worker). Deployment details live in [`worker/README.md`](./worker/README.md).
+
+## Related docs
+
+- [`AGENTS.md`](./AGENTS.md)
+- [`DESIGN.md`](./DESIGN.md)
+- [`PERFORMANCE.md`](./PERFORMANCE.md)
+- [`docs/email-audience-and-product-broadcast-plan.md`](./docs/email-audience-and-product-broadcast-plan.md)
+- [`docs/hybrid-tactical-ui-redesign-plan.md`](./docs/hybrid-tactical-ui-redesign-plan.md)
 
 ## License
 

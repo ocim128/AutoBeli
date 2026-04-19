@@ -21,14 +21,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const validationResult = validate(broadcastTestSchema, body);
-
-  if (!validationResult.success) {
-    return NextResponse.json({ error: validationResult.error }, { status: 400 });
-  }
-
   try {
+    const body = await request.json();
+    const validationResult = validate(broadcastTestSchema, body);
+
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 });
+    }
+
     const client = await getMongoClient();
     const db = client.db();
     const product = await resolveBroadcastProduct(validationResult.data!, db);

@@ -1,7 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { verifyAdminPassword } from "@/lib/rateLimit";
 
-const SECRET_KEY = process.env.JWT_SECRET || "default_secret_key_change_me";
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+  throw new Error("JWT_SECRET env var is required. Set it in .env");
+}
 const key = new TextEncoder().encode(SECRET_KEY);
 
 export async function signSession(payload: Record<string, unknown>) {
@@ -31,23 +35,24 @@ export async function getSession() {
 }
 
 export async function loginAdmin(password: string) {
-  if (password === process.env.ADMIN_PASSWORD) {
-    // Create session
-    const token = await signSession({ role: "ADMIN" });
-
-    // Set cookie
-    const cookieStore = await cookies();
-    cookieStore.set("admin_session", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24, // 24 hours
-    });
-
-    return true;
+  if (!verifyAdminPassword(password)) {
+    return false;
   }
-  return false;
+
+  // Create session
+  const token = await signSession({ role: "ADMIN" });
+
+  // Set cookie
+  const cookieStore = await cookies();
+  cookieStore.set("admin_session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24, // 24 hours
+  });
+
+  return true;
 }
 
 export async function logoutAdmin() {
