@@ -51,8 +51,8 @@ export default function MockPayButton({ orderId }: { orderId: string }) {
       aria-busy={loading}
       className={`w-full font-bold py-3 px-6 rounded-lg text-lg transition ${
         confirming
-          ? "bg-yellow-500 hover:bg-yellow-600 text-white animate-pulse"
-          : "bg-green-600 hover:bg-green-700 text-white"
+          ? "bg-[var(--warning)] hover:bg-[var(--warning)]/80 text-white animate-pulse"
+          : "bg-[var(--success)] hover:bg-[var(--success)]/80 text-white"
       } disabled:opacity-70 disabled:cursor-not-allowed disabled:animate-none`}
     >
       {loading ? "Processing..." : confirming ? "Confirm Payment?" : "Pay Now (Mock)"}

@@ -61,10 +61,10 @@ test.describe("Checkout Flow", () => {
     // Step 2: Verify product page elements
     // Note: Default language is Indonesian
     await expect(page.getByText("Akses Instan").first()).toBeVisible();
-    await expect(page.getByText("Terenkripsi Aman", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("Enkripsi Aman", { exact: false }).first()).toBeVisible();
 
     // Step 3: Click buy button
-    const buyButton = page.getByRole("button", { name: /Dapatkan Sekarang/i });
+    const buyButton = page.getByRole("button", { name: /Amankan Akses/i });
     await expect(buyButton).toBeVisible();
     await buyButton.click();
 
@@ -72,7 +72,7 @@ test.describe("Checkout Flow", () => {
     await expect(page).toHaveURL(/\/checkout\/.+/);
 
     // Step 5: Fill in contact information (email)
-    const contactInput = page.getByPlaceholder(/kamu@contoh.com/i);
+    const contactInput = page.getByPlaceholder(/email@contoh.com/i);
     await expect(contactInput).toBeVisible();
     await contactInput.fill("customer@example.com");
 
@@ -102,7 +102,7 @@ test.describe("Checkout Flow", () => {
 
     await productLink.click();
 
-    const buyButton = page.getByRole("button", { name: /Dapatkan Sekarang/i });
+    const buyButton = page.getByRole("button", { name: /Amankan Akses/i });
     await buyButton.waitFor({ state: "visible" });
     await buyButton.click();
 
@@ -115,7 +115,7 @@ test.describe("Checkout Flow", () => {
     // Should show error message on page
     const alert = page.locator('form [role="alert"]');
     await alert.waitFor({ state: "visible" });
-    await expect(alert).toContainText(/Isi emailmu dulu ya/i);
+    await expect(alert).toContainText(/Alamat email wajib diisi/i);
 
     // Should still be on checkout page
     await expect(page).toHaveURL(/\/checkout\/.+/);
@@ -154,7 +154,7 @@ test.describe("Checkout Flow", () => {
     await buyButton.click({ noWaitAfter: true });
 
     // The button text should change to "Memproses Akses..."
-    await expect(buyButton).toContainText("Lagi diproses", { timeout: 5000 });
+    await expect(buyButton).toContainText("Mengamankan Akses...", { timeout: 5000 });
     await expect(buyButton).toHaveAttribute("aria-busy", "true");
   });
 });

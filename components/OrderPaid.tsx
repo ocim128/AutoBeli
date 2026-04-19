@@ -59,7 +59,7 @@ export default function OrderPaid({
                   <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
                     {t("checkout.totalPaid")}
                   </span>
-                  <span className="font-mono text-lg font-medium text-emerald-400">
+                  <span className="font-mono text-lg font-medium text-[var(--success)]">
                     Rp {amountPaid.toLocaleString("id-ID")}
                   </span>
                 </div>

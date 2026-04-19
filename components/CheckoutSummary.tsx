@@ -76,7 +76,7 @@ export default function CheckoutSummary({
               <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
                 {t("checkout.serviceFee")}
               </span>
-              <span className="font-mono text-emerald-400">{t("checkout.free")}</span>
+              <span className="font-mono text-[var(--success)]">{t("checkout.free")}</span>
             </div>
           </div>
 
@@ -102,9 +102,9 @@ export default function CheckoutSummary({
         {/* Trust Indicators */}
         <div className="grid grid-cols-2 gap-4">
           <Panel padding="sm" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[var(--success)]/10 flex items-center justify-center shrink-0">
               <svg
-                className="w-4 h-4 text-emerald-400"
+                className="w-4 h-4 text-[var(--success)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

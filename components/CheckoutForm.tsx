@@ -31,7 +31,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         return "/api/payment/pakasir/create";
       case "MOCK":
       default:
-        return "/api/payment/mock/initiate";
+        return "/api/payment/mock/pay";
     }
   }, [paymentGateway]);
 
@@ -113,10 +113,10 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         {error && (
           <div
             role="alert"
-            className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+            className="flex items-start gap-2 p-3 rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/20"
           >
             <svg
-              className="w-4 h-4 text-red-400 shrink-0 mt-0.5"
+              className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -126,7 +126,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="font-mono text-xs text-red-400">{error}</span>
+            <span className="font-mono text-xs text-[var(--danger)]">{error}</span>
           </div>
         )}
 

@@ -122,11 +122,11 @@ function CreateProductContent() {
       />
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
           <span>{error}</span>
-          <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+          <Button variant="ghost" size="xs" onClick={() => setError("")} className="font-mono">
             DISMISS
-          </button>
+          </Button>
         </div>
       )}
 

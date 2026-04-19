@@ -143,7 +143,9 @@ function ContentViewer({ token }: { token: string }) {
             </button>
 
             {error && (
-              <p className="font-mono text-xs uppercase tracking-widest text-red-400">{error}</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-[var(--danger)]">
+                {error}
+              </p>
             )}
           </div>
         </Panel>
@@ -182,9 +184,9 @@ function ContentViewer({ token }: { token: string }) {
           {/* Integrity footer */}
           <div className="flex items-center justify-between border-t border-[var(--line)] pt-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--success)]/10">
                 <svg
-                  className="h-3.5 w-3.5 text-emerald-400"
+                  className="h-3.5 w-3.5 text-[var(--success)]"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

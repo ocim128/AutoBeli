@@ -74,7 +74,21 @@ export default function AnalyticsChart() {
   }
 
   if (error || !data) {
-    return null;
+    return (
+      <Panel monoLabel="ANALYTICS">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="font-mono text-sm text-[var(--text-muted)]">
+            Failed to load analytics data.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 font-mono text-xs text-[var(--accent)] hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      </Panel>
+    );
   }
 
   const chartData = data.dailyRevenue.map((d) => ({

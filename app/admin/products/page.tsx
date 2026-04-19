@@ -182,7 +182,10 @@ export default function ProductList() {
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors">
+                        <DropdownMenuTrigger
+                          aria-label="Product actions"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
+                        >
                           <svg
                             width="16"
                             height="16"

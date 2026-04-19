@@ -61,6 +61,7 @@ export function Header() {
               type="button"
               onClick={() => setLanguage("en")}
               aria-pressed={language === "en"}
+              aria-label="English"
               className={cn(
                 "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
                 language === "en"
@@ -74,6 +75,7 @@ export function Header() {
               type="button"
               onClick={() => setLanguage("id")}
               aria-pressed={language === "id"}
+              aria-label="Bahasa Indonesia"
               className={cn(
                 "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
                 language === "id"
@@ -95,6 +97,7 @@ export function Header() {
               type="button"
               onClick={() => setLanguage("en")}
               aria-pressed={language === "en"}
+              aria-label="English"
               className={cn(
                 "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
                 language === "en"
@@ -108,6 +111,7 @@ export function Header() {
               type="button"
               onClick={() => setLanguage("id")}
               aria-pressed={language === "id"}
+              aria-label="Bahasa Indonesia"
               className={cn(
                 "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
                 language === "id"

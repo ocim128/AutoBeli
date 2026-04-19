@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -48,17 +50,21 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+            <label
+              htmlFor="password"
+              className="block font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2"
+            >
               Password
             </label>
             <div className="relative">
-              <input
+              <Input
+                id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter Admin Password"
-                className="w-full rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5 pr-10 text-sm text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                aria-label="Admin password"
+                className="pr-10"
+                placeholder="Enter admin password"
+                aria-label="Password"
               />
               <button
                 type="button"
@@ -101,13 +107,9 @@ export default function AdminLogin() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-foreground)] hover:bg-[var(--accent)]/80 disabled:opacity-50 transition-colors"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Verifying..." : "Unlock"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { OrderWithProduct } from "@/lib/orders";
 import {
@@ -133,7 +134,10 @@ export default function AdminOrders() {
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors">
+                      <DropdownMenuTrigger
+                        aria-label="Order actions"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
+                      >
                         <svg
                           width="16"
                           height="16"
@@ -149,9 +153,9 @@ export default function AdminOrders() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem>
-                          <a href={`/admin/orders?id=${order._id}`} className="flex w-full">
+                          <Link href={`/admin/orders?id=${order._id}`} className="flex w-full">
                             View Order
-                          </a>
+                          </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -163,9 +167,12 @@ export default function AdminOrders() {
         </DataTableShell>
 
         {error && (
-          <div className="mt-4 flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+          <div className="mt-4 flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
             <span>{error}</span>
-            <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+            <button
+              onClick={() => setError("")}
+              className="font-mono text-xs hover:text-[var(--danger)]"
+            >
               DISMISS
             </button>
           </div>

@@ -36,7 +36,7 @@ export default function OrderPending({
         {/* Status indicator */}
         <div className="flex items-center justify-center gap-3">
           <StatusBadge status="warning">{t("checkout.statusProcessing")}</StatusBadge>
-          <Spinner size={20} className="text-amber-400" variant="classic" />
+          <Spinner size={20} className="text-[var(--warning)]" variant="classic" />
         </div>
 
         {/* Order Summary Panel */}
@@ -105,7 +105,7 @@ export default function OrderPending({
 
         {/* Waiting indicator */}
         <div className="flex items-center justify-center gap-2 pt-4 text-sm text-[var(--text-muted)]">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-[var(--warning)]" />
           <span>{t("checkout.waitingConfirmation")}</span>
         </div>
       </div>

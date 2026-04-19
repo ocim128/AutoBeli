@@ -214,13 +214,13 @@ export default function ProductBroadcastPanel({
 
       {/* Blocker Warnings */}
       {!product.isActive && (
-        <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-400">
+        <div className="rounded-lg border border-[var(--warning)]/25 bg-[var(--warning)]/10 px-4 py-3 font-mono text-xs text-[var(--warning)]">
           Live broadcast is blocked because this product is inactive.
         </div>
       )}
 
       {!hasAvailableStock && (
-        <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-400">
+        <div className="rounded-lg border border-[var(--warning)]/25 bg-[var(--warning)]/10 px-4 py-3 font-mono text-xs text-[var(--warning)]">
           Live broadcast is blocked because this product is sold out.
         </div>
       )}
@@ -339,12 +339,12 @@ export default function ProductBroadcastPanel({
 
       {/* Feedback */}
       {error && (
-        <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 font-mono text-xs text-red-400">
+        <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-3 font-mono text-xs text-[var(--danger)]">
           {error}
         </div>
       )}
       {message && (
-        <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 font-mono text-xs text-emerald-400">
+        <div className="rounded-lg border border-[var(--success)]/25 bg-[var(--success)]/10 px-4 py-3 font-mono text-xs text-[var(--success)]">
           {message}
         </div>
       )}

@@ -319,9 +319,12 @@ export default function StockManagementPage({ params }: StockPageProps) {
       </div>
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
           <span>{error}</span>
-          <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+          <button
+            onClick={() => setError("")}
+            className="font-mono text-xs hover:text-[var(--danger)]"
+          >
             DISMISS
           </button>
         </div>
@@ -466,14 +469,17 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
 
                 {/* Errors */}
                 {bulkErrors.length > 0 && (
-                  <div className="rounded-lg border border-red-500/25 bg-red-500/10 p-3">
-                    <p className="font-mono text-xs uppercase tracking-wider text-red-400 mb-2">
+                  <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 p-3">
+                    <p className="font-mono text-xs uppercase tracking-wider text-[var(--danger)] mb-2">
                       Failed to parse {bulkErrors.length} line(s):
                     </p>
-                    <ul className="text-xs text-red-400 space-y-1">
+                    <ul className="text-xs text-[var(--danger)] space-y-1">
                       {bulkErrors.map((err, i) => (
                         <li key={i} className="font-mono">
-                          <span className="bg-red-500/20 px-1 rounded">Line {err.line}:</span>{" "}
+                          <span className="bg-[var(--danger)]/20 px-1 rounded">
+                            Line {err.line}:
+                          </span>{" "}
+                          &nbsp;
                           {err.content.substring(0, 50)}...
                         </li>
                       ))}

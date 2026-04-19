@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
-              <a
+              <Link
                 key={href}
                 href={href}
                 className={`
@@ -137,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Icon />
                 {label}
-              </a>
+              </Link>
             );
           })}
         </nav>

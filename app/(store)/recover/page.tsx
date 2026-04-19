@@ -160,10 +160,10 @@ export default function RecoverPage() {
             {error && (
               <div
                 role="alert"
-                className="flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3"
+                className="flex items-start gap-3 rounded-lg border border-[var(--danger)]/20 bg-[var(--danger)]/10 px-4 py-3"
               >
                 <svg
-                  className="mt-0.5 h-4 w-4 shrink-0 text-red-400"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--danger)]"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -173,7 +173,7 @@ export default function RecoverPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-sm text-red-400">{error}</span>
+                <span className="text-sm text-[var(--danger)]">{error}</span>
               </div>
             )}
 
@@ -252,7 +252,7 @@ export default function RecoverPage() {
                         {order.productTitle}
                       </h3>
                       <div className="flex items-center gap-4">
-                        <span className="font-mono text-xs text-emerald-400">
+                        <span className="font-mono text-xs text-[var(--success)]">
                           Rp {order.amountPaid.toLocaleString("id-ID")}
                         </span>
                         <span className="font-mono text-xs text-[var(--text-muted)]">

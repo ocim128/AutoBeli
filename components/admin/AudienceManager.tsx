@@ -277,12 +277,20 @@ export default function AudienceManager() {
             <select
               value={statusInput}
               onChange={(e) => setStatusInput(e.target.value)}
-              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              <option value="">All</option>
-              <option value="ACTIVE">Active</option>
-              <option value="EXCLUDED">Excluded</option>
-              <option value="BOUNCED">Bounced</option>
+              <option value="" className="bg-[var(--panel)]">
+                All
+              </option>
+              <option value="ACTIVE" className="bg-[var(--panel)]">
+                Active
+              </option>
+              <option value="EXCLUDED" className="bg-[var(--panel)]">
+                Excluded
+              </option>
+              <option value="BOUNCED" className="bg-[var(--panel)]">
+                Bounced
+              </option>
             </select>
           </Field>
 
@@ -327,11 +335,17 @@ export default function AudienceManager() {
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as AudienceStatus)}
-                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
-                  <option value="ACTIVE">Active</option>
-                  <option value="EXCLUDED">Excluded</option>
-                  <option value="BOUNCED">Bounced</option>
+                  <option value="ACTIVE" className="bg-[var(--panel)]">
+                    Active
+                  </option>
+                  <option value="EXCLUDED" className="bg-[var(--panel)]">
+                    Excluded
+                  </option>
+                  <option value="BOUNCED" className="bg-[var(--panel)]">
+                    Bounced
+                  </option>
                 </select>
               </Field>
             </div>
@@ -387,7 +401,7 @@ export default function AudienceManager() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 font-mono text-xs text-red-400">
+        <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-3 font-mono text-xs text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -406,7 +420,7 @@ export default function AudienceManager() {
       >
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
                 Email
               </TableHead>
