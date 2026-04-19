@@ -115,7 +115,7 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
           <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
             {t("common.securePayment")}
           </span>
-          <span className="block text-xs text-[var(--foreground)]">Veripay</span>
+          <span className="block text-xs text-[var(--foreground)]">Pakasir</span>
         </div>
         <div className="space-y-1">
           <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
