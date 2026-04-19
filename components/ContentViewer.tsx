@@ -3,6 +3,10 @@
 import { useState, useCallback, memo } from "react";
 import { getErrorMessage } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { Panel } from "@/components/ui/panel";
+import { CornerFrame } from "@/components/ui/corner-frame";
+import { StatusBadge } from "@/components/ui/status-badge";
+import Spinner from "@/components/ui/Spinner";
 
 function ContentViewer({ token }: { token: string }) {
   const { t } = useLanguage();
@@ -18,7 +22,7 @@ function ContentViewer({ token }: { token: string }) {
       const res = await fetch(`/api/delivery/${token}`);
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Failed to unlock");
+      if (!res.ok) throw new Error(data.error || t("contentViewer.unlockFailed"));
 
       setContent(data.content);
     } catch (e: unknown) {
@@ -26,7 +30,7 @@ function ContentViewer({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   const handleCopy = useCallback(() => {
     if (content) {
@@ -37,115 +41,144 @@ function ContentViewer({ token }: { token: string }) {
   }, [content]);
 
   return (
-    <div className="mt-12 group">
-      <div className="bg-gray-950 rounded-[2.5rem] border border-gray-800 shadow-2xl shadow-indigo-900/20 overflow-hidden transform group-hover:scale-[1.01] transition-transform duration-500">
-        <div className="bg-gray-900/50 backdrop-blur-md px-8 py-5 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500/50"></div>
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/50"></div>
-              <div className="h-2.5 w-2.5 rounded-full bg-green-500/50"></div>
-            </div>
-            <h3 className="text-white/40 font-black text-[10px] tracking-[0.3em] uppercase ml-4">
-              Secure_Delivery_Portal_v2.0
-            </h3>
-          </div>
-          <div className="px-2 py-0.5 rounded bg-green-500/10 border border-green-500/20">
-            <span className="text-green-500 text-[8px] font-black tracking-widest uppercase">
-              SSL_ACTIVE
-            </span>
-          </div>
+    <div className="space-y-4">
+      {/* Secure Delivery Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Lock icon */}
+          <svg
+            className="h-4 w-4 text-[var(--accent)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+          <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            {t("contentViewer.secureDelivery")}
+          </span>
         </div>
+        {content && (
+          <StatusBadge status="success">{t("contentViewer.statusDecrypted")}</StatusBadge>
+        )}
+        {!content && !error && (
+          <StatusBadge status="warning">{t("contentViewer.statusEncrypted")}</StatusBadge>
+        )}
+        {error && <StatusBadge status="error">{t("contentViewer.statusError")}</StatusBadge>}
+      </div>
 
-        <div className="p-10 md:p-16">
-          {!content ? (
-            <div className="text-center">
-              <div className="relative mb-10">
-                <div className="absolute inset-0 bg-indigo-500/20 blur-[50px] rounded-full" />
-                <div className="relative w-24 h-24 mx-auto bg-gray-900 rounded-3xl border border-white/10 flex items-center justify-center animate-float">
-                  <svg
-                    className="w-10 h-10 text-indigo-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-              </div>
+      {/* Content Area */}
+      {!content ? (
+        <Panel variant="accent" padding="lg">
+          <div className="flex flex-col items-center gap-6 py-6 text-center">
+            {/* Lock icon large */}
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--panel)]">
+              <svg
+                className="h-8 w-8 text-[var(--text-muted)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
 
-              <h2 className="text-3xl font-black text-white mb-4 tracking-tighter">
+            <div className="space-y-2">
+              <h3 className="font-serif text-xl text-[var(--foreground)]">
                 {t("contentViewer.contentEncrypted")}
-              </h2>
-              <p className="text-gray-400 mb-10 max-w-sm mx-auto font-medium text-sm leading-relaxed">
+              </h3>
+              <p className="max-w-sm text-sm text-[var(--text-muted)]">
                 {t("contentViewer.encryptedDesc")}
               </p>
+            </div>
 
-              <button
-                onClick={handleReveal}
-                disabled={loading}
-                className="group relative px-12 py-5 bg-white text-gray-900 font-extrabold rounded-2xl shadow-xl hover:-translate-y-1 active:translate-y-0 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="relative z-10">
-                  {loading ? t("contentViewer.decrypting") : t("contentViewer.unlockContent")}
-                </span>
-              </button>
-
-              {error && (
-                <p className="text-red-500 mt-6 font-black text-xs uppercase tracking-widest">
-                  {error}
-                </p>
+            <button
+              onClick={handleReveal}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-8 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--accent-foreground)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Spinner size={16} className="text-current" variant="classic" />
+                  <span>{t("contentViewer.decrypting")}</span>
+                </>
+              ) : (
+                <span>{t("contentViewer.unlockContent")}</span>
               )}
-            </div>
-          ) : (
-            <div className="space-y-8 animate-in fade-in zoom-in duration-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                  {t("contentViewer.decryptedData")}
-                </span>
-                <button
-                  onClick={handleCopy}
-                  className="bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all text-[10px] font-black tracking-widest uppercase px-4 py-2 rounded-xl border border-white/10"
+            </button>
+
+            {error && (
+              <p className="font-mono text-xs uppercase tracking-widest text-red-400">{error}</p>
+            )}
+          </div>
+        </Panel>
+      ) : (
+        <div className="space-y-4">
+          {/* Copy button row */}
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              {t("contentViewer.decryptedData")}
+            </span>
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--foreground)]"
+            >
+              {/* Clipboard icon */}
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              {copied ? t("contentViewer.copied") : t("contentViewer.copyToClipboard")}
+            </button>
+          </div>
+
+          {/* Content display with corner frame */}
+          <CornerFrame size="lg" color="var(--accent)">
+            <pre className="max-h-[600px] overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-6 font-mono text-sm leading-relaxed text-[var(--foreground)] whitespace-pre-wrap break-all">
+              {content}
+            </pre>
+          </CornerFrame>
+
+          {/* Integrity footer */}
+          <div className="flex items-center justify-between border-t border-[var(--line)] pt-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10">
+                <svg
+                  className="h-3.5 w-3.5 text-emerald-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  {copied ? t("contentViewer.copied") : t("contentViewer.copyToClipboard")}
-                </button>
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </div>
-
-              <div className="relative group/content">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl opacity-20 blur group-hover/content:opacity-40 transition duration-1000" />
-                <pre className="relative bg-gray-950 p-8 rounded-3xl font-mono text-sm md:text-base text-gray-100 whitespace-pre-wrap break-all border border-white/5 overflow-x-auto max-h-[600px] leading-relaxed shadow-inner">
-                  {content}
-                </pre>
-              </div>
-
-              <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-                    {t("contentViewer.verifiedIntegrity")}
-                  </span>
-                </div>
-                <p className="text-[9px] text-gray-600 font-bold max-w-[200px] text-center md:text-right">
-                  {t("contentViewer.encryptedSession")}
-                </p>
-              </div>
+              <span className="font-mono text-[0.65rem] uppercase tracking-widest text-[var(--text-muted)]">
+                {t("contentViewer.verifiedIntegrity")}
+              </span>
             </div>
-          )}
+            <p className="max-w-[200px] text-right font-mono text-[0.6rem] text-[var(--text-muted)]">
+              {t("contentViewer.encryptedSession")}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -2,15 +2,22 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Spinner from "@/components/ui/Spinner";
-import FormInput from "@/components/ui/FormInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
+import { Field } from "@/components/ui/field";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function CreateProduct() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center p-12">
-          <Spinner size={32} />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-96 w-full" />
         </div>
       }
     >
@@ -45,7 +52,7 @@ function CreateProductContent() {
           if (data.product) {
             setForm({
               title: data.product.title,
-              slug: `${data.product.slug}-copy`, // Append copy to avoid collision
+              slug: `${data.product.slug}-copy`,
               description: data.product.description || "",
               imageUrl: data.product.imageUrl || "",
               priceIdr: data.product.priceIdr,
@@ -74,7 +81,6 @@ function CreateProductContent() {
     setError("");
 
     try {
-      // Remove empty optional string fields before sending
       const { imageUrl, ...rest } = form;
       const payload = {
         ...rest,
@@ -106,135 +112,168 @@ function CreateProductContent() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <PageHeader
+        eyebrow="NEW LISTING"
+        title="Create Product"
+        description={
+          sourceSlug ? `Duplicating from /${sourceSlug}` : "Add a new product to your catalog."
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-4 border p-6 rounded-lg bg-white shadow-sm">
-        {/* Title */}
-        <FormInput
-          id="title"
-          label="Title"
-          value={form.title}
-          onChange={(val) => {
-            setForm((prev) => ({
-              ...prev,
-              title: val,
-              slug: prev.slug || val.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-            }));
-          }}
-          required
-        />
-
-        {/* Slug */}
-        <FormInput
-          id="slug"
-          label="Slug (URL)"
-          value={form.slug}
-          onChange={(val) => setForm((prev) => ({ ...prev, slug: val }))}
-          required
-          className="bg-gray-50"
-        />
-
-        {/* Price */}
-        <FormInput
-          id="priceIdr"
-          label="Price (IDR)"
-          type="number"
-          value={String(form.priceIdr)}
-          onChange={(val) => setForm((prev) => ({ ...prev, priceIdr: Number(val) }))}
-          required
-          min={0}
-        />
-
-        {/* Description */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={3}
-            className="w-full border rounded p-2"
-            value={form.description}
-            onChange={handleChange}
-          />
+      {error && (
+        <div className="flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+          <span>{error}</span>
+          <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+            DISMISS
+          </button>
         </div>
+      )}
 
-        {/* Image URL */}
-        <div>
-          <FormInput
-            id="imageUrl"
-            label="Image URL (Optional)"
-            type="url"
-            value={form.imageUrl}
-            onChange={(val) => setForm((prev) => ({ ...prev, imageUrl: val }))}
-            placeholder="https://example.com/image.jpg"
-          />
-          {form.imageUrl && (
-            <div className="mt-2 text-xs text-gray-500">
-              <span className="block mb-1">Preview:</span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={form.imageUrl}
-                alt="Preview"
-                className="h-20 w-auto rounded border"
-                onError={(e) => (e.currentTarget.style.display = "none")}
+      <form onSubmit={handleSubmit}>
+        <Panel>
+          <div className="space-y-5">
+            {/* Title */}
+            <Field label="Title" monoLabel htmlFor="title">
+              <Input
+                type="text"
+                id="title"
+                name="title"
+                required
+                value={form.title}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    title: val,
+                    slug: prev.slug || val.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+                  }));
+                }}
               />
+            </Field>
+
+            {/* Slug */}
+            <Field
+              label="Slug (URL)"
+              monoLabel
+              htmlFor="slug"
+              helper="URL-safe identifier for this product."
+            >
+              <Input
+                type="text"
+                id="slug"
+                name="slug"
+                required
+                value={form.slug}
+                onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+              />
+            </Field>
+
+            {/* Price */}
+            <Field label="Price (IDR)" monoLabel htmlFor="priceIdr">
+              <Input
+                type="number"
+                id="priceIdr"
+                name="priceIdr"
+                required
+                min={0}
+                value={form.priceIdr}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    priceIdr: Number(e.target.value),
+                  }))
+                }
+              />
+            </Field>
+
+            <Separator />
+
+            {/* Description */}
+            <Field label="Description" monoLabel htmlFor="description">
+              <Textarea
+                id="description"
+                name="description"
+                rows={3}
+                value={form.description}
+                onChange={handleChange}
+              />
+            </Field>
+
+            {/* Image URL */}
+            <Field label="Image URL (Optional)" monoLabel htmlFor="imageUrl">
+              <Input
+                type="url"
+                id="imageUrl"
+                name="imageUrl"
+                placeholder="https://example.com/image.jpg"
+                value={form.imageUrl}
+                onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+              />
+              {form.imageUrl && (
+                <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.imageUrl}
+                    alt="Preview"
+                    className="h-20 w-auto rounded-md border border-[var(--line)]"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                </div>
+              )}
+            </Field>
+
+            <Separator />
+
+            {/* Content */}
+            <Field
+              label="Content (The Product)"
+              monoLabel
+              htmlFor="content"
+              helper="This text will be encrypted and delivered only after payment."
+            >
+              <Textarea
+                id="content"
+                name="content"
+                required
+                rows={6}
+                className="font-mono text-sm"
+                placeholder="Paste your digital product content here..."
+                value={form.content}
+                onChange={handleChange}
+              />
+            </Field>
+
+            <Separator />
+
+            {/* Active Toggle */}
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={form.isActive}
+                onChange={handleCheckbox}
+                className="h-4 w-4 rounded border-[var(--line)] accent-[var(--accent)]"
+              />
+              <label
+                htmlFor="isActive"
+                className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]"
+              >
+                Active (Visible in store)
+              </label>
             </div>
-          )}
-        </div>
 
-        {/* Content */}
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium">
-            Content (The Product)
-          </label>
-          <p className="text-xs text-gray-500 mb-1">
-            This text will be encrypted and delivered only after payment.
-          </p>
-          <textarea
-            id="content"
-            name="content"
-            required
-            rows={6}
-            className="w-full border rounded p-2 font-mono text-sm bg-yellow-50"
-            placeholder="Paste your digital product content here..."
-            value={form.content}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Active */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={form.isActive}
-            onChange={handleCheckbox}
-            className="h-4 w-4"
-          />
-          <label htmlFor="isActive">Active (Visible in store)</label>
-        </div>
-
-        {error && <div className="text-red-600 text-sm">{error}</div>}
-
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
-          >
-            {loading ? "Saving..." : "Create Product"}
-          </button>
-        </div>
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} size="sm">
+                {loading ? "Saving..." : "Create Product"}
+              </Button>
+            </div>
+          </div>
+        </Panel>
       </form>
     </div>
   );

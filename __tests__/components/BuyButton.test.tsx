@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import BuyButton from "@/components/BuyButton";
-import { ToastProvider } from "@/components/ui/Toast";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -9,6 +9,16 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+}));
+
+// Mock sonner
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
 }));
 
 // Mock fetch
@@ -42,29 +52,25 @@ describe("BuyButton Component", () => {
   });
 
   function renderBuyButton(slug: string) {
-    return render(
-      <ToastProvider>
-        <BuyButton slug={slug} />
-      </ToastProvider>
-    );
+    return render(<BuyButton slug={slug} />);
   }
 
-  it("renders Get Access Now button", () => {
+  it("renders Secure Access button", () => {
     renderBuyButton("test-product");
 
-    expect(screen.getByRole("button")).toHaveTextContent("Get Access Now");
+    expect(screen.getByRole("button")).toHaveTextContent("Secure Access");
   });
 
-  it("renders Get Access Now for any product", () => {
+  it("renders Secure Access for any product", () => {
     renderBuyButton("premium-product");
 
-    expect(screen.getByRole("button")).toHaveTextContent("Get Access Now");
+    expect(screen.getByRole("button")).toHaveTextContent("Secure Access");
   });
 
   it("shows secure payment messages", () => {
     renderBuyButton("test-product");
 
-    expect(screen.getByText(/certified secure/i)).toBeInTheDocument();
+    expect(screen.getByText(/secure payment/i)).toBeInTheDocument();
     expect(screen.getByText(/qris/i)).toBeInTheDocument();
   });
 
@@ -102,40 +108,40 @@ describe("BuyButton Component", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(button).toHaveTextContent("Securing access...");
+      expect(button).toHaveTextContent("Securing Access...");
       expect(button).toBeDisabled();
     });
   });
 
-  it("shows alert on API error", async () => {
+  it("shows toast on API error", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
     });
 
     renderBuyButton("test-product");
 
+    const user = userEvent.setup();
     const button = screen.getByRole("button");
-    fireEvent.click(button);
+    await user.click(button);
 
+    const { toast } = await import("sonner");
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Error creating order. Please try again."
-      );
+      expect(toast.error).toHaveBeenCalledWith("Error creating order. Please try again.");
     });
   });
 
-  it("shows alert on network error", async () => {
+  it("shows toast on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     renderBuyButton("test-product");
 
+    const user = userEvent.setup();
     const button = screen.getByRole("button");
-    fireEvent.click(button);
+    await user.click(button);
 
+    const { toast } = await import("sonner");
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Error creating order. Please try again."
-      );
+      expect(toast.error).toHaveBeenCalledWith("Error creating order. Please try again.");
     });
   });
 
@@ -149,7 +155,7 @@ describe("BuyButton Component", () => {
 
     await waitFor(() => {
       expect(button).not.toBeDisabled();
-      expect(button).toHaveTextContent("Get Access Now");
+      expect(button).toHaveTextContent("Secure Access");
     });
   });
 

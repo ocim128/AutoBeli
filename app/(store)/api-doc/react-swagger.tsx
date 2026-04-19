@@ -9,7 +9,11 @@ type Props = {
 };
 
 function ReactSwagger({ spec }: Props) {
-  return <SwaggerUI spec={spec} />;
+  return (
+    <div className="swagger-tactical">
+      <SwaggerUI spec={spec} />
+    </div>
+  );
 }
 
 export default ReactSwagger;

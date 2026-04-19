@@ -5,6 +5,7 @@ import { getMongoClient } from "@/lib/db";
 import { Product } from "@/lib/definitions";
 import { getBroadcastRecipientCount, productHasAvailableStock } from "@/lib/broadcast";
 import ProductBroadcastPanel from "@/components/admin/ProductBroadcastPanel";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function ProductBroadcastPage({
   params,
@@ -29,14 +30,17 @@ export default async function ProductBroadcastPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin/products" className="text-indigo-600 hover:underline text-sm">
+        <Link
+          href="/admin/products"
+          className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--accent)] hover:underline"
+        >
           Back to Products
         </Link>
-        <h1 className="text-3xl font-bold mt-2">Broadcast Product</h1>
-        <p className="text-gray-500 mt-1">
-          Send a short product announcement to active audience contacts who have not bought this
-          product yet.
-        </p>
+        <PageHeader
+          eyebrow="BROADCAST"
+          title="Broadcast Product"
+          description="Send a short product announcement to active audience contacts who have not bought this product yet."
+        />
       </div>
 
       <ProductBroadcastPanel

@@ -7,17 +7,21 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const res = await fetch("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ password }),
       headers: { "Content-Type": "application/json" },
     });
+
+    setLoading(false);
 
     if (res.ok) {
       router.push("/admin/dashboard");
@@ -28,16 +32,29 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex h-[80vh] items-center justify-center">
-      <div className="w-full max-w-sm rounded-lg border bg-white p-6 shadow-md">
-        <h1 className="mb-6 text-center text-2xl font-bold">Admin Access</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full max-w-sm">
+      {/* Tactical login card */}
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-8">
+        {/* Brand */}
+        <div className="mb-8 text-center">
+          <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
+            AutoBeli
+          </span>
+          <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+            Admin Access
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
+            <label className="block font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter Admin Password"
-                className="w-full rounded-md border p-2 pr-10 text-black"
+                className="w-full rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5 pr-10 text-sm text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-label="Admin password"
@@ -45,11 +62,11 @@ export default function AdminLogin() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)] p-1 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -58,7 +75,7 @@ export default function AdminLogin() {
                     />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -76,16 +93,19 @@ export default function AdminLogin() {
               </button>
             </div>
           </div>
+
           {error && (
-            <p className="text-sm text-red-500" role="alert">
+            <p className="text-sm text-[var(--danger)] font-mono" role="alert">
               {error}
             </p>
           )}
+
           <button
             type="submit"
-            className="w-full rounded-md bg-black py-2 text-white hover:bg-gray-800"
+            disabled={loading}
+            className="w-full rounded-lg bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-foreground)] hover:bg-[var(--accent)]/80 disabled:opacity-50 transition-colors"
           >
-            Unlock
+            {loading ? "Verifying..." : "Unlock"}
           </button>
         </form>
       </div>

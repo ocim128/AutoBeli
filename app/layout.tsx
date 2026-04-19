@@ -1,24 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
+import { Cormorant_Garamond } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Providers } from "@/components/Providers";
+
+/* ── Fonts ─────────────────────────────────── */
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap", // Performance: Prevent FOIT (Flash of Invisible Text)
-  preload: true,
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
   display: "swap",
   preload: true,
 });
+
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: true,
+});
+
+/* ── Metadata ──────────────────────────────── */
 
 export const metadata: Metadata = {
   title: "AutoBeli - Digital Text Store",
@@ -38,16 +50,17 @@ export const metadata: Metadata = {
   },
 };
 
-// Separate viewport export for Next.js 15+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5, // Allow pinch-to-zoom for accessibility
+  maximumScale: 5,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
+    { media: "(prefers-color-scheme: light)", color: "#f3ede0" },
+    { media: "(prefers-color-scheme: dark)", color: "#090909" },
   ],
 };
+
+/* ── Root Layout ───────────────────────────── */
 
 export default function RootLayout({
   children,
@@ -55,28 +68,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <head>
-        {/* Preconnect to font providers for faster loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* DNS prefetch for WhatsApp API */}
-        <link rel="dns-prefetch" href="https://wa.me" />
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="id" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${cormorantGaramond.variable} ${ibmPlexMono.variable} antialiased`}
+      >
         <Providers>
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-indigo-600 text-white px-4 py-2 rounded-md font-medium shadow-lg"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--accent-foreground)] shadow-lg"
           >
             Skip to content
           </a>
-          <Header />
-          <main id="main-content" className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <WhatsAppButton />
-          <Footer />
+          {children}
         </Providers>
       </body>
     </html>

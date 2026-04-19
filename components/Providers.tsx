@@ -1,12 +1,22 @@
 "use client";
 
+import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { ToastProvider } from "@/components/ui/Toast";
+import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <LanguageProvider>
-      <ToastProvider>{children}</ToastProvider>
-    </LanguageProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="autobeli-theme"
+    >
+      <LanguageProvider>
+        {children}
+        <Toaster />
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

@@ -1,11 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { OrderWithProduct } from "@/lib/orders";
-import Spinner from "@/components/ui/Spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PageHeader } from "@/components/ui/page-header";
+import { DataTableShell } from "@/components/ui/data-table-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Panel } from "@/components/ui/panel";
 
-// We'll fetch orders via a new API endpoint since we need dynamic joined data
 export default function AdminOrders() {
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,101 +36,141 @@ export default function AdminOrders() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Spinner size={32} />
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex justify-between items-center">
-        <span>{error}</span>
-        <button onClick={() => setError("")} className="text-red-500 font-bold hover:text-red-700">
-          &times;
-        </button>
-      </div>
-    );
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Orders</h1>
-        <Link href="/admin/dashboard" className="text-sm underline">
-          Back to Dashboard
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="TRANSACTIONS"
+        title="Orders"
+        description="View and manage all customer orders."
+      />
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="p-4">ID</th>
-                <th className="p-4">Product</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Contact</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Gateway</th>
-                <th className="p-4">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-gray-500">
-                    No orders found.
-                  </td>
-                </tr>
-              )}
+      <Panel padding="sm">
+        <DataTableShell
+          title="ORDERS"
+          loading={loading}
+          empty={orders.length === 0 && !loading}
+          emptyContent={
+            <div className="flex flex-col items-center gap-3 py-8">
+              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                No orders found
+              </span>
+            </div>
+          }
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-[var(--line)] hover:bg-transparent">
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  ID
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Product
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Amount
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Contact
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Status
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Gateway
+                </TableHead>
+                <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Date
+                </TableHead>
+                <TableHead className="w-12">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {orders.map((order) => (
-                <tr
+                <TableRow
                   key={order._id?.toString()}
-                  className="border-b last:border-0 hover:bg-gray-50 transition"
+                  className="border-b border-[var(--line)] hover:bg-[var(--panel-2)]"
                 >
-                  <td className="p-4 font-mono text-xs text-gray-500">{order._id?.toString()}</td>
-                  <td
-                    className="p-4 font-medium max-w-xs truncate"
-                    title={order.product?.title || "Unknown"}
-                  >
-                    {order.product?.title || <span className="text-red-400">Deleted Product</span>}
-                  </td>
-                  <td className="p-4">
+                  <TableCell className="font-mono text-xs text-[var(--text-muted)] max-w-[120px] truncate">
+                    {order._id?.toString()}
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    {order.product?.title ? (
+                      <span className="text-sm text-[var(--foreground)]">
+                        {order.product.title}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-[var(--danger)]">Deleted Product</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm text-[var(--foreground)]">
                     Rp {(order.amountPaid || order.product?.priceIdr || 0).toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4">
+                  </TableCell>
+                  <TableCell className="text-sm">
                     {order.customerContact ? (
-                      <span className="text-gray-700" title={order.customerContact}>
+                      <span className="text-[var(--text-muted)]" title={order.customerContact}>
                         {order.customerContact}
                       </span>
                     ) : (
-                      <span className="text-gray-400 italic">-</span>
+                      <span className="font-mono text-xs text-[var(--text-muted)]">--</span>
                     )}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        order.status === "PAID"
-                          ? "bg-green-100 text-green-800"
-                          : order.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-xs text-gray-500 uppercase">{order.paymentGateway}</td>
-                  <td className="p-4 text-gray-500">
+                  </TableCell>
+                  <TableCell>
+                    {order.status === "PAID" ? (
+                      <StatusBadge status="success">Paid</StatusBadge>
+                    ) : order.status === "PENDING" ? (
+                      <StatusBadge status="pending">Pending</StatusBadge>
+                    ) : (
+                      <StatusBadge status="error">{order.status}</StatusBadge>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs uppercase text-[var(--text-muted)]">
+                    {order.paymentGateway}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-[var(--text-muted)]">
                     {new Date(order.createdAt).toLocaleString("id-ID")}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors">
+                        <svg
+                          width="16"
+                          height="16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="12" cy="5" r="1" />
+                          <circle cx="12" cy="12" r="1" />
+                          <circle cx="12" cy="19" r="1" />
+                        </svg>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem>
+                          <a href={`/admin/orders?id=${order._id}`} className="flex w-full">
+                            View Order
+                          </a>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </DataTableShell>
+
+        {error && (
+          <div className="mt-4 flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+            <span>{error}</span>
+            <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+              DISMISS
+            </button>
+          </div>
+        )}
+      </Panel>
     </div>
   );
 }

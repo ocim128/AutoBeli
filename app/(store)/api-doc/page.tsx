@@ -1,5 +1,6 @@
 import { getApiDocs } from "@/lib/swagger";
 import ReactSwagger from "./react-swagger";
+import { ApiDocPageClient } from "./api-doc-client";
 
 export const metadata = {
   title: "API Documentation",
@@ -9,9 +10,11 @@ export const metadata = {
 export default async function IndexPage() {
   const spec = await getApiDocs();
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">AutoBeli API Docs</h1>
-      <ReactSwagger spec={spec} />
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <ApiDocPageClient />
+      <div className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--panel)] overflow-hidden">
+        <ReactSwagger spec={spec} />
+      </div>
     </div>
   );
 }

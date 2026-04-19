@@ -4,11 +4,12 @@ import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/ui/Spinner";
 import { useLanguage } from "@/context/LanguageContext";
-import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface BuyButtonProps {
   slug: string;
-  maxQuantity?: number; // Maximum quantity available (for stock products)
+  maxQuantity?: number;
 }
 
 function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
@@ -16,7 +17,6 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const { t } = useLanguage();
-  const { toast } = useToast();
 
   const handleBuy = useCallback(async () => {
     setLoading(true);
@@ -27,107 +27,110 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
         body: JSON.stringify({ slug, quantity }),
       });
 
-      if (!res.ok) throw new Error("Failed to create order");
+      if (!res.ok) throw new Error(t("common.createOrderFailed"));
 
       const data = await res.json();
       router.push(`/checkout/${data.orderId}`);
     } catch {
-      toast("Error creating order. Please try again.", "error");
+      toast.error(t("common.createOrderFailed"));
       setLoading(false);
     }
-  }, [slug, quantity, router, toast]);
+  }, [slug, quantity, router, t]);
 
   const canIncrement = quantity < maxQuantity;
   const canDecrement = quantity > 1;
 
   return (
-    <div className="w-full">
-      {/* Quantity Selector - only show if maxQuantity > 1 */}
+    <div className="w-full space-y-5">
       {maxQuantity > 1 && (
-        <div className="mb-4 flex items-center justify-center gap-4">
-          <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">
-            {t("product.quantity") || "Qty"}
-          </span>
-          <div className="flex items-center gap-2 bg-gray-800 rounded-xl p-1">
-            <button
-              type="button"
-              onClick={() => canDecrement && setQuantity((q) => q - 1)}
-              disabled={!canDecrement || loading}
-              className="w-10 h-10 rounded-lg bg-gray-700 text-white font-bold text-xl hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              aria-label="Decrease quantity"
-            >
-              −
-            </button>
-            <span className="w-12 text-center text-white font-black text-xl tabular-nums">
-              {quantity}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <span className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("product.quantity")}
             </span>
-            <button
-              type="button"
-              onClick={() => canIncrement && setQuantity((q) => q + 1)}
-              disabled={!canIncrement || loading}
-              className="w-10 h-10 rounded-lg bg-gray-700 text-white font-bold text-xl hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              aria-label="Increase quantity"
-            >
-              +
-            </button>
+            <span className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("common.minimum")} 1 / {t("common.maximum")} {maxQuantity}
+            </span>
           </div>
-          <span className="text-xs text-gray-500">(max {maxQuantity})</span>
+
+          <div className="overflow-hidden rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)]">
+            <div className="grid grid-cols-[3rem_1fr_3rem] items-stretch">
+              <button
+                type="button"
+                onClick={() => canDecrement && setQuantity((current) => current - 1)}
+                disabled={!canDecrement || loading}
+                className="flex h-12 items-center justify-center border-r border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
+                aria-label="Decrease quantity"
+              >
+                &minus;
+              </button>
+
+              <div className="flex h-12 flex-col items-center justify-center">
+                <span className="font-serif text-[1.7rem] leading-none tracking-[-0.04em] text-[var(--foreground)]">
+                  {quantity}
+                </span>
+                <span className="mt-1 font-mono text-[0.58rem] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  {t("common.stock")} {maxQuantity}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => canIncrement && setQuantity((current) => current + 1)}
+                disabled={!canIncrement || loading}
+                className="flex h-12 items-center justify-center border-l border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      <button
+      <Button
         onClick={handleBuy}
         disabled={loading}
         aria-busy={loading}
-        className="group relative w-full bg-white text-gray-900 font-black text-xl py-5 px-8 rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.2)] hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none overflow-hidden"
+        variant="outline"
+        className="h-12 w-full rounded-[10px] border border-[var(--accent)]/65 bg-transparent px-4 font-mono text-[0.78rem] uppercase tracking-[0.18em] text-[var(--foreground)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] disabled:border-[var(--line)] disabled:bg-transparent disabled:text-[var(--text-muted)]"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity" />
-
-        <div className="relative flex items-center justify-center gap-3">
+        <span className="flex items-center justify-center gap-2">
           {loading ? (
             <>
-              <Spinner size={24} className="text-gray-900" />
+              <Spinner size={18} variant="classic" />
               <span>{t("common.securingAccess")}</span>
             </>
           ) : (
             <>
               <span>{t("common.getAccessNow")}</span>
-              <svg
-                className="w-6 h-6 transform group-hover:translate-x-2 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={3}
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
+              <span aria-hidden="true">&rarr;</span>
             </>
           )}
-        </div>
-      </button>
+        </span>
+      </Button>
 
-      <div className="mt-6 flex items-center justify-center gap-6 opacity-60">
-        <div className="flex items-center gap-1.5 grayscale">
-          <span className="text-[10px] font-black tracking-tighter text-white bg-gray-500 px-1.5 rounded">
-            {t("common.qris")}
+      <div className="grid gap-3 border-t border-[var(--line)] pt-4 text-left sm:grid-cols-3">
+        <div className="space-y-1">
+          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            {t("common.securePayment")}
           </span>
-          <span className="text-[10px] font-bold text-gray-400">{t("common.ready")}</span>
+          <span className="block text-xs text-[var(--foreground)]">Veripay</span>
         </div>
-        <div className="w-px h-3 bg-gray-700/20" />
-        <div className="flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="text-[10px] font-black text-gray-500 tracking-widest uppercase">
-            {t("common.certifiedSecure")}
+        <div className="space-y-1">
+          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            {t("checkout.paymentMethod")}
+          </span>
+          <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+            QRIS / VA / Wallet
+          </span>
+        </div>
+        <div className="space-y-1">
+          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            {t("common.instantDelivery")}
+          </span>
+          <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+            {t("common.ready")}
           </span>
         </div>
       </div>

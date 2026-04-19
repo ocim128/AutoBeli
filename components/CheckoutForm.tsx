@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { REGEX_PATTERNS } from "@/lib/validation";
 import Spinner from "@/components/ui/Spinner";
 import { useLanguage } from "@/context/LanguageContext";
+import { Panel } from "@/components/ui/panel";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface CheckoutFormProps {
   orderId: string;
@@ -55,7 +60,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
 
         if (!contactRes.ok) {
           const data = await contactRes.json();
-          throw new Error(data.error || "Failed to save contact");
+          throw new Error(data.error || t("checkout.contactSaveFailed"));
         }
 
         const payRes = await fetch(getPaymentEndpoint(), {
@@ -67,7 +72,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         const payData = await payRes.json();
 
         if (!payRes.ok) {
-          throw new Error(payData.error || "Payment creation failed");
+          throw new Error(payData.error || t("checkout.paymentCreationFailed"));
         }
 
         if (payData.payment_url) {
@@ -89,92 +94,71 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
   );
 
   return (
-    <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-indigo-100/50">
-      <div className="mb-10 inline-flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-gray-900 leading-tight">
-            {t("checkout.securePayment")}
-          </h2>
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-            {t("checkout.digitalOrder")} #{orderId.slice(-6).toUpperCase()}
-          </p>
-        </div>
+    <Panel padding="lg">
+      {/* Header */}
+      <div className="mb-8">
+        <SectionEyebrow variant="accent">{t("common.payment")}</SectionEyebrow>
+        <h2 className="font-serif text-2xl text-[var(--foreground)] mt-2 leading-tight">
+          {t("checkout.securePayment")}
+        </h2>
+        <p className="font-mono text-[0.65rem] text-[var(--text-muted)] mt-1 uppercase tracking-wider">
+          {t("checkout.digitalOrder")} #{orderId.slice(-6).toUpperCase()}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {/* Error Display */}
         {error && (
           <div
             role="alert"
-            className="p-4 rounded-2xl bg-red-50 border border-red-100 text-sm text-red-600 font-medium flex gap-3 animate-head-shake"
+            className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
           >
-            <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <svg
+              className="w-4 h-4 text-red-400 shrink-0 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
                 clipRule="evenodd"
               />
             </svg>
-            {error}
+            <span className="font-mono text-xs text-red-400">{error}</span>
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="contact"
-            className="block text-sm font-black text-gray-700 uppercase tracking-widest mb-3 pl-1"
-          >
-            {t("checkout.emailAddress")}
-          </label>
-          <div className="relative group">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-indigo-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <input
-              type="email"
-              id="contact"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              placeholder={t("checkout.emailPlaceholder")}
-              className={`w-full pl-14 pr-6 py-5 bg-gray-50 border-2 rounded-[1.5rem] focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-600 transition-all text-lg font-bold text-gray-900 placeholder:text-gray-300 ${
-                error ? "border-red-200" : "border-gray-100"
-              }`}
-              disabled={loading}
-              aria-invalid={!!error}
-              aria-required="true"
-            />
-          </div>
-          <p className="text-xs text-gray-400 font-medium mt-4 pl-1">{t("checkout.emailHelp")}</p>
-        </div>
+        {/* Email Field */}
+        <Field
+          label={t("checkout.emailAddress")}
+          monoLabel
+          htmlFor="contact"
+          helper={t("checkout.emailHelp")}
+        >
+          <Input
+            type="email"
+            id="contact"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            placeholder={t("checkout.emailPlaceholder")}
+            disabled={loading}
+            aria-invalid={!!error}
+            aria-required="true"
+            className="h-10 text-sm bg-[var(--panel-2)] border-[var(--line)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-[var(--accent)]/20"
+          />
+        </Field>
 
-        <button
+        {/* Submit Button */}
+        <Button
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="group relative w-full bg-gray-900 text-white font-black py-5 px-8 rounded-2xl text-xl shadow-xl hover:bg-black hover:-translate-y-1 active:translate-y-0 transition-all duration-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:transform-none overflow-hidden"
+          className="h-12 w-full rounded-lg bg-[var(--accent)] text-base font-semibold text-[var(--accent-foreground)] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-10 transition-opacity" />
-
-          <div className="relative flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2">
             {loading ? (
               <>
-                <Spinner size={24} />
+                <Spinner size={20} />
                 <span>{t("checkout.processing")}</span>
               </>
             ) : (
@@ -182,37 +166,41 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
                 <span>
                   {t("checkout.pay")} Rp{amount.toLocaleString("id-ID")}
                 </span>
-                <svg
-                  className="w-6 h-6 transform group-hover:translate-x-1.5 transition-transform duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={3}
+                    strokeWidth={2}
                     d="M13 7l5 5m0 0l-5 5m5-5H6"
                   />
                 </svg>
               </>
             )}
           </div>
-        </button>
+        </Button>
       </form>
 
-      <div className="mt-10 flex flex-col items-center gap-4 border-t border-gray-50 pt-8">
-        <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">
+      {/* Payment Methods */}
+      <div className="mt-8 pt-6 border-t border-[var(--line)]">
+        <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-[var(--text-muted)] text-center mb-3">
           {t("checkout.supportedMethods")}
         </p>
-        <div className="flex gap-6 grayscale opacity-40">
-          <span className="font-black text-xs tracking-tighter">QRIS</span>
-          <span className="font-black text-xs tracking-tighter">BCA</span>
-          <span className="font-black text-xs tracking-tighter">GOPAY</span>
-          <span className="font-black text-xs tracking-tighter">OVO</span>
+        <div className="flex justify-center gap-6">
+          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
+            QRIS
+          </span>
+          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
+            BCA
+          </span>
+          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
+            GOPAY
+          </span>
+          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
+            OVO
+          </span>
         </div>
       </div>
-    </div>
+    </Panel>
   );
 }
 

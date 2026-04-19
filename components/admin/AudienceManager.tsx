@@ -1,8 +1,43 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import Spinner from "@/components/ui/Spinner";
+import { Panel } from "@/components/ui/panel";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Field } from "@/components/ui/field";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DataTableShell } from "@/components/ui/data-table-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 type AudienceStatus = "ACTIVE" | "EXCLUDED" | "BOUNCED";
 
@@ -30,10 +65,17 @@ function formatDate(value: string | null): string {
   return new Date(value).toLocaleString("id-ID");
 }
 
-function statusClassName(status: AudienceStatus): string {
-  if (status === "ACTIVE") return "bg-green-100 text-green-800";
-  if (status === "EXCLUDED") return "bg-amber-100 text-amber-800";
-  return "bg-red-100 text-red-800";
+function statusToBadge(status: AudienceStatus) {
+  switch (status) {
+    case "ACTIVE":
+      return <StatusBadge status="success">{status}</StatusBadge>;
+    case "EXCLUDED":
+      return <StatusBadge status="warning">{status}</StatusBadge>;
+    case "BOUNCED":
+      return <StatusBadge status="error">{status}</StatusBadge>;
+    default:
+      return <StatusBadge status="neutral">{status}</StatusBadge>;
+  }
 }
 
 export default function AudienceManager() {
@@ -52,6 +94,7 @@ export default function AudienceManager() {
   const [formNotes, setFormNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<AudienceRow | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +184,7 @@ export default function AudienceManager() {
       }
 
       closeEdit();
+      toast.success("Audience contact updated");
       refreshCurrentPage();
     } catch (saveError) {
       setError(
@@ -152,9 +196,6 @@ export default function AudienceManager() {
   }
 
   async function deleteRow(row: AudienceRow) {
-    const confirmed = window.confirm(`Delete ${row.email} from the audience list?`);
-    if (!confirmed) return;
-
     setDeletingId(row._id);
     setError("");
 
@@ -169,6 +210,7 @@ export default function AudienceManager() {
       }
 
       closeEdit();
+      toast.success(`${row.email} removed from audience`);
       if (data && data.rows.length === 1 && page > 1) {
         setPage((current) => Math.max(1, current - 1));
       } else {
@@ -180,6 +222,7 @@ export default function AudienceManager() {
       );
     } finally {
       setDeletingId("");
+      setDeleteTarget(null);
     }
   }
 
@@ -204,232 +247,253 @@ export default function AudienceManager() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link href="/admin/dashboard" className="text-indigo-600 hover:underline text-sm">
-            Back to Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold mt-2">Audience</h1>
-          <p className="text-gray-500 mt-1">
-            Manage customer emails collected from paid orders, then use them for product broadcast.
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="AUDIENCE"
+          title="Audience"
+          description="Manage customer emails collected from paid orders, then use them for product broadcast."
+        />
 
-        <button
-          onClick={exportCsv}
-          className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition"
-        >
-          Export CSV
-        </button>
+        <Button variant="outline" size="sm" onClick={exportCsv}>
+          <span className="font-mono text-[0.7rem] uppercase tracking-wider">Export CSV</span>
+        </Button>
       </div>
 
-      <div className="bg-white border rounded-xl p-4 shadow-sm space-y-4">
+      {/* Filters */}
+      <Panel padding="sm">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_200px_auto_auto] md:items-end">
-          <div>
-            <label className="block text-sm font-medium mb-2">Search Email</label>
-            <input
+          <Field label="Search Email" monoLabel>
+            <Input
               type="text"
               value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") applyFilters();
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") applyFilters();
               }}
               placeholder="customer@example.com"
-              className="w-full rounded-lg border px-3 py-2"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Status</label>
+          <Field label="Status" monoLabel>
             <select
               value={statusInput}
-              onChange={(event) => setStatusInput(event.target.value)}
-              className="w-full rounded-lg border px-3 py-2"
+              onChange={(e) => setStatusInput(e.target.value)}
+              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <option value="">All</option>
               <option value="ACTIVE">Active</option>
               <option value="EXCLUDED">Excluded</option>
               <option value="BOUNCED">Bounced</option>
             </select>
-          </div>
+          </Field>
 
-          <button
-            onClick={applyFilters}
-            className="px-4 py-2 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 transition"
-          >
+          <Button variant="outline" size="sm" onClick={applyFilters}>
             Apply
-          </button>
+          </Button>
 
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-50 transition"
-          >
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
             Reset
-          </button>
+          </Button>
         </div>
 
         {data && (
-          <p className="text-sm text-gray-500">
-            Showing {data.rows.length} of {data.total} audience contacts
+          <p className="mt-3 font-mono text-[0.65rem] text-[var(--text-muted)]">
+            Showing {data.rows.length} of {data.total} contacts
           </p>
         )}
-      </div>
+      </Panel>
 
-      {editingRow && (
-        <div className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">Edit Audience Contact</h2>
-              <p className="text-sm text-gray-500">{editingRow.email}</p>
+      {/* Edit Dialog */}
+      <Dialog open={!!editingRow} onOpenChange={(open) => !open && closeEdit()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[var(--foreground)]">
+              Edit Audience Contact
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs text-[var(--text-muted)]">
+              {editingRow?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Email" monoLabel>
+                <Input
+                  type="email"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                />
+              </Field>
+              <Field label="Status" monoLabel>
+                <select
+                  value={formStatus}
+                  onChange={(e) => setFormStatus(e.target.value as AudienceStatus)}
+                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="EXCLUDED">Excluded</option>
+                  <option value="BOUNCED">Bounced</option>
+                </select>
+              </Field>
             </div>
-            <button onClick={closeEdit} className="text-sm text-gray-500 hover:text-gray-700">
-              Cancel
-            </button>
+
+            <Field label="Notes" monoLabel>
+              <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={4} />
+            </Field>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <input
-                type="email"
-                value={formEmail}
-                onChange={(event) => setFormEmail(event.target.value)}
-                className="w-full rounded-lg border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <select
-                value={formStatus}
-                onChange={(event) => setFormStatus(event.target.value as AudienceStatus)}
-                className="w-full rounded-lg border px-3 py-2"
-              >
-                <option value="ACTIVE">Active</option>
-                <option value="EXCLUDED">Excluded</option>
-                <option value="BOUNCED">Bounced</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Notes</label>
-            <textarea
-              value={formNotes}
-              onChange={(event) => setFormNotes(event.target.value)}
-              rows={4}
-              className="w-full rounded-lg border px-3 py-2"
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={saveEdit}
-              disabled={saving}
-              className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition"
-            >
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" size="sm" />}>Cancel</DialogClose>
+            <Button size="sm" onClick={() => void saveEdit()} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
-            </button>
+            </Button>
+            {editingRow && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteTarget(editingRow)}
+                disabled={deletingId === editingRow._id}
+              >
+                {deletingId === editingRow._id ? "Deleting..." : "Delete"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <button
-              onClick={() => void deleteRow(editingRow)}
-              disabled={deletingId === editingRow._id}
-              className="px-4 py-2 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50 transition"
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif text-[var(--foreground)]">
+              Remove from Audience
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete {deleteTarget?.email} from the audience list? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (deleteTarget) void deleteRow(deleteTarget);
+              }}
             >
-              {deletingId === editingRow._id ? "Deleting..." : "Delete from List"}
-            </button>
-          </div>
-        </div>
-      )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
+      {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 font-mono text-xs text-red-400">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow border overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center p-12">
-            <Spinner size={32} />
+      {/* Table */}
+      <DataTableShell
+        title="CONTACTS"
+        loading={loading}
+        empty={!data || data.rows.length === 0}
+        emptyContent={
+          <EmptyState
+            title="No audience contacts found"
+            description="Customer emails from paid orders will appear here automatically."
+          />
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                Email
+              </TableHead>
+              <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                Status
+              </TableHead>
+              <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                Orders
+              </TableHead>
+              <TableHead className="hidden md:table-cell font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                First Paid
+              </TableHead>
+              <TableHead className="hidden md:table-cell font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                Last Paid
+              </TableHead>
+              <TableHead className="hidden lg:table-cell font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                Updated
+              </TableHead>
+              <TableHead>
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.rows.map((row) => (
+              <TableRow key={row._id}>
+                <TableCell>
+                  <div className="font-mono text-xs text-[var(--foreground)]">{row.email}</div>
+                  {row.notes ? (
+                    <div className="mt-0.5 font-mono text-[0.6rem] text-[var(--text-muted)]">
+                      {row.notes}
+                    </div>
+                  ) : null}
+                </TableCell>
+                <TableCell>{statusToBadge(row.status)}</TableCell>
+                <TableCell className="font-mono text-xs">{row.totalPaidOrders}</TableCell>
+                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                  {formatDate(row.firstPaidOrderAt)}
+                </TableCell>
+                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                  {formatDate(row.lastPaidOrderAt)}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                  {formatDate(row.updatedAt)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => openEdit(row)}
+                    className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--accent)]"
+                  >
+                    Edit
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* Pagination */}
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-between gap-4 border-t border-[var(--line)] px-4 py-3">
+            <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+              Page {data.page} of {data.totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => setPage((c) => Math.max(1, c - 1))}
+                disabled={data.page <= 1}
+              >
+                Prev
+              </Button>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => setPage((c) => Math.min(data.totalPages, c + 1))}
+                disabled={data.page >= data.totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        ) : !data || data.rows.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No audience contacts found.</div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="p-4">Email</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Orders</th>
-                    <th className="p-4">First Paid</th>
-                    <th className="p-4">Last Paid</th>
-                    <th className="p-4">Updated</th>
-                    <th className="p-4">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rows.map((row) => (
-                    <tr key={row._id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="p-4">
-                        <div className="font-medium text-gray-900">{row.email}</div>
-                        {row.notes ? (
-                          <div className="text-xs text-gray-500 mt-1">{row.notes}</div>
-                        ) : null}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${statusClassName(row.status)}`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="p-4 font-medium">{row.totalPaidOrders}</td>
-                      <td className="p-4 text-gray-500">{formatDate(row.firstPaidOrderAt)}</td>
-                      <td className="p-4 text-gray-500">{formatDate(row.lastPaidOrderAt)}</td>
-                      <td className="p-4 text-gray-500">{formatDate(row.updatedAt)}</td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => openEdit(row)}
-                          className="text-indigo-600 hover:text-indigo-900 font-medium"
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 border-t px-4 py-3">
-              <p className="text-sm text-gray-500">
-                Page {data.page} of {data.totalPages}
-              </p>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  disabled={data.page <= 1}
-                  className="px-4 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 transition"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))}
-                  disabled={data.page >= data.totalPages}
-                  className="px-4 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 transition"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
         )}
-      </div>
+      </DataTableShell>
     </div>
   );
 }

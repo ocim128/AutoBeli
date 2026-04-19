@@ -6,6 +6,23 @@ import {
   buildProductBroadcastSubject,
   buildProductUrl,
 } from "@/lib/broadcastTemplate";
+import { Panel } from "@/components/ui/panel";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Field } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface ProductBroadcastPanelProps {
   product: {
@@ -31,6 +48,7 @@ export default function ProductBroadcastPanel({
   const [sendingLive, setSendingLive] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmLive, setConfirmLive] = useState(false);
 
   const subjectPreview = useMemo(
     () => buildProductBroadcastSubject(product.title),
@@ -67,24 +85,21 @@ export default function ProductBroadcastPanel({
         throw new Error(json.error || "Failed to send test email");
       }
 
-      setMessage(
+      toast.success(
         json.warning
           ? `Test email sent to ${testEmail}. ${json.warning}`
           : `Test email sent to ${testEmail}.`
       );
     } catch (sendError) {
-      setError(sendError instanceof Error ? sendError.message : "Failed to send test email");
+      const msg = sendError instanceof Error ? sendError.message : "Failed to send test email";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSendingTest(false);
     }
   }
 
   async function sendLive() {
-    const confirmed = window.confirm(
-      `Send this broadcast to ${recipientCount} eligible contacts for ${product.title}?`
-    );
-    if (!confirmed) return;
-
     setSendingLive(true);
     setError("");
     setMessage("");
@@ -109,164 +124,187 @@ export default function ProductBroadcastPanel({
         json.status === "PARTIAL"
           ? `Broadcast partially sent: ${json.sentCount} sent, ${json.failedCount} failed.`
           : `Broadcast sent to ${json.sentCount} contacts.`;
-      setMessage(json.warning ? `${summary} ${json.warning}` : summary);
+      toast.success(json.warning ? `${summary} ${json.warning}` : summary);
       setAdminPassword("");
     } catch (sendError) {
-      setError(sendError instanceof Error ? sendError.message : "Failed to send broadcast");
+      const msg = sendError instanceof Error ? sendError.message : "Failed to send broadcast";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSendingLive(false);
+      setConfirmLive(false);
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold">Product</h2>
-          <div className="space-y-2 text-sm text-gray-600">
-            <p>
-              <span className="font-medium text-gray-900">Title:</span> {product.title}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">Slug:</span> /{product.slug}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">Status:</span>{" "}
-              {product.isActive ? "Active" : "Inactive"}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">Public URL:</span>{" "}
+    <div className="space-y-4">
+      {/* Info Cards */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel monoLabel="PRODUCT">
+          <div className="space-y-2 text-sm">
+            <div>
+              <span className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
+                Title
+              </span>
+              <p className="text-[var(--foreground)]">{product.title}</p>
+            </div>
+            <div>
+              <span className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
+                Slug
+              </span>
+              <p className="font-mono text-xs text-[var(--foreground)]">/{product.slug}</p>
+            </div>
+            <div>
+              <span className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
+                Status
+              </span>
+              <div className="mt-0.5">
+                {product.isActive ? (
+                  <StatusBadge status="success">ACTIVE</StatusBadge>
+                ) : (
+                  <StatusBadge status="pending">INACTIVE</StatusBadge>
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
+                Public URL
+              </span>
               <a
                 href={buildProductUrl(product.slug)}
                 target="_blank"
                 rel="noreferrer"
-                className="text-indigo-600 hover:underline break-all"
+                className="mt-0.5 block break-all font-mono text-xs text-[var(--accent)] hover:underline"
               >
                 {buildProductUrl(product.slug)}
               </a>
-            </p>
+            </div>
           </div>
-        </section>
+        </Panel>
 
-        <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold">Recipients</h2>
-          <p className="text-4xl font-black">{recipientCount}</p>
-          <p className="text-sm text-gray-500">
+        <Panel monoLabel="RECIPIENTS">
+          <p className="font-serif text-4xl text-[var(--foreground)]">{recipientCount}</p>
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
             Eligible audience contacts after excluding deleted, excluded, bounced, and prior buyers
             of this product.
           </p>
-        </section>
+        </Panel>
 
-        <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold">Live Send Rules</h2>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li>Product must stay active.</li>
-            <li>Product must still have stock available.</li>
-            <li>Live send needs the admin password again.</li>
-            <li>Test send uses the same template as live send.</li>
+        <Panel monoLabel="LIVE SEND RULES">
+          <ul className="space-y-2 text-xs text-[var(--text-muted)]">
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--text-muted)]" />
+              Product must stay active.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--text-muted)]" />
+              Product must still have stock available.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--text-muted)]" />
+              Live send needs the admin password again.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--text-muted)]" />
+              Test send uses the same template as live send.
+            </li>
           </ul>
-        </section>
+        </Panel>
       </div>
 
+      {/* Blocker Warnings */}
       {!product.isActive && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl">
+        <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-400">
           Live broadcast is blocked because this product is inactive.
         </div>
       )}
 
       {!hasAvailableStock && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl">
+        <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 font-mono text-xs text-amber-400">
           Live broadcast is blocked because this product is sold out.
         </div>
       )}
 
-      <div className="bg-white border rounded-xl p-6 shadow-sm space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold">Broadcast Copy</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Keep it short and direct. This feature uses a fixed template and your teaser line.
-          </p>
-        </div>
+      {/* Broadcast Copy */}
+      <Panel monoLabel="BROADCAST COPY">
+        <p className="-mt-2 mb-4 text-xs text-[var(--text-muted)]">
+          Keep it short and direct. This feature uses a fixed template and your teaser line.
+        </p>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Teaser</label>
-          <textarea
+        <Field label="Teaser" monoLabel helper={`${teaser.length}/160 characters`}>
+          <Textarea
             value={teaser}
-            onChange={(event) => setTeaser(event.target.value)}
+            onChange={(e) => setTeaser(e.target.value)}
             rows={4}
             maxLength={160}
             placeholder="Cocok buat yang cari akses cepat tanpa ribet."
-            className="w-full rounded-xl border px-4 py-3"
           />
-          <p className="text-xs text-gray-500 mt-2">{teaser.length}/160 characters</p>
-        </div>
+        </Field>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-3">
-            <label className="block text-sm font-medium">Subject Preview</label>
-            <div className="rounded-xl border bg-gray-50 px-4 py-3 font-medium">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div>
+            <span className="mb-1.5 block font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+              Subject Preview
+            </span>
+            <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3 text-sm text-[var(--foreground)]">
               {subjectPreview}
             </div>
           </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-medium">Body Preview</label>
-            <pre className="rounded-xl border bg-gray-50 px-4 py-3 whitespace-pre-wrap text-sm text-gray-700 min-h-48">
+          <div>
+            <span className="mb-1.5 block font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+              Body Preview
+            </span>
+            <pre className="min-h-48 whitespace-pre-wrap rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
               {bodyPreview}
             </pre>
           </div>
         </div>
-      </div>
+      </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Test Send</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Send the exact broadcast template to one email first.
-            </p>
-          </div>
+      {/* Send Actions */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel monoLabel="TEST SEND">
+          <p className="-mt-2 mb-4 text-xs text-[var(--text-muted)]">
+            Send the exact broadcast template to one email first.
+          </p>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Test Email</label>
-            <input
+          <Field label="Test Email" monoLabel>
+            <Input
               type="email"
               value={testEmail}
-              onChange={(event) => setTestEmail(event.target.value)}
+              onChange={(e) => setTestEmail(e.target.value)}
               placeholder="admin@example.com"
-              className="w-full rounded-xl border px-4 py-3"
             />
-          </div>
+          </Field>
 
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
             onClick={() => void sendTest()}
             disabled={sendingTest || teaser.trim().length < 10 || !testEmail.trim()}
-            className="px-4 py-2 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 transition"
           >
-            {sendingTest ? "Sending Test..." : "Send Test Email"}
-          </button>
-        </section>
+            {sendingTest ? "Sending..." : "Send Test Email"}
+          </Button>
+        </Panel>
 
-        <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Live Broadcast</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              This sends to all currently eligible audience contacts for this product.
-            </p>
-          </div>
+        <Panel monoLabel="LIVE BROADCAST">
+          <p className="-mt-2 mb-4 text-xs text-[var(--text-muted)]">
+            This sends to all currently eligible audience contacts for this product.
+          </p>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Admin Password</label>
-            <input
+          <Field label="Admin Password" monoLabel>
+            <Input
               type="password"
               value={adminPassword}
-              onChange={(event) => setAdminPassword(event.target.value)}
-              className="w-full rounded-xl border px-4 py-3"
+              onChange={(e) => setAdminPassword(e.target.value)}
             />
-          </div>
+          </Field>
 
-          <button
-            onClick={() => void sendLive()}
+          <Button
+            size="sm"
+            className="mt-4"
+            onClick={() => setConfirmLive(true)}
             disabled={
               sendingLive ||
               teaser.trim().length < 10 ||
@@ -274,19 +312,39 @@ export default function ProductBroadcastPanel({
               recipientCount === 0 ||
               !canLiveSend
             }
-            className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition"
           >
-            {sendingLive ? "Sending Broadcast..." : `Send to ${recipientCount} Contacts`}
-          </button>
-        </section>
+            {sendingLive ? "Sending..." : `Send to ${recipientCount} Contacts`}
+          </Button>
+        </Panel>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">{error}</div>
-      )}
+      {/* Live Send Confirmation */}
+      <AlertDialog open={confirmLive} onOpenChange={setConfirmLive}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif text-[var(--foreground)]">
+              Confirm Broadcast
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Send this broadcast to {recipientCount} eligible contacts for {product.title}? This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void sendLive()}>Confirm Send</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
+      {/* Feedback */}
+      {error && (
+        <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 font-mono text-xs text-red-400">
+          {error}
+        </div>
+      )}
       {message && (
-        <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl">
+        <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 font-mono text-xs text-emerald-400">
           {message}
         </div>
       )}

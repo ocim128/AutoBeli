@@ -1,0 +1,161 @@
+"use client";
+
+import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CornerFrame } from "@/components/ui/corner-frame";
+import ContentViewer from "@/components/ContentViewer";
+
+interface OrderPaidProps {
+  orderId: string;
+  productTitle: string;
+  amountPaid: number;
+  createdAt: Date | string;
+  paymentGateway: string;
+  token: string | null;
+}
+
+export default function OrderPaid({
+  orderId,
+  productTitle,
+  amountPaid,
+  createdAt,
+  paymentGateway,
+  token,
+}: OrderPaidProps) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="min-h-[80vh] py-16 px-4">
+      <div className="mx-auto max-w-5xl space-y-8">
+        {/* Success Header */}
+        <PageHeader
+          eyebrow={t("checkout.orderDetails")}
+          title={t("checkout.purchaseSuccessful")}
+          align="center"
+          description={t("checkout.purchaseSuccessfulDesc")}
+        />
+
+        <div className="flex items-center justify-center gap-3">
+          <StatusBadge status="success">{t("checkout.paid")}</StatusBadge>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-12">
+          {/* Order Info Sidebar */}
+          <div className="space-y-6 md:col-span-4">
+            <Panel monoLabel={t("checkout.orderDetails")} padding="lg">
+              <div className="space-y-4">
+                <div className="border-b border-[var(--line)] pb-3">
+                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {t("checkout.product")}
+                  </span>
+                  <span className="text-sm font-medium text-[var(--foreground)]">
+                    {productTitle}
+                  </span>
+                </div>
+                <div className="border-b border-[var(--line)] pb-3">
+                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {t("checkout.totalPaid")}
+                  </span>
+                  <span className="font-mono text-lg font-medium text-emerald-400">
+                    Rp {amountPaid.toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div className="border-b border-[var(--line)] pb-3">
+                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {t("checkout.date")}
+                  </span>
+                  <span className="text-sm text-[var(--text-muted)]">
+                    {new Date(createdAt).toLocaleString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <div className="border-b border-[var(--line)] pb-3">
+                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {t("checkout.paymentMethod")}
+                  </span>
+                  <span className="text-sm text-[var(--foreground)]">{paymentGateway}</span>
+                </div>
+                <div>
+                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {t("checkout.orderId")}
+                  </span>
+                  <CornerFrame size="sm">
+                    <span className="block rounded bg-[var(--panel-2)] px-2 py-1 font-mono text-xs text-[var(--text-muted)]">
+                      {orderId}
+                    </span>
+                  </CornerFrame>
+                </div>
+              </div>
+            </Panel>
+
+            {/* Help link */}
+            <Panel variant="ghost" padding="sm">
+              <Link
+                href="/recover"
+                className="flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--accent)]"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                {t("checkout.findOtherOrders")}
+              </Link>
+            </Panel>
+          </div>
+
+          {/* Content Delivery Area */}
+          <div className="md:col-span-8">
+            {!token ? (
+              <Panel variant="accent" padding="lg">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                    <svg
+                      className="h-5 w-5 text-red-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status="error">{t("checkout.deliveryError")}</StatusBadge>
+                    </div>
+                    <h3 className="font-serif text-lg text-[var(--foreground)]">
+                      {t("checkout.deliveryError")}
+                    </h3>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      {t("checkout.deliveryErrorDesc")}
+                    </p>
+                  </div>
+                </div>
+              </Panel>
+            ) : (
+              <Panel padding="lg">
+                <ContentViewer token={token} />
+              </Panel>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

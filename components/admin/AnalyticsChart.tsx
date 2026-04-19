@@ -11,6 +11,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { Panel } from "@/components/ui/panel";
+import { MetricCard } from "@/components/ui/metric-card";
+import Spinner from "@/components/ui/Spinner";
 
 interface DailyData {
   date: string;
@@ -52,22 +55,16 @@ export default function AnalyticsChart() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="h-80 bg-white rounded-2xl border border-gray-100 shadow-sm animate-pulse flex items-center justify-center">
-          <span className="text-gray-400">Loading charts...</span>
-        </div>
-        <div className="h-80 bg-white rounded-2xl border border-gray-100 shadow-sm animate-pulse flex items-center justify-center">
-          <span className="text-gray-400">Loading stats...</span>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Spinner size={32} variant="classic" className="text-[var(--text-muted)]" />
       </div>
     );
   }
 
   if (error || !data) {
-    return null; // Silently fail or show error
+    return null;
   }
 
-  // Format date for chart (e.g., "Jan 11")
   const chartData = data.dailyRevenue.map((d) => ({
     ...d,
     shortDate: new Date(d.date).toLocaleDateString("id-ID", {
@@ -77,62 +74,61 @@ export default function AnalyticsChart() {
   }));
 
   return (
-    <div className="space-y-8 mb-8">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
-            Total Revenue
-          </p>
-          <p className="text-2xl font-black text-green-600">
-            Rp {data.summary.totalRevenue.toLocaleString("id-ID")}
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
-            Total Orders
-          </p>
-          <p className="text-2xl font-black text-gray-900">{data.summary.totalOrders}</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
-            Avg. Order Value
-          </p>
-          <p className="text-2xl font-black text-indigo-600">
-            Rp {data.summary.avgOrderValue.toLocaleString("id-ID")}
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Summary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MetricCard
+          label="Total Revenue"
+          value={`Rp ${data.summary.totalRevenue.toLocaleString("id-ID")}`}
+          sublabel="All time"
+          trend="up"
+        />
+        <MetricCard
+          label="Total Orders"
+          value={data.summary.totalOrders}
+          sublabel="All time"
+          trend="flat"
+        />
+        <MetricCard
+          label="Avg. Order Value"
+          value={`Rp ${data.summary.avgOrderValue.toLocaleString("id-ID")}`}
+          sublabel="Per transaction"
+          trend="flat"
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Daily Revenue Chart */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-black text-gray-900 mb-6">Revenue (Last 7 Days)</h3>
+        <Panel monoLabel="REVENUE / LAST 7 DAYS" className="lg:col-span-8">
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
                 <XAxis
                   dataKey="shortDate"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#94a3b8", fontSize: 12 }}
+                  tick={{
+                    fill: "var(--text-muted)",
+                    fontSize: 11,
+                    fontFamily: "var(--font-mono)",
+                  }}
                   dy={10}
                 />
                 <YAxis hide={true} />
                 <Tooltip
-                  cursor={{ fill: "#f8fafc" }}
+                  cursor={{ fill: "var(--panel-3)" }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl border border-slate-800">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                        <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3 shadow-xl">
+                          <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-widest text-[var(--text-muted)]">
                             {payload[0].payload.date}
-                          </p>
-                          <p className="font-bold text-green-400">
+                          </span>
+                          <p className="font-serif text-lg text-[var(--foreground)]">
                             Rp {payload[0].value?.toLocaleString("id-ID")}
                           </p>
-                          <p className="text-xs text-slate-300">
+                          <p className="font-mono text-xs text-[var(--text-muted)]">
                             {payload[0].payload.orders} orders
                           </p>
                         </div>
@@ -141,53 +137,49 @@ export default function AnalyticsChart() {
                     return null;
                   }}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={40}>
-                  {chartData.map((entry, index) => (
+                <Bar dataKey="revenue" radius={[4, 4, 0, 0]} barSize={40}>
+                  {chartData.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={index === chartData.length - 1 ? "#6366f1" : "#e2e8f0"}
-                      className="hover:fill-indigo-500 transition-colors duration-200"
+                      fill={index === chartData.length - 1 ? "var(--accent)" : "var(--panel-3)"}
+                      className="transition-colors duration-200"
                     />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Panel>
 
         {/* Top Products */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-black text-gray-900 mb-6">Top Products</h3>
+        <Panel monoLabel="TOP PRODUCTS" className="lg:col-span-4">
           <div className="space-y-4">
             {data.topProducts.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No data available</p>
+              <p className="py-8 text-center font-mono text-sm text-[var(--text-muted)]">
+                No data available
+              </p>
             ) : (
               data.topProducts.map((product, i) => (
-                <div key={i} className="flex items-center justify-between group">
+                <div
+                  key={i}
+                  className="flex items-center justify-between border-b border-[var(--line)] pb-3 last:border-0 last:pb-0"
+                >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
-                      {product.title}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">
+                    <p className="truncate text-sm text-[var(--foreground)]">{product.title}</p>
+                    <span className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
                       {product.quantity} sold
-                    </p>
+                    </span>
                   </div>
-                  <div className="text-right ml-4">
-                    <p className="text-sm font-black text-gray-900">
+                  <div className="ml-4 text-right">
+                    <span className="font-serif text-sm text-[var(--foreground)]">
                       Rp {product.revenue.toLocaleString("id-ID")}
-                    </p>
+                    </span>
                   </div>
                 </div>
               ))
             )}
           </div>
-          {data.topProducts.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between text-xs">
-              <span className="text-gray-400 font-medium">Bestsellers ranking</span>
-              <span className="text-indigo-600 font-black">View All →</span>
-            </div>
-          )}
-        </div>
+        </Panel>
       </div>
     </div>
   );

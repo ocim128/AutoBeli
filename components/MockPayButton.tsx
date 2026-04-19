@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/Toast";
+import { toast } from "sonner";
 
 export default function MockPayButton({ orderId }: { orderId: string }) {
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Auto-reset confirming state after 3 seconds
   useEffect(() => {
@@ -39,7 +38,7 @@ export default function MockPayButton({ orderId }: { orderId: string }) {
       // Redirect to unlock page
       router.push(`/order/${orderId}`);
     } catch {
-      toast("Payment failed. Try again.", "error");
+      toast.error("Payment failed. Try again.");
       setLoading(false);
     }
   };

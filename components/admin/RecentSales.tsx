@@ -1,7 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFocusTrap } from "@/hooks/useKeyboard";
+import { useEffect, useState } from "react";
+import { Panel } from "@/components/ui/panel";
+import { StatusBadge } from "@/components/ui/status-badge";
+import Spinner from "@/components/ui/Spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface RecentSale {
   _id: string;
@@ -18,9 +30,6 @@ interface RecentSale {
   };
 }
 
-/**
- * Formats a date into a relative time string (e.g., "2 hours ago")
- */
 function getRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -32,24 +41,14 @@ function getRelativeTime(dateString: string): string {
   const diffWeeks = Math.floor(diffDays / 7);
   const diffMonths = Math.floor(diffDays / 30);
 
-  if (diffSeconds < 60) {
-    return "just now";
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
-  } else if (diffDays < 7) {
-    return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
-  } else if (diffWeeks < 4) {
-    return `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"} ago`;
-  } else {
-    return `${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`;
-  }
+  if (diffSeconds < 60) return "just now";
+  if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`;
+  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
+  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
+  if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"} ago`;
+  return `${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`;
 }
 
-/**
- * Masks an email address for privacy (e.g., "jo***@example.com")
- */
 function maskEmail(email: string): string {
   if (!email) return "Unknown";
   const [local, domain] = email.split("@");
@@ -63,18 +62,6 @@ export default function RecentSales() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSale, setSelectedSale] = useState<RecentSale | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useFocusTrap(modalRef as React.RefObject<HTMLElement>, { enabled: !!selectedSale });
-
-  useEffect(() => {
-    if (!selectedSale) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedSale(null);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedSale]);
 
   useEffect(() => {
     fetch("/api/admin/recent-sales")
@@ -91,203 +78,168 @@ export default function RecentSales() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span className="text-2xl">💰</span> Recent Sales
-        </h2>
-        <div className="animate-pulse space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
-              </div>
-            </div>
-          ))}
+      <Panel monoLabel="RECENT ORDERS">
+        <div className="flex items-center justify-center py-12">
+          <Spinner size={32} variant="classic" className="text-[var(--text-muted)]" />
         </div>
-      </div>
+      </Panel>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span className="text-2xl">💰</span> Recent Sales
-        </h2>
-        <p className="text-red-500 text-sm">{error}</p>
-      </div>
+      <Panel monoLabel="RECENT ORDERS">
+        <p className="font-mono text-sm text-red-400">{error}</p>
+      </Panel>
     );
   }
 
   return (
     <>
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span className="text-2xl">💰</span> Recent Sales
-        </h2>
-
+      <Panel monoLabel="RECENT ORDERS">
         {sales.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-4">
-            No sales yet. Your first sale will appear here! 🎉
+          <p className="py-8 text-center font-mono text-sm text-[var(--text-muted)]">
+            No sales yet. Your first sale will appear here.
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-[var(--line)]">
             {sales.map((sale) => (
               <button
                 key={sale._id}
                 onClick={() => setSelectedSale(sale)}
-                className="w-full text-left flex items-center gap-4 p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 transition-all hover:shadow-md hover:scale-[1.01]"
+                className="flex w-full items-center gap-4 px-1 py-3 text-left transition-colors hover:bg-[var(--panel-2)] first:pt-0 last:pb-0"
               >
-                {/* Avatar / Icon */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0">
-                  {sale.customerContact ? sale.customerContact[0].toUpperCase() : "?"}
-                </div>
-
-                {/* Sale Details */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
+                {/* Amount */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-[var(--foreground)]">
                     {sale.product?.title || "Unknown Product"}
                     {sale.quantity && sale.quantity > 1 && (
-                      <span className="ml-2 px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold">
+                      <span className="ml-2 font-mono text-[0.65rem] text-[var(--text-muted)]">
                         x{sale.quantity}
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
                     {sale.customerContact ? maskEmail(sale.customerContact) : "Anonymous buyer"}
-                  </p>
+                  </span>
                 </div>
 
-                {/* Amount & Time */}
-                <div className="text-right shrink-0">
-                  <p className="font-semibold text-green-600">
-                    +Rp {sale.amountPaid.toLocaleString("id-ID")}
-                  </p>
-                  <p className="text-xs text-gray-400">{getRelativeTime(sale.paidAt)}</p>
-                </div>
+                {/* Amount */}
+                <span className="shrink-0 font-serif text-sm text-[var(--success)]">
+                  +Rp {sale.amountPaid.toLocaleString("id-ID")}
+                </span>
+
+                {/* Time */}
+                <span className="shrink-0 font-mono text-[0.65rem] text-[var(--text-muted)]">
+                  {getRelativeTime(sale.paidAt)}
+                </span>
               </button>
             ))}
           </div>
         )}
-      </div>
+      </Panel>
 
-      {/* Detail Modal */}
-      {selectedSale && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedSale(null)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Order Details"
-            ref={modalRef}
-          >
-            <div className="p-6 space-y-6">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-bold text-gray-900">Order Details</h3>
-                <button
-                  onClick={() => setSelectedSale(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl text-[var(--foreground)]">
+              Order Details
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs text-[var(--text-muted)]">
+              Full order information
+            </DialogDescription>
+          </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Order ID
-                    </span>
-                    <p className="font-mono text-sm text-gray-900 break-all">{selectedSale._id}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Product
-                    </span>
-                    <p className="font-medium text-gray-900">
-                      {selectedSale.product?.title || "Unknown"}
-                      {selectedSale.quantity && selectedSale.quantity > 1 && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
-                          {selectedSale.quantity} items
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Amount
-                      </span>
-                      <p className="font-medium text-green-600">
-                        Rp {selectedSale.amountPaid.toLocaleString("id-ID")}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Date
-                      </span>
-                      <p className="text-sm text-gray-900">
-                        {new Date(selectedSale.paidAt).toLocaleString("id-ID")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
+          {selectedSale && (
+            <div className="space-y-4">
+              {/* Order ID & Product */}
+              <div className="space-y-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Customer Info
+                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                    Order ID
                   </span>
-                  <div className="mt-1 p-3 border rounded-lg">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">Email:</span>{" "}
-                      {selectedSale.customerContact || "Not provided"}
-                    </p>
-                    {selectedSale.paymentGateway && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Via: {selectedSale.paymentGateway}
-                      </p>
+                  <p className="mt-0.5 break-all font-mono text-xs text-[var(--foreground)]">
+                    {selectedSale._id}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                    Product
+                  </span>
+                  <p className="mt-0.5 text-sm text-[var(--foreground)]">
+                    {selectedSale.product?.title || "Unknown"}
+                    {selectedSale.quantity && selectedSale.quantity > 1 && (
+                      <StatusBadge status="neutral" className="ml-2">
+                        {selectedSale.quantity} items
+                      </StatusBadge>
                     )}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                      Amount
+                    </span>
+                    <p className="mt-0.5 font-serif text-[var(--success)]">
+                      Rp {selectedSale.amountPaid.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                      Date
+                    </span>
+                    <p className="mt-0.5 font-mono text-xs text-[var(--foreground)]">
+                      {new Date(selectedSale.paidAt).toLocaleString("id-ID")}
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                {selectedSale.product?.content && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                      <span>🔓 Decrypted Content</span>
-                      <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 text-[10px] font-bold">
-                        SENSITIVE
-                      </span>
-                    </span>
-                    <div className="mt-2 p-4 bg-slate-900 rounded-lg overflow-x-auto">
-                      <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">
-                        {selectedSale.product.content}
-                      </pre>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      This content is encrypted in the database and only decrypted for display here.
+              {/* Customer */}
+              <div>
+                <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  Customer Info
+                </span>
+                <div className="mt-1 rounded-lg border border-[var(--line)] p-3">
+                  <p className="font-mono text-xs text-[var(--foreground)]">
+                    {selectedSale.customerContact || "Not provided"}
+                  </p>
+                  {selectedSale.paymentGateway && (
+                    <p className="mt-1 font-mono text-[0.65rem] text-[var(--text-muted)]">
+                      Via: {selectedSale.paymentGateway}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              <div className="pt-4 border-t flex justify-end">
-                <button
-                  onClick={() => setSelectedSale(null)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
-                >
-                  Close
-                </button>
-              </div>
+              {/* Content */}
+              {selectedSale.product?.content && (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                      Decrypted Content
+                    </span>
+                    <StatusBadge status="error">SENSITIVE</StatusBadge>
+                  </div>
+                  <div className="mt-2 overflow-x-auto rounded-lg bg-[var(--panel-3)] p-4">
+                    <pre className="whitespace-pre-wrap font-mono text-sm text-[var(--success)]">
+                      {selectedSale.product.content}
+                    </pre>
+                  </div>
+                  <p className="mt-2 text-xs text-[var(--text-muted)]">
+                    This content is encrypted in the database and only decrypted for display here.
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      )}
+          )}
+
+          <DialogFooter showCloseButton>
+            <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

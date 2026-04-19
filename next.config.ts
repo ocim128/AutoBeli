@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["zod", "jose"],
   },
 
+  // External image hostnames allowed for next/image optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
+
   // Performance: Enable React strict mode for better development practices
   reactStrictMode: true,
 

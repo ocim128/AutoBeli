@@ -1,17 +1,12 @@
 import { cn } from "@/lib/utils";
 
-function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn(
-        "relative overflow-hidden rounded-md bg-gradient-to-r from-gray-200/60 via-gray-100/60 to-gray-200/60 bg-[length:200%_100%] animate-pulse",
-        className
-      )}
+      data-slot="skeleton"
+      className={cn("animate-pulse rounded-md bg-muted", className)}
       {...props}
-    >
-      {/* Shimmer overlay */}
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-    </div>
+    />
   );
 }
 
