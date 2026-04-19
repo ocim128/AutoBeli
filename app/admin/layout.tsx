@@ -1,17 +1,10 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 /* ── Auth context so child pages know if authenticated ── */
-type AdminCtx = { authenticated: boolean; refreshAuth: () => void };
-const AdminAuthContext = createContext<AdminCtx>({
-  authenticated: false,
-  refreshAuth: () => {},
-});
-export const useAdminAuth = () => useContext(AdminAuthContext);
-
 /* ── Nav links ── */
 const NAV = [
   { href: "/admin/dashboard", label: "Dashboard", icon: DashboardIcon },
@@ -94,47 +87,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   /* ── Authenticated shell ── */
   return (
-    <AdminAuthContext.Provider value={{ authenticated: authed, refreshAuth: checkAuth }}>
-      <div className="flex min-h-screen bg-[var(--background)]">
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-black/60 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+    <div className="flex min-h-screen bg-[var(--background)]">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        {/* ── Sidebar ── */}
-        <aside
-          className={`
+      {/* ── Sidebar ── */}
+      <aside
+        className={`
             fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-[var(--line)]
             bg-[var(--panel)] transition-transform duration-200 ease-out
             lg:static lg:translate-x-0
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           `}
-        >
-          {/* Brand */}
-          <div className="flex h-14 items-center gap-2 border-b border-[var(--line)] px-5">
-            <span className="text-lg font-bold tracking-tight text-[var(--foreground)]">
-              AutoBeli
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] ml-auto">
-              admin
-            </span>
-          </div>
+      >
+        {/* Brand */}
+        <div className="flex h-14 items-center gap-2 border-b border-[var(--line)] px-5">
+          <span className="text-lg font-bold tracking-tight text-[var(--foreground)]">
+            AutoBeli
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] ml-auto">
+            admin
+          </span>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-            <span className="block px-2 pb-2 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
-              Navigation
-            </span>
-            {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
-              return (
-                <a
-                  key={href}
-                  href={href}
-                  className={`
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <span className="block px-2 pb-2 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+            Navigation
+          </span>
+          {NAV.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <a
+                key={href}
+                href={href}
+                className={`
                     group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
                     ${
                       active
@@ -142,60 +134,60 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         : "text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)]"
                     }
                   `}
-                >
-                  <Icon />
-                  {label}
-                </a>
-              );
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="border-t border-[var(--line)] p-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
-              onClick={handleLogout}
-            >
-              <LogoutIcon />
-              Sign Out
-            </Button>
-          </div>
-        </aside>
-
-        {/* ── Main area ── */}
-        <div className="flex flex-1 flex-col min-w-0">
-          {/* Top bar (mobile hamburger) */}
-          <header className="flex h-14 items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-4 lg:px-6">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)] hover:text-[var(--foreground)] lg:hidden"
-              aria-label="Toggle sidebar"
-            >
-              <svg
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
               >
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <span className="font-mono text-xs text-[var(--text-muted)] hidden sm:inline">
-              {pathname.replace("/admin", "") || "/dashboard"}
-            </span>
-          </header>
+                <Icon />
+                {label}
+              </a>
+            );
+          })}
+        </nav>
 
-          {/* Page content */}
-          <main id="main-content" className="flex-1 p-4 lg:p-6 overflow-y-auto">
-            {children}
-          </main>
+        {/* Logout */}
+        <div className="border-t border-[var(--line)] p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
+            onClick={handleLogout}
+          >
+            <LogoutIcon />
+            Sign Out
+          </Button>
         </div>
+      </aside>
+
+      {/* ── Main area ── */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Top bar (mobile hamburger) */}
+        <header className="flex h-14 items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-4 lg:px-6">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)] hover:text-[var(--foreground)] lg:hidden"
+            aria-label="Toggle sidebar"
+          >
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="font-mono text-xs text-[var(--text-muted)] hidden sm:inline">
+            {pathname.replace("/admin", "") || "/dashboard"}
+          </span>
+        </header>
+
+        {/* Page content */}
+        <main id="main-content" className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          {children}
+        </main>
       </div>
-    </AdminAuthContext.Provider>
+    </div>
   );
 }
 

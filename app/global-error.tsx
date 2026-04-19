@@ -9,22 +9,17 @@ function GlobalErrorContent({ reset }: { error: Error & { digest?: string }; res
   return (
     <div
       className="flex h-screen flex-col items-center justify-center text-center px-4"
-      style={{ background: "#090909", color: "#f2eee6" }}
+      style={{ background: "var(--background, #090909)", color: "var(--foreground, #f2eee6)" }}
     >
-      <span
-        className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em]"
-        style={{ color: "#9c9588" }}
-      >
-        CRITICAL ERROR
+      <span className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--text-muted)]">
+        {t("error.criticalError").toUpperCase()}
       </span>
       <h2 className="text-3xl font-serif mb-4">{t("error.criticalError")}</h2>
-      <p className="mb-8 max-w-lg" style={{ color: "#9c9588" }}>
-        {t("error.criticalErrorDesc")}
-      </p>
+      <p className="mb-8 max-w-lg text-[var(--text-muted)]">{t("error.criticalErrorDesc")}</p>
       <button
         onClick={() => reset()}
         className="px-6 py-3 rounded-lg font-semibold transition-all hover:brightness-110"
-        style={{ background: "#ff5a36", color: "#fff3ee" }}
+        style={{ background: "var(--accent, #ff5a36)", color: "var(--accent-foreground, #fff3ee)" }}
       >
         {t("error.reloadApp")}
       </button>

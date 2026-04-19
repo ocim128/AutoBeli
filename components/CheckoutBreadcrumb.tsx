@@ -13,7 +13,10 @@ export default function CheckoutBreadcrumb({
   const { t } = useLanguage();
 
   return (
-    <nav className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] mb-8">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] mb-8"
+    >
       <Link href="/" className="hover:text-[var(--accent)] transition-colors">
         {t("common.store")}
       </Link>

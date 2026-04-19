@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { getErrorMessage } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { Panel } from "@/components/ui/panel";
 import { CornerFrame } from "@/components/ui/corner-frame";
 import { StatusBadge } from "@/components/ui/status-badge";
 import Spinner from "@/components/ui/Spinner";
+import { toast } from "sonner";
 
 function ContentViewer({ token }: { token: string }) {
   const { t } = useLanguage();
@@ -14,6 +15,15 @@ function ContentViewer({ token }: { token: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimeoutRef.current) {
+        clearTimeout(copyResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleReveal = useCallback(async () => {
     setLoading(true);
@@ -32,13 +42,27 @@ function ContentViewer({ token }: { token: string }) {
     }
   }, [token, t]);
 
-  const handleCopy = useCallback(() => {
-    if (content) {
-      navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const handleCopy = useCallback(async () => {
+    if (!content) return;
+
+    if (!navigator.clipboard?.writeText) {
+      setCopied(false);
+      toast.error(t("contentViewer.copyFailed"));
+      return;
     }
-  }, [content]);
+
+    try {
+      await navigator.clipboard.writeText(content);
+      if (copyResetTimeoutRef.current) {
+        clearTimeout(copyResetTimeoutRef.current);
+      }
+      setCopied(true);
+      copyResetTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+      toast.error(t("contentViewer.copyFailed"));
+    }
+  }, [content, t]);
 
   return (
     <div className="space-y-4">
@@ -103,6 +127,7 @@ function ContentViewer({ token }: { token: string }) {
             </div>
 
             <button
+              type="button"
               onClick={handleReveal}
               disabled={loading}
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-8 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--accent-foreground)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
@@ -130,6 +155,7 @@ function ContentViewer({ token }: { token: string }) {
               {t("contentViewer.decryptedData")}
             </span>
             <button
+              type="button"
               onClick={handleCopy}
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--foreground)]"
             >

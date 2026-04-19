@@ -34,6 +34,7 @@ export const translations = {
       allRightsReserved: "Hak Cipta Dilindungi.",
     },
     error: {
+      errorEyebrow: "Kesalahan",
       somethingWentWrong: "Terjadi Kesalahan",
       unexpectedError: "Terjadi kesalahan tak terduga. Silakan coba lagi.",
       reference: "Kode Referensi",
@@ -165,6 +166,7 @@ export const translations = {
       decryptedData: "Data Terdekripsi",
       copyToClipboard: "SALIN",
       copied: "TERSALIN",
+      copyFailed: "Gagal menyalin ke clipboard.",
       verifiedIntegrity: "Verifikasi Integritas Berhasil",
       encryptedSession: "Konten dikirim melalui sesi terenkripsi end-to-end.",
       secureDelivery: "Pengiriman Aman",
@@ -212,6 +214,7 @@ export const translations = {
       allRightsReserved: "All rights reserved.",
     },
     error: {
+      errorEyebrow: "Error",
       somethingWentWrong: "Something Went Wrong",
       unexpectedError: "An unexpected error occurred. Please try again.",
       reference: "Reference",
@@ -343,6 +346,7 @@ export const translations = {
       decryptedData: "Decrypted Data",
       copyToClipboard: "COPY",
       copied: "COPIED",
+      copyFailed: "Failed to copy to clipboard.",
       verifiedIntegrity: "Integrity Verification Passed",
       encryptedSession: "Content delivered via end-to-end encrypted session.",
       secureDelivery: "Secure Delivery",

@@ -128,7 +128,7 @@ function ProductCard({ product }: { product: Product }) {
 
         <div className="flex flex-1 flex-col gap-3 p-5">
           <span className="font-mono text-xs tracking-wider text-[var(--text-muted)]">
-            IDR {product.priceIdr.toLocaleString("id-ID")}
+            Rp {product.priceIdr.toLocaleString("id-ID")}
           </span>
 
           <h3 className="line-clamp-1 font-serif text-lg leading-snug text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
@@ -145,7 +145,7 @@ function ProductCard({ product }: { product: Product }) {
             </span>
           )}
 
-          <span className="mt-2 inline-flex h-7 w-full items-center justify-center rounded-lg border border-[var(--line)] bg-background px-2.5 font-mono text-xs uppercase tracking-wider text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]">
+          <span className="mt-2 inline-flex h-7 w-full items-center justify-center rounded-lg border border-[var(--line)] bg-background px-2.5 font-mono text-xs uppercase tracking-wider text-[var(--foreground)] transition-colors group-hover:bg-[var(--muted)]">
             {t("common.browse")}
           </span>
         </div>

@@ -14,7 +14,7 @@ export default function NotFound() {
         <Panel variant="ghost" padding="lg" className="max-w-md mx-auto">
           {/* Mono eyebrow */}
           <span className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--text-muted)]">
-            PAGE NOT FOUND
+            {t("error.pageNotFound").toUpperCase()}
           </span>
 
           {/* Large serif 404 */}

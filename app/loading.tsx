@@ -2,11 +2,14 @@ import Spinner from "@/components/ui/Spinner";
 
 export default function Loading() {
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-[var(--background)]">
+    <div
+      className="min-h-[60vh] flex items-center justify-center bg-[var(--background)]"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
       <Spinner size={32} variant="classic" className="text-[var(--text-muted)]" />
-      <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--text-muted)]">
-        LOADING
-      </span>
+      <span className="sr-only">Loading</span>
     </div>
   );
 }

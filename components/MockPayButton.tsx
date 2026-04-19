@@ -45,8 +45,10 @@ export default function MockPayButton({ orderId }: { orderId: string }) {
 
   return (
     <button
+      type="button"
       onClick={handlePay}
       disabled={loading}
+      aria-busy={loading}
       className={`w-full font-bold py-3 px-6 rounded-lg text-lg transition ${
         confirming
           ? "bg-yellow-500 hover:bg-yellow-600 text-white animate-pulse"

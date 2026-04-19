@@ -25,7 +25,7 @@ export default function Error({
         <Panel variant="ghost" padding="lg" className="max-w-lg w-full text-center">
           {/* Mono eyebrow */}
           <span className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--text-muted)]">
-            ERROR
+            {t("error.errorEyebrow").toUpperCase()}
           </span>
 
           {/* Serif title */}

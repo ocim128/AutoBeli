@@ -52,7 +52,7 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
                 : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
             )}
           >
-            <Icon className={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5"} />
+            <Icon className="h-3.5 w-3.5" />
           </button>
         );
       })}

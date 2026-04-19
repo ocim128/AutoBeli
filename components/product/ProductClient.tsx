@@ -37,7 +37,10 @@ export function ProductClient({ product }: { product: SerializedProduct }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-4 pb-20 md:px-6">
-      <nav className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]"
+      >
         <Link href="/" className="transition-colors hover:text-[var(--accent)]">
           {t("common.store")}
         </Link>
@@ -49,7 +52,7 @@ export function ProductClient({ product }: { product: SerializedProduct }) {
 
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">
         <div className="min-w-0 space-y-8 lg:col-span-7">
-          <Panel padding="sm" className="overflow-hidden p-0">
+          <Panel padding="sm" className="group overflow-hidden p-0">
             <div className="relative aspect-[16/10] bg-[var(--panel-2)]">
               {product.imageUrl ? (
                 <LazyImage

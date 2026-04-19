@@ -54,7 +54,7 @@ function LazyImage({
   className,
   priority = false,
 }: LazyImageProps) {
-  const [loadState, setLoadState] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [loadState, setLoadState] = useState<"idle" | "loaded" | "error">("idle");
   const { ref, hasBeenInView } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: "100px", // Start loading before image enters viewport
@@ -73,11 +73,7 @@ function LazyImage({
 
   // Start loading when in view or priority
   const shouldLoad = priority || hasBeenInView;
-  if (shouldLoad && loadState === "idle") {
-    setLoadState("loading");
-  }
-
-  const isLoading = loadState === "loading" || loadState === "idle";
+  const isLoading = loadState === "idle";
   const isLoaded = loadState === "loaded";
   const hasError = loadState === "error";
 
@@ -85,14 +81,14 @@ function LazyImage({
     <div
       ref={ref as React.RefObject<HTMLDivElement>}
       className={cn(
-        "relative overflow-hidden bg-gray-100",
+        "relative overflow-hidden bg-[var(--panel-2)]",
         fill ? "absolute inset-0" : "w-full",
         className
       )}
     >
       {/* Shimmer loading state */}
       {isLoading && !blurDataURL && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--panel-2)] via-[var(--panel)] to-[var(--panel-2)] animate-pulse">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
       )}
@@ -120,8 +116,8 @@ function LazyImage({
       {hasError && (
         <>
           {fallback || (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="text-center text-gray-400">
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--panel-2)]">
+              <div className="text-center text-[var(--text-muted)]">
                 <svg
                   className="w-8 h-8 mx-auto mb-2"
                   fill="none"

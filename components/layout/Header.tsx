@@ -58,7 +58,9 @@ export function Header() {
           {/* Language Toggle */}
           <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
             <button
+              type="button"
               onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
               className={cn(
                 "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
                 language === "en"
@@ -69,7 +71,9 @@ export function Header() {
               EN
             </button>
             <button
+              type="button"
               onClick={() => setLanguage("id")}
+              aria-pressed={language === "id"}
               className={cn(
                 "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
                 language === "id"
@@ -88,7 +92,9 @@ export function Header() {
         <div className="flex items-center gap-3 md:hidden">
           <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
             <button
+              type="button"
               onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
               className={cn(
                 "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
                 language === "en"
@@ -99,7 +105,9 @@ export function Header() {
               EN
             </button>
             <button
+              type="button"
               onClick={() => setLanguage("id")}
+              aria-pressed={language === "id"}
               className={cn(
                 "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
                 language === "id"
@@ -114,6 +122,7 @@ export function Header() {
           <ThemeToggle compact />
 
           <button
+            type="button"
             onClick={() => setMobileOpen(true)}
             className="text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
             aria-label="Open menu"

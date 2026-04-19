@@ -19,7 +19,7 @@ export default function OrderPending({
   amountPaid,
   createdAt,
 }: OrderPendingProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
@@ -60,7 +60,7 @@ export default function OrderPending({
                 {t("checkout.date")}
               </span>
               <span className="text-sm text-[var(--text-muted)]">
-                {new Date(createdAt).toLocaleString("en-GB", {
+                {new Date(createdAt).toLocaleString(language === "id" ? "id-ID" : "en-GB", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",

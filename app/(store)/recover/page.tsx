@@ -121,6 +121,7 @@ export default function RecoverPage() {
           <div className="mb-6 flex gap-1 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-1">
             <button
               type="button"
+              aria-pressed={searchType === "email"}
               onClick={() => {
                 setSearchType("email");
                 setSearchValue("");
@@ -137,6 +138,7 @@ export default function RecoverPage() {
             </button>
             <button
               type="button"
+              aria-pressed={searchType === "orderId"}
               onClick={() => {
                 setSearchType("orderId");
                 setSearchValue("");
@@ -156,7 +158,10 @@ export default function RecoverPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Alert */}
             {error && (
-              <div className="flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3"
+              >
                 <svg
                   className="mt-0.5 h-4 w-4 shrink-0 text-red-400"
                   fill="currentColor"
