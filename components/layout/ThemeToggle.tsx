@@ -28,8 +28,8 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-0.5 rounded border border-[var(--line)] bg-[var(--panel)] p-0.5",
-        compact && "p-0"
+        "inline-flex items-center gap-0.5 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-0.5",
+        compact && "p-px"
       )}
       aria-label="Theme selector"
       role="group"
@@ -46,13 +46,14 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
             aria-pressed={active}
             className={cn(
               "inline-flex items-center justify-center rounded-sm transition-colors",
-              compact ? "h-8 w-8" : "h-7 w-7",
+              "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
+              compact ? "h-8 w-8" : "h-11 w-11",
               active
-                ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                 : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
             )}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           </button>
         );
       })}

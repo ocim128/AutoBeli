@@ -169,7 +169,7 @@ describe("Rate Limiting", () => {
       expect(ip).toBe("172.16.0.1");
     });
 
-    it("prioritizes x-forwarded-for over other headers", () => {
+    it("prioritizes cf-connecting-ip over other headers", () => {
       const request = new Request("http://localhost", {
         headers: {
           "x-forwarded-for": "1.1.1.1",
@@ -179,19 +179,19 @@ describe("Rate Limiting", () => {
       });
 
       const ip = getClientIP(request);
-      expect(ip).toBe("1.1.1.1");
+      expect(ip).toBe("2.2.2.2");
     });
 
-    it("falls back to cf-connecting-ip when x-forwarded-for is missing", () => {
+    it("falls back to x-forwarded-for when cf-connecting-ip is missing", () => {
       const request = new Request("http://localhost", {
         headers: {
-          "cf-connecting-ip": "2.2.2.2",
+          "x-forwarded-for": "1.1.1.1, 10.0.0.1",
           "x-real-ip": "3.3.3.3",
         },
       });
 
       const ip = getClientIP(request);
-      expect(ip).toBe("2.2.2.2");
+      expect(ip).toBe("1.1.1.1");
     });
 
     it('returns "unknown" when no IP headers present', () => {

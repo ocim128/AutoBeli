@@ -258,54 +258,63 @@ export default function AudienceManager() {
         </Button>
       </div>
 
-      {/* Filters */}
-      <Panel padding="sm">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_200px_auto_auto] md:items-end">
-          <Field label="Search Email" monoLabel>
-            <Input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") applyFilters();
-              }}
-              placeholder="customer@example.com"
-            />
-          </Field>
+      {/* Filter Toolbar */}
+      <Panel
+        padding="sm"
+        variant="ghost"
+        className="border border-[var(--line)] rounded-xl bg-[var(--panel)]"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-0 flex-[1.5]">
+            <Field label="Search Email" monoLabel>
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyFilters();
+                }}
+                placeholder="customer@example.com"
+              />
+            </Field>
+          </div>
 
-          <Field label="Status" monoLabel>
-            <select
-              value={statusInput}
-              onChange={(e) => setStatusInput(e.target.value)}
-              className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <option value="" className="bg-[var(--panel)]">
-                All
-              </option>
-              <option value="ACTIVE" className="bg-[var(--panel)]">
-                Active
-              </option>
-              <option value="EXCLUDED" className="bg-[var(--panel)]">
-                Excluded
-              </option>
-              <option value="BOUNCED" className="bg-[var(--panel)]">
-                Bounced
-              </option>
-            </select>
-          </Field>
+          <div className="w-36">
+            <Field label="Status" monoLabel>
+              <select
+                value={statusInput}
+                onChange={(e) => setStatusInput(e.target.value)}
+                className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <option value="" className="bg-[var(--panel)]">
+                  All
+                </option>
+                <option value="ACTIVE" className="bg-[var(--panel)]">
+                  Active
+                </option>
+                <option value="EXCLUDED" className="bg-[var(--panel)]">
+                  Excluded
+                </option>
+                <option value="BOUNCED" className="bg-[var(--panel)]">
+                  Bounced
+                </option>
+              </select>
+            </Field>
+          </div>
 
-          <Button variant="outline" size="sm" onClick={applyFilters}>
-            Apply
-          </Button>
-
-          <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Reset
-          </Button>
+          <div className="flex items-end gap-2 pb-0.5">
+            <Button variant="outline" size="sm" onClick={applyFilters}>
+              Apply
+            </Button>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              Reset
+            </Button>
+          </div>
         </div>
 
         {data && (
-          <p className="mt-3 font-mono text-[0.65rem] text-[var(--text-muted)]">
-            Showing {data.rows.length} of {data.total} contacts
+          <p className="mt-3 font-mono text-[0.65rem] tracking-wide text-[var(--text-muted)]">
+            {data.rows.length} of {data.total} contacts
           </p>
         )}
       </Panel>
@@ -314,16 +323,16 @@ export default function AudienceManager() {
       <Dialog open={!!editingRow} onOpenChange={(open) => !open && closeEdit()}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-serif text-[var(--foreground)]">
-              Edit Audience Contact
+            <DialogTitle className="font-serif text-lg text-[var(--foreground)]">
+              Edit Contact
             </DialogTitle>
-            <DialogDescription className="font-mono text-xs text-[var(--text-muted)]">
+            <DialogDescription className="font-mono text-[0.7rem] tracking-wide text-[var(--text-muted)]">
               {editingRow?.email}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-5 py-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email" monoLabel>
                 <Input
                   type="email"
@@ -351,11 +360,11 @@ export default function AudienceManager() {
             </div>
 
             <Field label="Notes" monoLabel>
-              <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={4} />
+              <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={3} />
             </Field>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <DialogClose render={<Button variant="outline" size="sm" />}>Cancel</DialogClose>
             <Button size="sm" onClick={() => void saveEdit()} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
@@ -381,8 +390,12 @@ export default function AudienceManager() {
             <AlertDialogTitle className="font-serif text-[var(--foreground)]">
               Remove from Audience
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              Delete {deleteTarget?.email} from the audience list? This action cannot be undone.
+            <AlertDialogDescription className="text-sm text-[var(--text-muted)]">
+              Delete{" "}
+              <span className="font-mono text-xs text-[var(--foreground)]">
+                {deleteTarget?.email}
+              </span>{" "}
+              from the audience list. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -401,7 +414,7 @@ export default function AudienceManager() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-3 font-mono text-xs text-[var(--danger)]">
+        <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger)]/5 px-4 py-3 font-mono text-xs text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -413,8 +426,8 @@ export default function AudienceManager() {
         empty={!data || data.rows.length === 0}
         emptyContent={
           <EmptyState
-            title="No audience contacts found"
-            description="Customer emails from paid orders will appear here automatically."
+            title="No contacts yet"
+            description="Customer emails from paid orders will appear here."
           />
         }
       >
@@ -427,7 +440,7 @@ export default function AudienceManager() {
               <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
                 Status
               </TableHead>
-              <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+              <TableHead className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)] text-center">
                 Orders
               </TableHead>
               <TableHead className="hidden md:table-cell font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
@@ -448,22 +461,24 @@ export default function AudienceManager() {
             {data?.rows.map((row) => (
               <TableRow key={row._id}>
                 <TableCell>
-                  <div className="font-mono text-xs text-[var(--foreground)]">{row.email}</div>
+                  <div className="text-sm font-medium text-[var(--foreground)]">{row.email}</div>
                   {row.notes ? (
-                    <div className="mt-0.5 font-mono text-[0.6rem] text-[var(--text-muted)]">
+                    <div className="mt-0.5 text-[0.7rem] leading-snug text-[var(--text-muted)]">
                       {row.notes}
                     </div>
                   ) : null}
                 </TableCell>
                 <TableCell>{statusToBadge(row.status)}</TableCell>
-                <TableCell className="font-mono text-xs">{row.totalPaidOrders}</TableCell>
-                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                <TableCell className="font-mono text-xs text-center tabular-nums">
+                  {row.totalPaidOrders}
+                </TableCell>
+                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)] tabular-nums">
                   {formatDate(row.firstPaidOrderAt)}
                 </TableCell>
-                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                <TableCell className="hidden md:table-cell font-mono text-[0.65rem] text-[var(--text-muted)] tabular-nums">
                   {formatDate(row.lastPaidOrderAt)}
                 </TableCell>
-                <TableCell className="hidden lg:table-cell font-mono text-[0.65rem] text-[var(--text-muted)]">
+                <TableCell className="hidden lg:table-cell font-mono text-[0.65rem] text-[var(--text-muted)] tabular-nums">
                   {formatDate(row.updatedAt)}
                 </TableCell>
                 <TableCell className="text-right">
@@ -483,8 +498,8 @@ export default function AudienceManager() {
 
         {/* Pagination */}
         {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-between gap-4 border-t border-[var(--line)] px-4 py-3">
-            <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+          <div className="flex items-center justify-between gap-4 border-t border-[var(--line)] px-4 py-2.5">
+            <span className="font-mono text-[0.65rem] tabular-nums text-[var(--text-muted)]">
               Page {data.page} of {data.totalPages}
             </span>
             <div className="flex gap-2">

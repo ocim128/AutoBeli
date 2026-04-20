@@ -23,20 +23,20 @@ export function Field({
   ...props
 }: FieldProps) {
   return (
-    <div data-slot="field" className={cn("flex flex-col gap-1.5", className)} {...props}>
+    <div data-slot="field" className={cn("flex flex-col gap-2", className)} {...props}>
       <label
         htmlFor={htmlFor}
         className={cn(
           "text-sm font-medium text-[var(--foreground)]",
           monoLabel
-            ? "font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)]"
+            ? "font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)]"
             : ""
         )}
       >
         {label}
       </label>
       {children}
-      {error && <span className="font-mono text-xs text-red-400">{error}</span>}
+      {error && <span className="font-mono text-xs text-[var(--danger)]">{error}</span>}
       {helper && !error && <span className="text-xs text-[var(--text-muted)]">{helper}</span>}
     </div>
   );

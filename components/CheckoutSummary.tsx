@@ -28,21 +28,26 @@ export default function CheckoutSummary({
 
   return (
     <div className="lg:col-span-5 lg:order-2">
-      <div className="sticky top-28 space-y-6">
-        {/* Order Summary Panel */}
-        <Panel padding="lg">
-          <SectionEyebrow>{t("checkout.orderSummary")}</SectionEyebrow>
-          <p className="font-mono text-[0.65rem] text-[var(--text-muted)] mt-1 mb-6">
-            #{orderId.slice(-8).toUpperCase()}
-          </p>
+      <div className="sticky top-28 space-y-5">
+        {/* Order Brief Panel */}
+        <Panel padding="lg" featured>
+          {/* Eyebrow + Order ID */}
+          <div className="flex items-center justify-between mb-6">
+            <SectionEyebrow>{t("checkout.orderSummary")}</SectionEyebrow>
+            <span className="font-mono text-[0.65rem] text-[var(--text-muted)] tracking-wider">
+              #{orderId.slice(-8).toUpperCase()}
+            </span>
+          </div>
 
-          {/* Product Info */}
-          <div className="mb-6">
-            <h3 className="font-serif text-xl text-[var(--foreground)] leading-tight line-clamp-2 mb-1">
+          {/* Product Title — prominent serif */}
+          <div className="mb-5">
+            <h3 className="font-serif text-2xl text-[var(--foreground)] leading-tight line-clamp-2 mb-1.5">
               {productTitle}
             </h3>
             {productDescription && (
-              <p className="text-sm text-[var(--text-muted)] line-clamp-2">{productDescription}</p>
+              <p className="text-sm text-[var(--text-muted)] line-clamp-2 leading-relaxed">
+                {productDescription}
+              </p>
             )}
           </div>
 
@@ -54,57 +59,61 @@ export default function CheckoutSummary({
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-[var(--line)] my-6" />
+          <div className="h-px bg-[var(--line)] mb-6" />
 
-          {/* Price Breakdown */}
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+          {/* Price Breakdown — mono numbers */}
+          <div className="space-y-3.5 text-sm">
+            <div className="flex justify-between items-baseline">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 {t("checkout.unitPrice")}
               </span>
-              <span className="font-mono text-[var(--text-muted)]">
+              <span className="font-mono text-sm tabular-nums text-[var(--text-muted)]">
                 Rp {priceIdr.toLocaleString("id-ID")}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+            <div className="flex justify-between items-baseline">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 {t("checkout.quantity")}
               </span>
-              <span className="font-mono text-[var(--text-muted)]">{quantity}</span>
+              <span className="font-mono text-sm tabular-nums text-[var(--text-muted)]">
+                {quantity}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+            <div className="flex justify-between items-baseline">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 {t("checkout.serviceFee")}
               </span>
-              <span className="font-mono text-[var(--success)]">{t("checkout.free")}</span>
+              <span className="font-mono text-sm tabular-nums text-[var(--success)]">
+                {t("checkout.free")}
+              </span>
             </div>
           </div>
 
           {/* Divider */}
           <div className="h-px bg-[var(--line)] my-6" />
 
-          {/* Total */}
+          {/* Total — very prominent serif */}
           <div className="flex justify-between items-end">
-            <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+            <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
               {t("checkout.total")}
             </span>
             <div className="text-right">
-              <span className="font-serif text-2xl text-[var(--foreground)] tracking-tight">
+              <span className="font-serif text-3xl text-[var(--foreground)] tracking-tight">
                 Rp {totalAmount.toLocaleString("id-ID")}
               </span>
-              <span className="block font-mono text-[0.6rem] uppercase tracking-widest text-[var(--text-muted)] mt-0.5">
+              <span className="block font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--accent)] mt-0.5">
                 IDR
               </span>
             </div>
           </div>
         </Panel>
 
-        {/* Trust Indicators */}
-        <div className="grid grid-cols-2 gap-4">
-          <Panel padding="sm" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--success)]/10 flex items-center justify-center shrink-0">
+        {/* Trust Indicators — subtle and refined */}
+        <div className="grid grid-cols-2 gap-3">
+          <Panel padding="sm" className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-[var(--success)]/8 flex items-center justify-center shrink-0">
               <svg
-                className="w-4 h-4 text-[var(--success)]"
+                className="w-3.5 h-3.5 text-[var(--success)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -118,16 +127,16 @@ export default function CheckoutSummary({
               </svg>
             </div>
             <div>
-              <p className="text-xs font-medium text-[var(--foreground)]">{t("common.secure")}</p>
-              <p className="text-[0.65rem] text-[var(--text-muted)]">
-                {t("checkout.sslEncrypted")}
+              <p className="text-[0.7rem] font-medium text-[var(--foreground)]">
+                {t("common.secure")}
               </p>
+              <p className="text-[0.6rem] text-[var(--text-muted)]">{t("checkout.sslEncrypted")}</p>
             </div>
           </Panel>
-          <Panel padding="sm" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
+          <Panel padding="sm" className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
               <svg
-                className="w-4 h-4 text-[var(--accent)]"
+                className="w-3.5 h-3.5 text-[var(--accent)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -141,10 +150,10 @@ export default function CheckoutSummary({
               </svg>
             </div>
             <div>
-              <p className="text-xs font-medium text-[var(--foreground)]">{t("common.instant")}</p>
-              <p className="text-[0.65rem] text-[var(--text-muted)]">
-                {t("checkout.autoDelivery")}
+              <p className="text-[0.7rem] font-medium text-[var(--foreground)]">
+                {t("common.instant")}
               </p>
+              <p className="text-[0.6rem] text-[var(--text-muted)]">{t("checkout.autoDelivery")}</p>
             </div>
           </Panel>
         </div>

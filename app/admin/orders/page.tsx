@@ -82,7 +82,7 @@ export default function AdminOrders() {
                 <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
                   Date
                 </TableHead>
-                <TableHead className="w-12">
+                <TableHead className="w-10">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -93,28 +93,31 @@ export default function AdminOrders() {
                   key={order._id?.toString()}
                   className="border-b border-[var(--line)] hover:bg-[var(--panel-2)]"
                 >
-                  <TableCell className="font-mono text-xs text-[var(--text-muted)] max-w-[120px] truncate">
+                  <TableCell className="max-w-[100px] truncate font-mono text-[0.65rem] text-[var(--text-muted)]">
                     {order._id?.toString()}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
                     {order.product?.title ? (
-                      <span className="text-sm text-[var(--foreground)]">
+                      <span className="font-medium text-sm text-[var(--foreground)]">
                         {order.product.title}
                       </span>
                     ) : (
                       <span className="text-sm text-[var(--danger)]">Deleted Product</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-[var(--foreground)]">
+                  <TableCell className="font-mono text-sm tabular-nums text-[var(--foreground)]">
                     Rp {(order.amountPaid || order.product?.priceIdr || 0).toLocaleString("id-ID")}
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell>
                     {order.customerContact ? (
-                      <span className="text-[var(--text-muted)]" title={order.customerContact}>
+                      <span
+                        className="block max-w-[160px] truncate font-mono text-xs text-[var(--text-muted)]"
+                        title={order.customerContact}
+                      >
                         {order.customerContact}
                       </span>
                     ) : (
-                      <span className="font-mono text-xs text-[var(--text-muted)]">--</span>
+                      <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">--</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -126,21 +129,21 @@ export default function AdminOrders() {
                       <StatusBadge status="error">{order.status}</StatusBadge>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs uppercase text-[var(--text-muted)]">
+                  <TableCell className="font-mono text-[0.65rem] uppercase text-[var(--text-muted)]">
                     {order.paymentGateway}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--text-muted)]">
+                  <TableCell className="font-mono text-[0.7rem] text-[var(--text-muted)]">
                     {new Date(order.createdAt).toLocaleString("id-ID")}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         aria-label="Order actions"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
                       >
                         <svg
-                          width="16"
-                          height="16"
+                          width="14"
+                          height="14"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="1.5"
@@ -151,7 +154,7 @@ export default function AdminOrders() {
                           <circle cx="12" cy="19" r="1" />
                         </svg>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent align="end" className="w-36">
                         <DropdownMenuItem>
                           <Link href={`/admin/orders?id=${order._id}`} className="flex w-full">
                             View Order
@@ -167,7 +170,7 @@ export default function AdminOrders() {
         </DataTableShell>
 
         {error && (
-          <div className="mt-4 flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
+          <div className="mt-4 flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
             <span>{error}</span>
             <button
               onClick={() => setError("")}

@@ -25,7 +25,6 @@ interface RecentSale {
   quantity?: number;
   product?: {
     title: string;
-    content?: string;
     priceIdr: number;
   };
 }
@@ -89,8 +88,8 @@ export default function RecentSales() {
   if (loading) {
     return (
       <Panel monoLabel="RECENT ORDERS">
-        <div className="flex items-center justify-center py-12">
-          <Spinner size={32} variant="classic" className="text-[var(--text-muted)]" />
+        <div className="flex items-center justify-center py-10">
+          <Spinner size={28} variant="classic" className="text-[var(--text-muted)]" />
         </div>
       </Panel>
     );
@@ -99,16 +98,18 @@ export default function RecentSales() {
   if (error) {
     return (
       <Panel monoLabel="RECENT ORDERS">
-        <p className="font-mono text-sm text-red-400">{error}</p>
+        <div className="flex items-center justify-center py-10">
+          <p className="font-mono text-sm text-[var(--text-muted)]">{error}</p>
+        </div>
       </Panel>
     );
   }
 
   return (
     <>
-      <Panel monoLabel="RECENT ORDERS">
+      <Panel monoLabel="RECENT ORDERS" padding="sm">
         {sales.length === 0 ? (
-          <p className="py-8 text-center font-mono text-sm text-[var(--text-muted)]">
+          <p className="py-6 text-center font-mono text-xs text-[var(--text-muted)]">
             No sales yet. Your first sale will appear here.
           </p>
         ) : (
@@ -117,30 +118,27 @@ export default function RecentSales() {
               <button
                 key={sale._id}
                 onClick={() => setSelectedSale(sale)}
-                className="flex w-full items-center gap-4 px-1 py-3 text-left transition-colors hover:bg-[var(--panel-2)] first:pt-0 last:pb-0"
+                className="flex w-full items-center gap-3 px-2 py-2.5 text-left transition-colors hover:bg-[var(--panel-2)] first:pt-1 last:pb-1"
               >
-                {/* Amount */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-[var(--foreground)]">
+                  <p className="truncate text-sm font-medium leading-snug text-[var(--foreground)]">
                     {sale.product?.title || "Unknown Product"}
                     {sale.quantity && sale.quantity > 1 && (
-                      <span className="ml-2 font-mono text-[0.65rem] text-[var(--text-muted)]">
-                        x{sale.quantity}
+                      <span className="ml-1.5 font-mono text-[0.6rem] font-normal text-[var(--text-muted)]">
+                        &times;{sale.quantity}
                       </span>
                     )}
                   </p>
-                  <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+                  <span className="font-mono text-[0.6rem] tracking-wide text-[var(--text-muted)]">
                     {sale.customerContact ? maskEmail(sale.customerContact) : "Anonymous buyer"}
                   </span>
                 </div>
 
-                {/* Amount */}
-                <span className="shrink-0 font-serif text-sm text-[var(--success)]">
+                <span className="shrink-0 font-mono text-xs font-medium text-[var(--success)]">
                   +Rp {sale.amountPaid.toLocaleString("id-ID")}
                 </span>
 
-                {/* Time */}
-                <span className="shrink-0 font-mono text-[0.65rem] text-[var(--text-muted)]">
+                <span className="shrink-0 font-mono text-[0.6rem] text-[var(--text-muted)]">
                   {getRelativeTime(sale.paidAt)}
                 </span>
               </button>
@@ -162,19 +160,19 @@ export default function RecentSales() {
           </DialogHeader>
 
           {selectedSale && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Order ID & Product */}
-              <div className="space-y-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
+              <div className="space-y-2.5 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-3.5">
                 <div>
-                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                     Order ID
                   </span>
-                  <p className="mt-0.5 break-all font-mono text-xs text-[var(--foreground)]">
+                  <p className="mt-0.5 break-all font-mono text-[0.7rem] leading-relaxed text-[var(--foreground)]">
                     {selectedSale._id}
                   </p>
                 </div>
-                <div>
-                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                <div className="border-t border-[var(--line)] pt-2.5">
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                     Product
                   </span>
                   <p className="mt-0.5 text-sm text-[var(--foreground)]">
@@ -186,20 +184,20 @@ export default function RecentSales() {
                     )}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 border-t border-[var(--line)] pt-2.5">
                   <div>
-                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                       Amount
                     </span>
-                    <p className="mt-0.5 font-serif text-[var(--success)]">
+                    <p className="mt-0.5 font-mono text-sm font-medium text-[var(--success)]">
                       Rp {selectedSale.amountPaid.toLocaleString("id-ID")}
                     </p>
                   </div>
                   <div>
-                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                       Date
                     </span>
-                    <p className="mt-0.5 font-mono text-xs text-[var(--foreground)]">
+                    <p className="mt-0.5 font-mono text-[0.7rem] text-[var(--foreground)]">
                       {new Date(selectedSale.paidAt).toLocaleString("id-ID")}
                     </p>
                   </div>
@@ -208,40 +206,20 @@ export default function RecentSales() {
 
               {/* Customer */}
               <div>
-                <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
+                <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                   Customer Info
                 </span>
-                <div className="mt-1 rounded-lg border border-[var(--line)] p-3">
+                <div className="mt-1 rounded-md border border-[var(--line)] p-2.5">
                   <p className="font-mono text-xs text-[var(--foreground)]">
                     {selectedSale.customerContact || "Not provided"}
                   </p>
                   {selectedSale.paymentGateway && (
-                    <p className="mt-1 font-mono text-[0.65rem] text-[var(--text-muted)]">
-                      Via: {selectedSale.paymentGateway}
+                    <p className="mt-1 font-mono text-[0.6rem] text-[var(--text-muted)]">
+                      Via {selectedSale.paymentGateway}
                     </p>
                   )}
                 </div>
               </div>
-
-              {/* Content */}
-              {selectedSale.product?.content && (
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
-                      Decrypted Content
-                    </span>
-                    <StatusBadge status="error">SENSITIVE</StatusBadge>
-                  </div>
-                  <div className="mt-2 overflow-x-auto rounded-lg bg-[var(--panel-3)] p-4">
-                    <pre className="whitespace-pre-wrap font-mono text-sm text-[var(--success)]">
-                      {selectedSale.product.content}
-                    </pre>
-                  </div>
-                  <p className="mt-2 text-xs text-[var(--text-muted)]">
-                    This content is encrypted in the database and only decrypted for display here.
-                  </p>
-                </div>
-              )}
             </div>
           )}
 

@@ -14,6 +14,9 @@ export interface DataTableShellProps extends React.HTMLAttributes<HTMLDivElement
   children: React.ReactNode;
 }
 
+/* Realistic skeleton widths for table rows */
+const skeletonWidths = ["w-full", "w-4/5", "w-full", "w-3/4", "w-full", "w-5/6", "w-full"];
+
 export function DataTableShell({
   title,
   toolbar,
@@ -30,7 +33,7 @@ export function DataTableShell({
       className={cn("rounded-xl border border-[var(--line)] bg-[var(--panel)]", className)}
       {...props}
     >
-      {/* Header area */}
+      {/* Header / toolbar */}
       {(title || toolbar) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
           {title && (
@@ -45,19 +48,31 @@ export function DataTableShell({
       {/* Body */}
       <div className="relative">
         {loading ? (
-          <div className="flex flex-col gap-2 p-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full rounded-md" />
+          <div className="flex flex-col gap-2.5 p-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className={cn(
+                  "h-9 rounded-[var(--radius-sm)]",
+                  skeletonWidths[i % skeletonWidths.length]
+                )}
+              />
             ))}
           </div>
         ) : empty ? (
-          <div className="p-4">
+          <div className="p-6">
             {emptyContent ?? (
               <EmptyState title="No data" description="There are no records to display." />
             )}
           </div>
         ) : (
-          children
+          <div className="overflow-x-auto">
+            {/* Horizontal scroll indicator for narrow viewports */}
+            <div className="pointer-events-none sticky left-0 top-0 z-10 h-0">
+              <div className="absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-[var(--panel)] to-transparent opacity-0 [supports-selector(:-webkit-scrollbar)]:hidden sm:opacity-0" />
+            </div>
+            {children}
+          </div>
         )}
       </div>
     </div>

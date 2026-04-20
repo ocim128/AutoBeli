@@ -284,7 +284,7 @@ describe("CheckoutForm Component", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/payment/mock/initiate", {
+      expect(mockFetch).toHaveBeenCalledWith("/api/payment/mock/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: "order123" }),

@@ -29,42 +29,39 @@ export default function OrderPaid({
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
-      <div className="mx-auto max-w-5xl space-y-8">
+      <div className="mx-auto max-w-5xl space-y-10">
         {/* Success Header */}
         <PageHeader
           eyebrow={t("checkout.orderDetails")}
           title={t("checkout.purchaseSuccessful")}
           align="center"
           description={t("checkout.purchaseSuccessfulDesc")}
+          size="lg"
         />
 
-        <div className="flex items-center justify-center gap-3">
-          <StatusBadge status="success">{t("checkout.paid")}</StatusBadge>
-        </div>
-
         <div className="grid gap-8 md:grid-cols-12">
-          {/* Order Info Sidebar */}
+          {/* Order Brief Sidebar */}
           <div className="space-y-6 md:col-span-4">
-            <Panel monoLabel={t("checkout.orderDetails")} padding="lg">
-              <div className="space-y-4">
-                <div className="border-b border-[var(--line)] pb-3">
-                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            <Panel featured monoLabel={t("checkout.orderDetails")} padding="lg">
+              <div className="space-y-0 divide-y divide-[var(--line)]">
+                <div className="pb-4">
+                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                     {t("checkout.product")}
                   </span>
                   <span className="text-sm font-medium text-[var(--foreground)]">
                     {productTitle}
                   </span>
                 </div>
-                <div className="border-b border-[var(--line)] pb-3">
-                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                <div className="py-4">
+                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                     {t("checkout.totalPaid")}
                   </span>
                   <span className="font-mono text-lg font-medium text-[var(--success)]">
                     Rp {amountPaid.toLocaleString("id-ID")}
                   </span>
                 </div>
-                <div className="border-b border-[var(--line)] pb-3">
-                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                <div className="py-4">
+                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                     {t("checkout.date")}
                   </span>
                   <span className="text-sm text-[var(--text-muted)]">
@@ -77,14 +74,14 @@ export default function OrderPaid({
                     })}
                   </span>
                 </div>
-                <div className="border-b border-[var(--line)] pb-3">
-                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                <div className="py-4">
+                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                     {t("checkout.paymentMethod")}
                   </span>
                   <span className="text-sm text-[var(--foreground)]">{paymentGateway}</span>
                 </div>
-                <div>
-                  <span className="mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                <div className="pt-4">
+                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                     {t("checkout.orderId")}
                   </span>
                   <CornerFrame size="sm">
@@ -93,6 +90,11 @@ export default function OrderPaid({
                     </span>
                   </CornerFrame>
                 </div>
+              </div>
+
+              {/* Status */}
+              <div className="mt-5 border-t border-[var(--line)] pt-4">
+                <StatusBadge status="success">{t("checkout.paid")}</StatusBadge>
               </div>
             </Panel>
 
@@ -119,10 +121,10 @@ export default function OrderPaid({
           <div className="md:col-span-8">
             {!token ? (
               <Panel variant="accent" padding="lg">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                <div className="flex flex-col items-center gap-5 py-4 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel-2)]">
                     <svg
-                      className="h-5 w-5 text-red-400"
+                      className="h-5 w-5 text-[var(--text-muted)]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -130,19 +132,14 @@ export default function OrderPaid({
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
+                        strokeWidth={1.5}
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                       />
                     </svg>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status="error">{t("checkout.deliveryError")}</StatusBadge>
-                    </div>
-                    <h3 className="font-serif text-lg text-[var(--foreground)]">
-                      {t("checkout.deliveryError")}
-                    </h3>
-                    <p className="text-sm text-[var(--text-muted)]">
+                  <div className="space-y-2">
+                    <StatusBadge status="error">{t("checkout.deliveryError")}</StatusBadge>
+                    <p className="max-w-md text-sm text-[var(--text-muted)]">
                       {t("checkout.deliveryErrorDesc")}
                     </p>
                   </div>

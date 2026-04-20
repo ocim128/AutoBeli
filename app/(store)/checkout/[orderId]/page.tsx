@@ -30,8 +30,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
   const totalAmount = order.product.priceIdr * quantity;
 
   return (
-    <div className="min-h-[80vh] py-8 md:py-16">
-      <div className="max-w-5xl mx-auto px-4">
+    <div className="min-h-[80vh] py-10 md:py-16">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* Breadcrumb */}
         <CheckoutBreadcrumb productSlug={order.product.slug} productTitle={order.product.title} />
 
@@ -40,7 +40,16 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column - Order Summary */}
+          {/* Primary action first on mobile, left column on desktop */}
+          <div className="lg:col-span-7 lg:order-1">
+            <CheckoutForm
+              orderId={orderId}
+              amount={totalAmount}
+              paymentGateway={order.paymentGateway}
+            />
+          </div>
+
+          {/* Order summary */}
           <CheckoutSummary
             orderId={orderId}
             productTitle={order.product.title}
@@ -50,15 +59,6 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
             quantity={quantity}
             totalAmount={totalAmount}
           />
-
-          {/* Right Column - Checkout Form */}
-          <div className="lg:col-span-7 lg:order-1">
-            <CheckoutForm
-              orderId={orderId}
-              amount={totalAmount}
-              paymentGateway={order.paymentGateway}
-            />
-          </div>
         </div>
       </div>
     </div>

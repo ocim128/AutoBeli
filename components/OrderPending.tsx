@@ -4,7 +4,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
-import Spinner from "@/components/ui/Spinner";
 import Link from "next/link";
 
 interface OrderPendingProps {
@@ -24,40 +23,37 @@ export default function OrderPending({
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="mx-auto max-w-2xl space-y-10">
         {/* Header */}
         <PageHeader
           eyebrow={t("checkout.orderDetails")}
           title={t("checkout.paymentVerification")}
           align="center"
           description={t("checkout.paymentVerificationDesc")}
+          size="lg"
         />
 
-        {/* Status indicator */}
-        <div className="flex items-center justify-center gap-3">
-          <StatusBadge status="warning">{t("checkout.statusProcessing")}</StatusBadge>
-          <Spinner size={20} className="text-[var(--warning)]" variant="classic" />
-        </div>
-
-        {/* Order Summary Panel */}
-        <Panel monoLabel={t("checkout.orderSummary")} title={t("checkout.orderDetails")}>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+        {/* Order Brief — featured panel */}
+        <Panel featured monoLabel={t("checkout.orderSummary")} padding="lg">
+          <div className="space-y-0 divide-y divide-[var(--line)]">
+            <div className="flex items-start justify-between gap-4 pb-4">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {t("checkout.product")}
               </span>
-              <span className="text-sm text-[var(--foreground)]">{productTitle}</span>
+              <span className="text-right text-sm font-medium text-[var(--foreground)]">
+                {productTitle}
+              </span>
             </div>
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            <div className="flex items-center justify-between py-4">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {t("checkout.amount")}
               </span>
               <span className="font-mono text-sm font-medium text-[var(--foreground)]">
                 Rp {amountPaid.toLocaleString("id-ID")}
               </span>
             </div>
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            <div className="flex items-center justify-between py-4">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {t("checkout.date")}
               </span>
               <span className="text-sm text-[var(--text-muted)]">
@@ -70,12 +66,24 @@ export default function OrderPending({
                 })}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            <div className="flex items-center justify-between pt-4">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {t("checkout.orderId")}
               </span>
               <span className="font-mono text-xs text-[var(--text-muted)]">{orderId}</span>
             </div>
+          </div>
+
+          {/* Status row */}
+          <div className="mt-6 flex items-center justify-between border-t border-[var(--line)] pt-5">
+            <StatusBadge status="warning">{t("checkout.statusProcessing")}</StatusBadge>
+            <span className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--warning)] opacity-40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--warning)]" />
+              </span>
+              {t("checkout.waitingConfirmation")}
+            </span>
           </div>
         </Panel>
 
@@ -101,12 +109,6 @@ export default function OrderPending({
           >
             {t("checkout.retryPayment")}
           </Link>
-        </div>
-
-        {/* Waiting indicator */}
-        <div className="flex items-center justify-center gap-2 pt-4 text-sm text-[var(--text-muted)]">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-[var(--warning)]" />
-          <span>{t("checkout.waitingConfirmation")}</span>
         </div>
       </div>
     </div>

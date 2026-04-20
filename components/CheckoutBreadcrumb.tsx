@@ -15,20 +15,27 @@ export default function CheckoutBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)] mb-8"
+      className="mb-10 flex items-center gap-3 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-[var(--text-muted)]"
     >
-      <Link href="/" className="hover:text-[var(--accent)] transition-colors">
+      <Link
+        href="/"
+        className="rounded-sm transition-colors duration-200 hover:text-[var(--accent)]"
+      >
         {t("common.store")}
       </Link>
-      <span aria-hidden="true">/</span>
+      <span aria-hidden="true" className="text-[var(--line-strong)]">
+        /
+      </span>
       <Link
         href={`/product/${productSlug}`}
-        className="hover:text-[var(--accent)] transition-colors truncate max-w-[200px]"
+        className="max-w-[200px] truncate rounded-sm transition-colors duration-200 hover:text-[var(--accent)]"
       >
         {productTitle}
       </Link>
-      <span aria-hidden="true">/</span>
-      <span className="text-[var(--foreground)]">{t("checkout.title")}</span>
+      <span aria-hidden="true" className="text-[var(--line-strong)]">
+        /
+      </span>
+      <span className="font-medium text-[var(--foreground)]">{t("checkout.title")}</span>
     </nav>
   );
 }

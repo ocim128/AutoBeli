@@ -26,72 +26,88 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[var(--panel)]">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-baseline gap-1.5 group">
-          <span className="font-serif text-xl font-semibold tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
+        <Link
+          href="/"
+          className="flex items-baseline gap-1.5 group focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-sm"
+        >
+          <span className="font-serif text-[1.35rem] font-semibold tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
             AutoBeli
           </span>
           <span className="hidden h-1.5 w-1.5 rounded-full bg-[var(--accent)] sm:block" />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Main navigation">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "font-sans text-sm tracking-wide transition-colors",
-                isActive(link.href)
-                  ? "text-[var(--accent)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
+        {/* Desktop: Nav left, utilities right */}
+        <div className="hidden items-center gap-10 md:flex">
+          {/* Navigation links */}
+          <nav className="flex items-center gap-8" aria-label="Main navigation">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "relative font-mono text-[11px] uppercase tracking-[0.14em] transition-colors py-2",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-sm",
+                  isActive(link.href)
+                    ? "text-[var(--foreground)] font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                )}
+              >
+                {link.label}
+                {/* Subtle active dot */}
+                {isActive(link.href) && (
+                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full bg-[var(--accent)]" />
+                )}
+              </Link>
+            ))}
+          </nav>
 
-          {/* Divider */}
-          <span className="h-4 w-px bg-[var(--line)]" />
+          {/* Divider between nav and utilities */}
+          <span className="h-5 w-px bg-[var(--line)]" />
 
-          {/* Language Toggle */}
-          <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
-            <button
-              type="button"
-              onClick={() => setLanguage("en")}
-              aria-pressed={language === "en"}
-              aria-label="English"
-              className={cn(
-                "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
-                language === "en"
-                  ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-              )}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage("id")}
-              aria-pressed={language === "id"}
-              aria-label="Bahasa Indonesia"
-              className={cn(
-                "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
-                language === "id"
-                  ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-              )}
-            >
-              ID
-            </button>
+          {/* Utility controls */}
+          <div className="flex items-center gap-3">
+            {/* Language Toggle */}
+            <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                aria-pressed={language === "en"}
+                aria-label="English"
+                className={cn(
+                  "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
+                  language === "en"
+                    ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                )}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("id")}
+                aria-pressed={language === "id"}
+                aria-label="Bahasa Indonesia"
+                className={cn(
+                  "font-mono text-[11px] font-medium px-2 py-0.5 rounded-sm transition-colors",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
+                  language === "id"
+                    ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                )}
+              >
+                ID
+              </button>
+            </div>
+
+            <ThemeToggle />
           </div>
+        </div>
 
-          <ThemeToggle />
-        </nav>
-
-        {/* Mobile: Language + Hamburger */}
-        <div className="flex items-center gap-3 md:hidden">
+        {/* Mobile: Compact controls + Hamburger */}
+        <div className="flex items-center gap-2 md:hidden">
           <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
             <button
               type="button"
@@ -99,7 +115,8 @@ export function Header() {
               aria-pressed={language === "en"}
               aria-label="English"
               className={cn(
-                "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
+                "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
+                "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
                 language === "en"
                   ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
                   : "text-[var(--text-muted)]"
@@ -113,7 +130,8 @@ export function Header() {
               aria-pressed={language === "id"}
               aria-label="Bahasa Indonesia"
               className={cn(
-                "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors",
+                "font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-sm transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
+                "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
                 language === "id"
                   ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
                   : "text-[var(--text-muted)]"
@@ -128,7 +146,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -136,22 +154,25 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Sheet */}
+      {/* Mobile Sheet Drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" className="bg-[var(--panel)] border-[var(--line)] w-72">
-          <SheetTitle className="font-serif text-lg text-[var(--foreground)]">AutoBeli</SheetTitle>
+          <SheetTitle className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            AutoBeli
+          </SheetTitle>
 
-          <nav className="flex flex-col gap-1 pt-4">
+          <nav className="flex flex-col gap-1 pt-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "block px-3 py-2.5 text-sm font-sans tracking-wide rounded-sm transition-colors",
+                  "block px-3 py-3 text-sm font-mono uppercase tracking-[0.1em] rounded-sm transition-colors min-h-[44px] flex items-center",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-1",
                   isActive(link.href)
-                    ? "text-[var(--accent)] bg-[var(--accent-soft)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--panel-2)]"
+                    ? "text-[var(--accent)] font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
                 )}
               >
                 {link.label}
@@ -159,8 +180,8 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="mt-8 border-t border-[var(--line)] pt-4">
-            <div className="mb-4">
+          <div className="mt-8 border-t border-[var(--line)] pt-5">
+            <div className="mb-5">
               <ThemeToggle compact />
             </div>
             <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">

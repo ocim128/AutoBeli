@@ -92,12 +92,12 @@ export default function ProductList() {
             </div>
           }
           toolbar={
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Input
                 placeholder="Search products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-7 w-48 text-xs"
+                className="w-full text-xs sm:w-56"
               />
               <Link href="/admin/products/create">
                 <Button size="sm">Add New</Button>
@@ -123,7 +123,7 @@ export default function ProductList() {
                 <TableHead className="font-mono text-[0.7rem] uppercase tracking-wider text-[var(--text-muted)]">
                   Created
                 </TableHead>
-                <TableHead className="w-12">
+                <TableHead className="w-10">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -139,30 +139,32 @@ export default function ProductList() {
                     className="border-b border-[var(--line)] hover:bg-[var(--panel-2)]"
                   >
                     <TableCell>
-                      <div>
-                        <span className="text-sm text-[var(--foreground)]">{p.title}</span>
-                        <span className="ml-2 font-mono text-xs text-[var(--text-muted)]">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-sm text-[var(--foreground)]">
+                          {p.title}
+                        </span>
+                        <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
                           /{p.slug}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-[var(--foreground)]">
+                    <TableCell className="font-mono text-sm tabular-nums text-[var(--foreground)]">
                       Rp {p.priceIdr.toLocaleString("id-ID")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span
-                          className={`font-mono text-sm font-medium ${
+                          className={`font-mono text-xs tabular-nums font-medium ${
                             isSoldOut ? "text-[var(--danger)]" : "text-[var(--success)]"
                           }`}
                         >
                           {stock.available}
                         </span>
-                        <span className="font-mono text-xs text-[var(--text-muted)]">
-                          / {stock.total}
+                        <span className="font-mono text-[0.65rem] tabular-nums text-[var(--text-muted)]">
+                          /{stock.total}
                         </span>
                         {stock.hasStock && (
-                          <span className="font-mono text-[0.6rem] uppercase tracking-wider text-[var(--accent)] bg-[var(--accent-soft)] px-1.5 py-0.5 rounded">
+                          <span className="ml-1 font-mono text-[0.55rem] uppercase tracking-wider text-[var(--accent)] bg-[var(--accent-soft)] px-1 py-px rounded-[var(--radius-sm)]">
                             Multi
                           </span>
                         )}
@@ -177,18 +179,18 @@ export default function ProductList() {
                         <StatusBadge status="neutral">Inactive</StatusBadge>
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-[var(--text-muted)]">
+                    <TableCell className="font-mono text-[0.7rem] text-[var(--text-muted)]">
                       {new Date(p.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           aria-label="Product actions"
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors"
                         >
                           <svg
-                            width="16"
-                            height="16"
+                            width="14"
+                            height="14"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="1.5"
@@ -199,7 +201,7 @@ export default function ProductList() {
                             <circle cx="12" cy="19" r="1" />
                           </svg>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent align="end" className="w-36">
                           <DropdownMenuItem>
                             <Link href={`/admin/products/${p.slug}/edit`} className="flex w-full">
                               Edit
@@ -237,9 +239,12 @@ export default function ProductList() {
         </DataTableShell>
 
         {error && (
-          <div className="mt-4 flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+          <div className="mt-4 flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
             <span>{error}</span>
-            <button onClick={() => setError("")} className="font-mono text-xs hover:text-red-300">
+            <button
+              onClick={() => setError("")}
+              className="font-mono text-xs hover:text-[var(--danger)]"
+            >
               DISMISS
             </button>
           </div>

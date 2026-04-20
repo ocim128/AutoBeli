@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -36,14 +35,13 @@ export default function AdminLogin() {
 
   return (
     <div className="w-full max-w-sm">
-      {/* Tactical login card */}
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-8">
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-8">
         {/* Brand */}
         <div className="mb-8 text-center">
-          <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
+          <span className="font-serif text-xl font-semibold tracking-tight text-[var(--foreground)]">
             AutoBeli
           </span>
-          <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+          <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Admin Access
           </div>
         </div>
@@ -52,7 +50,7 @@ export default function AdminLogin() {
           <div>
             <label
               htmlFor="password"
-              className="block font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2"
+              className="block font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2"
             >
               Password
             </label>
@@ -62,18 +60,18 @@ export default function AdminLogin() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
+                className="pr-11 h-10 text-[0.875rem]"
                 placeholder="Enter admin password"
                 aria-label="Password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)] p-1 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-muted)] transition-colors hover:text-[var(--foreground)] hover:bg-[var(--panel-2)]"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -82,7 +80,7 @@ export default function AdminLogin() {
                     />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -102,14 +100,36 @@ export default function AdminLogin() {
           </div>
 
           {error && (
-            <p className="text-sm text-[var(--danger)] font-mono" role="alert">
-              {error}
-            </p>
+            <div className="rounded-md bg-[var(--panel-2)] px-3 py-2.5" role="alert">
+              <p className="text-[0.8125rem] text-[var(--text-muted)]">{error}</p>
+            </div>
           )}
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Verifying..." : "Unlock"}
-          </Button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[var(--foreground)] text-sm font-medium text-[var(--background)] transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            ) : (
+              "Unlock"
+            )}
+          </button>
         </form>
       </div>
     </div>

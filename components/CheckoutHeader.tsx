@@ -8,10 +8,11 @@ export default function CheckoutHeader() {
 
   return (
     <PageHeader
-      eyebrow={t("checkout.title").toUpperCase()}
+      eyebrow={t("checkout.title")}
       title={t("checkout.completeOrder")}
       description={t("checkout.completeOrderDesc")}
-      className="mb-10"
+      size="lg"
+      className="mb-12"
     />
   );
 }

@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ──────────────────────────────────────────────
-   Theme Tokens — Tactical Dark Palette
+   Theme Tokens — Editorial Luxury Palette
    ────────────────────────────────────────────── */
 
 @theme {
@@ -71,9 +71,9 @@ html.dark {
   --panel: #111111;
   --panel-2: #151515;
   --panel-3: #1b1b1b;
-  --text-muted: #9c9588;
+  --text-muted: #a89f92;
   --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.18);
+  --line-strong: rgba(255, 255, 255, 0.22);
   --accent: #ff5a36;
   --accent-foreground: #fff3ee;
   --success: #7bc490;
@@ -131,17 +131,17 @@ html.dark {
 
 html.light {
   color-scheme: light;
-  --background: #f2ede2;
-  --foreground: #171310;
-  --panel: #f6efe2;
-  --panel-2: #efe7d9;
-  --panel-3: #e7ddcc;
-  --text-muted: #756d61;
-  --line: rgba(23, 19, 16, 0.12);
-  --line-strong: rgba(23, 19, 16, 0.24);
+  --background: #efe8da;
+  --foreground: #151110;
+  --panel: #f5efe3;
+  --panel-2: #ece4d4;
+  --panel-3: #ddd1bc;
+  --text-muted: #635848;
+  --line: rgba(23, 19, 16, 0.14);
+  --line-strong: rgba(23, 19, 16, 0.3);
   --accent: #ff5a36;
   --accent-foreground: #fff7f2;
-  --success: #0f9d69;
+  --success: #1a8a5c;
   --warning: #b67b20;
   --danger: #d75745;
   --scrollbar-thumb: #d0c5b4;
@@ -150,13 +150,13 @@ html.light {
   --scrollbar-thumb-hover-2: #a59680;
   --card: var(--panel);
   --card-foreground: var(--foreground);
-  --popover: #f8f3e9;
+  --popover: var(--panel);
   --popover-foreground: var(--foreground);
   --primary: var(--accent);
   --primary-foreground: var(--accent-foreground);
-  --secondary: #ece4d6;
+  --secondary: var(--panel-2);
   --secondary-foreground: var(--foreground);
-  --muted: #ece4d6;
+  --muted: var(--panel-2);
   --muted-foreground: var(--text-muted);
   --accent-soft: rgba(255, 90, 54, 0.1);
   --border: var(--line);
@@ -170,7 +170,7 @@ html.light {
   --chart-3: var(--warning);
   --chart-4: #8f8375;
   --chart-5: var(--text-muted);
-  --sidebar-background: #f7f1e5;
+  --sidebar-background: var(--panel);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--accent);
   --sidebar-primary-foreground: var(--accent-foreground);
@@ -229,7 +229,7 @@ body {
 }
 
 /* ──────────────────────────────────────────────
-   CSS Utilities — Tactical Theme
+   CSS Utilities — Editorial Luxury Theme
    ────────────────────────────────────────────── */
 
 /* Subtle grid background pattern */
@@ -321,8 +321,46 @@ body {
 }
 
 /* ──────────────────────────────────────────────
-   Animations (kept)
+   Animations
    ────────────────────────────────────────────── */
+
+@keyframes editorial-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes editorial-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes editorial-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-editorial-fade-in {
+  animation: editorial-fade-in 0.6s ease-out both;
+}
+
+.animate-editorial-pulse {
+  animation: editorial-pulse 2s ease-in-out infinite;
+}
 
 /* ──────────────────────────────────────────────
    Swagger UI Tactical Override

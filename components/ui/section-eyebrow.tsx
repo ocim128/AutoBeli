@@ -17,7 +17,7 @@ export function SectionEyebrow({
     <span
       data-slot="section-eyebrow"
       className={cn(
-        "inline-flex items-center gap-2 font-mono text-xs font-medium uppercase tracking-[0.1em]",
+        "inline-flex items-center gap-2.5 font-mono text-xs font-medium uppercase tracking-[0.1em]",
         variant === "default" && "text-[var(--text-muted)]",
         variant === "accent" && "text-[var(--accent)]",
         className
@@ -27,7 +27,7 @@ export function SectionEyebrow({
       <span
         aria-hidden="true"
         className={cn(
-          "inline-block h-px w-5",
+          "inline-block h-px w-8",
           variant === "default" ? "bg-[var(--text-muted)]" : "bg-[var(--accent)]"
         )}
       />

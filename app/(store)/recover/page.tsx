@@ -53,17 +53,14 @@ export default function RecoverPage() {
       return;
     }
 
-    // Basic validation using shared patterns
     if (searchType === "email") {
       if (!REGEX_PATTERNS.email.test(searchValue.trim())) {
         setError(t("checkout.validEmail"));
         return;
       }
-    } else {
-      if (!REGEX_PATTERNS.objectId.test(searchValue.trim())) {
-        setError(t("checkout.validOrderId"));
-        return;
-      }
+    } else if (!REGEX_PATTERNS.objectId.test(searchValue.trim())) {
+      setError(t("checkout.validOrderId"));
+      return;
     }
 
     setLoading(true);
@@ -105,62 +102,45 @@ export default function RecoverPage() {
   };
 
   return (
-    <div className="min-h-[80vh] py-16 px-4">
-      <div className="mx-auto max-w-2xl space-y-8">
-        {/* Header */}
+    <div className="min-h-[80vh] px-4 py-16">
+      <div className="mx-auto max-w-xl space-y-8">
         <PageHeader
           eyebrow={t("checkout.orderRecovery")}
           title={t("checkout.recoverPurchase")}
           align="center"
           description={t("checkout.recoverPurchaseDesc")}
+          size="lg"
         />
 
-        {/* Search Form Panel */}
         <Panel padding="lg">
-          {/* Toggle Search Type */}
-          <div className="mb-6 flex gap-1 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-1">
-            <button
-              type="button"
-              aria-pressed={searchType === "email"}
-              onClick={() => {
-                setSearchType("email");
-                setSearchValue("");
-                setError(null);
-                setResults(null);
-              }}
-              className={`flex-1 rounded-md px-4 py-2 font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-                searchType === "email"
-                  ? "bg-[var(--panel)] text-[var(--foreground)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              {t("checkout.email")}
-            </button>
-            <button
-              type="button"
-              aria-pressed={searchType === "orderId"}
-              onClick={() => {
-                setSearchType("orderId");
-                setSearchValue("");
-                setError(null);
-                setResults(null);
-              }}
-              className={`flex-1 rounded-md px-4 py-2 font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-                searchType === "orderId"
-                  ? "bg-[var(--panel)] text-[var(--foreground)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              {t("checkout.orderId")}
-            </button>
+          <div className="mb-6 flex rounded-lg border border-[var(--line)] p-0.5">
+            {(["email", "orderId"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                aria-pressed={searchType === type}
+                onClick={() => {
+                  setSearchType(type);
+                  setSearchValue("");
+                  setError(null);
+                  setResults(null);
+                }}
+                className={`flex min-h-[44px] flex-1 items-center justify-center rounded-md px-4 py-2 font-mono text-[0.65rem] font-medium uppercase tracking-[0.12em] transition-all ${
+                  searchType === type
+                    ? "bg-[var(--panel-2)] text-[var(--foreground)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                {type === "email" ? t("checkout.email") : t("checkout.orderId")}
+              </button>
+            ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Alert */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div
                 role="alert"
-                className="flex items-start gap-3 rounded-lg border border-[var(--danger)]/20 bg-[var(--danger)]/10 px-4 py-3"
+                className="flex items-start gap-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3"
               >
                 <svg
                   className="mt-0.5 h-4 w-4 shrink-0 text-[var(--danger)]"
@@ -177,7 +157,6 @@ export default function RecoverPage() {
               </div>
             )}
 
-            {/* Search Input */}
             <Field
               label={searchType === "email" ? t("checkout.emailAddress") : t("checkout.orderId")}
               monoLabel
@@ -201,7 +180,6 @@ export default function RecoverPage() {
               />
             </Field>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -229,70 +207,70 @@ export default function RecoverPage() {
           </form>
         </Panel>
 
-        {/* Results */}
         {results && results.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {t("checkout.foundOrders").replace("{count}", String(results.length))}
               </span>
               <StatusBadge status="success">
                 {t("checkout.result").replace("{count}", String(results.length))}
               </StatusBadge>
             </div>
-            {results.map((order) => (
-              <Link key={order.orderId} href={`/order/${order.orderId}`} className="group block">
-                <Panel
-                  padding="md"
-                  className="transition-colors group-hover:border-[var(--line-strong)]"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <h3 className="text-sm font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
-                        {order.productTitle}
-                      </h3>
-                      <div className="flex items-center gap-4">
-                        <span className="font-mono text-xs text-[var(--success)]">
-                          Rp {order.amountPaid.toLocaleString("id-ID")}
-                        </span>
-                        <span className="font-mono text-xs text-[var(--text-muted)]">
-                          {new Date(order.paidAt).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
+            <div className="space-y-2">
+              {results.map((order) => (
+                <Link key={order.orderId} href={`/order/${order.orderId}`} className="group block">
+                  <Panel
+                    padding="md"
+                    className="transition-colors group-hover:border-[var(--line-strong)]"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <h3 className="truncate text-sm font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
+                          {order.productTitle}
+                        </h3>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-xs text-[var(--success)]">
+                            Rp {order.amountPaid.toLocaleString("id-ID")}
+                          </span>
+                          <span className="text-[var(--line)]" aria-hidden="true">
+                            /
+                          </span>
+                          <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+                            {new Date(order.paidAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
                       </div>
-                      <span className="block font-mono text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">
-                        #{order.orderId.slice(-8).toUpperCase()}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-1 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent)]">
+                        <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em]">
+                          {t("checkout.access")}
+                        </span>
+                        <svg
+                          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent)]">
-                      <span className="font-mono text-xs uppercase tracking-wider">
-                        {t("checkout.access")}
-                      </span>
-                      <svg
-                        className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </Panel>
-              </Link>
-            ))}
+                  </Panel>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Not Found Empty State */}
         {results && results.length === 0 && (
           <EmptyState
             title={t("checkout.noOrdersFound")}
@@ -310,8 +288,7 @@ export default function RecoverPage() {
           />
         )}
 
-        {/* Back to Store Link */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-2">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--accent)]"

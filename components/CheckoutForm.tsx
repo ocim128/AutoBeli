@@ -98,22 +98,22 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
   return (
     <Panel padding="lg">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-10">
         <SectionEyebrow variant="accent">{t("common.payment")}</SectionEyebrow>
-        <h2 className="font-serif text-2xl text-[var(--foreground)] mt-2 leading-tight">
+        <h2 className="font-serif text-3xl text-[var(--foreground)] mt-3 leading-tight">
           {t("checkout.securePayment")}
         </h2>
-        <p className="font-mono text-[0.65rem] text-[var(--text-muted)] mt-1 uppercase tracking-wider">
+        <p className="font-mono text-[0.65rem] text-[var(--text-muted)] mt-2 uppercase tracking-[0.14em]">
           {t("checkout.digitalOrder")} #{orderId.slice(-6).toUpperCase()}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        {/* Error Display */}
+      <form onSubmit={handleSubmit} className="space-y-7" noValidate>
+        {/* Inline Error Display */}
         {error && (
           <div
             role="alert"
-            className="flex items-start gap-2 p-3 rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/20"
+            className="flex items-start gap-2.5 px-4 py-3 rounded-lg bg-[var(--danger)]/8 border border-[var(--danger)]/15"
           >
             <svg
               className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5"
@@ -146,18 +146,19 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
             disabled={loading}
             aria-invalid={!!error}
             aria-required="true"
-            className="h-10 text-sm bg-[var(--panel-2)] border-[var(--line)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-[var(--accent)]/20"
+            className="h-11 text-sm bg-[var(--panel-2)] border-[var(--line)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-[var(--accent)]/20"
           />
         </Field>
 
-        {/* Submit Button */}
+        {/* Submit Button — prominent and decisive */}
         <Button
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="h-12 w-full rounded-lg bg-[var(--accent)] text-base font-semibold text-[var(--accent-foreground)] transition-opacity hover:opacity-90 disabled:opacity-50"
+          size="lg"
+          className="h-[3.25rem] w-full rounded-lg bg-[var(--accent)] text-base font-semibold text-[var(--accent-foreground)] shadow-md transition-all hover:opacity-90 hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
         >
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2.5">
             {loading ? (
               <>
                 <Spinner size={20} />
@@ -165,7 +166,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
               </>
             ) : (
               <>
-                <span>
+                <span className="font-serif text-lg">
                   {t("checkout.pay")} Rp{amount.toLocaleString("id-ID")}
                 </span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,24 +183,20 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         </Button>
       </form>
 
-      {/* Payment Methods */}
-      <div className="mt-8 pt-6 border-t border-[var(--line)]">
-        <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-[var(--text-muted)] text-center mb-3">
+      {/* Payment Methods — cleaner, icon-style presentation */}
+      <div className="mt-10 pt-6 border-t border-[var(--line)]">
+        <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--text-muted)] text-center mb-4">
           {t("checkout.supportedMethods")}
         </p>
-        <div className="flex justify-center gap-6">
-          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
-            QRIS
-          </span>
-          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
-            BCA
-          </span>
-          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
-            GOPAY
-          </span>
-          <span className="font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]">
-            OVO
-          </span>
+        <div className="flex justify-center items-center gap-5">
+          {["QRIS", "BCA", "GOPAY", "OVO"].map((method) => (
+            <span
+              key={method}
+              className="flex items-center justify-center h-8 px-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]"
+            >
+              {method}
+            </span>
+          ))}
         </div>
       </div>
     </Panel>

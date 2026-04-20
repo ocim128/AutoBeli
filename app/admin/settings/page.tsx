@@ -3,7 +3,6 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { Separator } from "@/components/ui/separator";
-import { StatusBadge } from "@/components/ui/status-badge";
 
 export default function AdminSettingsPage() {
   return (
@@ -14,14 +13,22 @@ export default function AdminSettingsPage() {
         description="Outbound email runs through your Cloudflare worker when configured."
       />
 
-      {/* Warning */}
-      <Panel variant="accent" padding="md">
+      {/* Notice */}
+      <Panel padding="md" className="bg-[var(--panel-2,var(--panel))]">
         <div className="flex items-start gap-3">
-          <StatusBadge status="warning">Notice</StatusBadge>
-          <p className="text-sm text-[var(--foreground)] opacity-90">
-            Customer access is still delivered on the order page directly. Email is a best-effort
-            copy sent through Cloudflare when the worker endpoint and secret are configured.
-          </p>
+          <span
+            className="mt-0.5 inline-block size-1.5 shrink-0 rounded-full bg-amber-400"
+            aria-hidden="true"
+          />
+          <div>
+            <p className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Email Delivery
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--foreground)] opacity-80">
+              Customer access is delivered on the order page directly. Email is a best-effort copy
+              sent through Cloudflare when the worker endpoint and secret are configured.
+            </p>
+          </div>
         </div>
       </Panel>
 
@@ -29,12 +36,12 @@ export default function AdminSettingsPage() {
         {/* Current Flow */}
         <Panel monoLabel="DELIVERY" title="Current Flow">
           <div className="space-y-3">
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
               After payment, customers should use their order page as the primary delivery path,
               with email acting as a backup copy.
             </p>
             <Separator />
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
               The stored checkout email remains useful for order recovery, support, and admin order
               search.
             </p>
@@ -44,19 +51,19 @@ export default function AdminSettingsPage() {
         {/* Recovery Path */}
         <Panel monoLabel="RECOVERY" title="Recovery Path">
           <div className="space-y-3">
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
               Customers can recover access from{" "}
-              <span className="font-mono text-xs text-[var(--accent)] bg-[var(--accent-soft)] px-1.5 py-0.5 rounded">
+              <code className="inline-flex items-center rounded-md border border-[var(--line-strong)] bg-[var(--panel)] px-1.5 py-0.5 font-mono text-[0.7rem] text-[var(--accent)]">
                 /recover
-              </span>{" "}
+              </code>{" "}
               using their email address or order ID.
             </p>
             <Separator />
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
               AutoBeli calls the Cloudflare worker from{" "}
-              <span className="font-mono text-xs text-[var(--accent)] bg-[var(--accent-soft)] px-1.5 py-0.5 rounded">
+              <code className="inline-flex items-center rounded-md border border-[var(--line-strong)] bg-[var(--panel)] px-1.5 py-0.5 font-mono text-[0.7rem] text-[var(--accent)]">
                 lib/email.ts
-              </span>
+              </code>
               . Set the worker URL and API key in this app&apos;s environment variables.
             </p>
           </div>

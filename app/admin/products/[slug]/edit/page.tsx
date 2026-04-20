@@ -140,7 +140,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
       />
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/5 px-4 py-2.5 text-sm text-[var(--danger)]">
           <span>{error}</span>
           <Button variant="ghost" size="xs" onClick={() => setError("")} className="font-mono">
             DISMISS
@@ -149,7 +149,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
       )}
 
       <form onSubmit={handleSubmit}>
-        <Panel>
+        <Panel padding="md">
           <div className="space-y-5">
             {/* Title */}
             <Field label="Title" monoLabel htmlFor="title">
@@ -163,6 +163,17 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
               />
             </Field>
 
+            {/* Slug (read-only) */}
+            <Field label="Slug (read-only)" monoLabel htmlFor="slug">
+              <Input
+                type="text"
+                id="slug"
+                value={slug}
+                readOnly
+                className="font-mono text-sm bg-[var(--panel-2)] opacity-70 cursor-not-allowed"
+              />
+            </Field>
+
             {/* Price */}
             <Field label="Price (IDR)" monoLabel htmlFor="priceIdr">
               <Input
@@ -172,6 +183,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
                 required
                 min="0"
                 value={form.priceIdr}
+                className="font-mono tabular-nums"
                 onChange={handleChange}
               />
             </Field>
@@ -205,12 +217,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
                 onChange={handleChange}
               />
               {form.imageUrl && (
-                <div className="mt-2">
+                <div className="mt-2 inline-flex">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={form.imageUrl}
                     alt="Preview"
-                    className="h-20 w-auto rounded-md border border-[var(--line)]"
+                    className="h-16 w-auto rounded-md border border-[var(--line)] opacity-90"
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />
                 </div>
@@ -258,7 +270,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
             <Separator />
 
             {/* Active Toggle */}
-            <div className="flex items-center gap-3">
+            <label htmlFor="isActive" className="flex items-center gap-3 cursor-pointer group">
               <input
                 type="checkbox"
                 id="isActive"
@@ -266,27 +278,24 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
                 onChange={handleCheckbox}
                 className="h-4 w-4 rounded border-[var(--line)] accent-[var(--accent)]"
               />
-              <label
-                htmlFor="isActive"
-                className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]"
-              >
-                Active (Visible in store)
-              </label>
-            </div>
+              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)] group-hover:text-[var(--foreground)] transition-colors">
+                Active &middot; Visible in store
+              </span>
+            </label>
 
             {/* Slug notice */}
             <div className="flex justify-end">
-              <span className="font-mono text-xs text-[var(--warning)]">
-                Note: Slug cannot be changed.
+              <span className="font-mono text-[0.65rem] text-[var(--text-muted)] opacity-60">
+                Slug cannot be changed after creation.
               </span>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-3">
               <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving} size="sm">
+              <Button type="submit" disabled={saving} size="lg">
                 {saving ? "Saving..." : "Update Product"}
               </Button>
             </div>

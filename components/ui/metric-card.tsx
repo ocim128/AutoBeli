@@ -10,7 +10,7 @@ const trendIcon = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="inline-block h-4 w-4 text-emerald-400"
+      className="inline-block h-3 w-3 text-emerald-500 opacity-70"
     >
       <path
         fillRule="evenodd"
@@ -24,7 +24,7 @@ const trendIcon = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="inline-block h-4 w-4 text-red-400"
+      className="inline-block h-3 w-3 text-red-400 opacity-70"
     >
       <path
         fillRule="evenodd"
@@ -38,7 +38,7 @@ const trendIcon = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="inline-block h-4 w-4 text-[var(--text-muted)]"
+      className="inline-block h-3 w-3 text-[var(--text-muted)] opacity-50"
     >
       <path
         fillRule="evenodd"
@@ -66,15 +66,21 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <Panel padding="md" className={cn("", className)} {...props}>
-      <div className="flex flex-col gap-1">
-        <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+      <div className="flex flex-col gap-2">
+        <span className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
           {label}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-serif text-3xl text-[var(--foreground)] lg:text-4xl">{value}</span>
-          {trend && <span>{trendIcon[trend]}</span>}
+          <span className="font-serif text-3xl font-semibold tracking-tight text-[var(--foreground)] lg:text-4xl">
+            {value}
+          </span>
+          {trend && <span className="mt-0.5 self-center">{trendIcon[trend]}</span>}
         </div>
-        {sublabel && <span className="text-xs text-[var(--text-muted)]">{sublabel}</span>}
+        {sublabel && (
+          <span className="text-[0.7rem] leading-snug text-[var(--text-muted)] opacity-70">
+            {sublabel}
+          </span>
+        )}
       </div>
     </Panel>
   );

@@ -46,8 +46,9 @@ test.describe("Homepage", () => {
 
     const hasError = await hasAppError(page);
     if (!hasError) {
-      // Matches "Aset yang Tersedia" from i18n
-      await expect(page.getByText("Aset yang Tersedia")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 2, name: /Aset Tersedia|Available Assets/i })
+      ).toBeVisible();
     }
   });
 
@@ -100,12 +101,21 @@ test.describe("Product Page", () => {
       // Check for either 404 content OR error page (DB down)
       const hasErrorPage = await hasAppError(page);
 
-      const has404 = await page
-        .getByText(/404|not found|halaman nggak ketemu/i)
+      const has404Heading = await page
+        .getByRole("heading", { level: 1, name: "404" })
+        .isVisible()
+        .catch(() => false);
+      const has404Copy = await page
+        .getByText(/asset not found|aset tidak ditemukan|page not found/i)
         .first()
         .isVisible()
         .catch(() => false);
-      expect(hasErrorPage || has404).toBeTruthy();
+      const hasRecoveryAction = await page
+        .getByRole("link", { name: /return to store|kembali ke toko|find my order|cari pesanan/i })
+        .first()
+        .isVisible()
+        .catch(() => false);
+      expect(hasErrorPage || has404Heading || has404Copy || hasRecoveryAction).toBeTruthy();
     }
   });
 

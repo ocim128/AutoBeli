@@ -280,7 +280,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
@@ -292,7 +292,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
@@ -319,19 +319,19 @@ export default function StockManagementPage({ params }: StockPageProps) {
       </div>
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/8 px-4 py-2.5 text-sm text-[var(--danger)]">
           <span>{error}</span>
           <button
             onClick={() => setError("")}
-            className="font-mono text-xs hover:text-[var(--danger)]"
+            className="font-mono text-[0.65rem] uppercase tracking-wider opacity-70 hover:opacity-100 transition-opacity"
           >
-            DISMISS
+            Dismiss
           </button>
         </div>
       )}
 
-      {/* Stock Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stock Stats -- tighter grid gap */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <MetricCard label="Total Stock" value={stockItems.length} />
         <MetricCard
           label="Available"
@@ -341,21 +341,23 @@ export default function StockManagementPage({ params }: StockPageProps) {
         <MetricCard label="Sold" value={soldCount} />
       </div>
 
-      {/* Legacy Content Notice */}
+      {/* Legacy Content Notice -- calmer, regular panel */}
       {legacyContent && stockItems.length === 0 && (
-        <Panel variant="accent" padding="md">
+        <Panel padding="md">
           <div className="flex items-start gap-3">
-            <StatusBadge status="warning">Legacy</StatusBadge>
-            <div>
-              <p className="text-sm text-[var(--foreground)]">
+            <div className="shrink-0 mt-0.5">
+              <StatusBadge status="warning">Legacy</StatusBadge>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                 This product has a single content item (old system). Add new stock items below to
                 enable multi-stock mode.
               </p>
               <details className="mt-3">
-                <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--foreground)]">
+                <summary className="cursor-pointer font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors">
                   View legacy content
                 </summary>
-                <pre className="mt-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-xs font-mono text-[var(--text-muted)] overflow-auto max-h-32">
+                <pre className="mt-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-xs font-mono text-[var(--text-muted)] overflow-auto max-h-32 leading-relaxed">
                   {legacyContent}
                 </pre>
               </details>
@@ -366,24 +368,24 @@ export default function StockManagementPage({ params }: StockPageProps) {
 
       {/* Add New Stock Form */}
       <Panel monoLabel="ADD STOCK" title="New Stock Item">
-        {/* Mode Toggle */}
-        <div className="flex gap-2 mb-5">
+        {/* Mode Toggle -- pill-style segmented control */}
+        <div className="inline-flex rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-0.5 mb-5">
           <button
             onClick={() => setBulkMode(false)}
-            className={`font-mono text-xs uppercase tracking-wider px-3 py-1.5 rounded-md transition-colors ${
+            className={`font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] px-4 py-1.5 rounded-md transition-all ${
               !bulkMode
-                ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                : "text-[var(--text-muted)] hover:text-[var(--foreground)] border border-[var(--line)]"
+                ? "bg-[var(--panel)] text-[var(--foreground)] shadow-sm border border-[var(--line-strong)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)] border border-transparent"
             }`}
           >
             Single
           </button>
           <button
             onClick={() => setBulkMode(true)}
-            className={`font-mono text-xs uppercase tracking-wider px-3 py-1.5 rounded-md transition-colors ${
+            className={`font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] px-4 py-1.5 rounded-md transition-all ${
               bulkMode
-                ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                : "text-[var(--text-muted)] hover:text-[var(--foreground)] border border-[var(--line)]"
+                ? "bg-[var(--panel)] text-[var(--foreground)] shadow-sm border border-[var(--line-strong)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)] border border-transparent"
             }`}
           >
             Bulk
@@ -413,7 +415,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
         ) : (
           /* Bulk Stock Form */
           <div className="space-y-4">
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed">
               Paste multiple lines of raw data. Each line will be processed and converted to a stock
               item.
             </p>
@@ -460,51 +462,60 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
             {/* Preview Section */}
             {showPreview && (
               <div className="space-y-3 pt-4 border-t border-[var(--line)]">
-                <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                  Preview -- {bulkPreview.length} items to add
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                    Preview
+                  </span>
+                  <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+                    {bulkPreview.length} items to add
+                  </span>
                   {bulkErrors.length > 0 && (
-                    <span className="text-[var(--danger)] ml-2">({bulkErrors.length} errors)</span>
+                    <span className="font-mono text-[0.65rem] text-[var(--danger)]">
+                      {bulkErrors.length} errors
+                    </span>
                   )}
-                </span>
+                </div>
 
                 {/* Errors */}
                 {bulkErrors.length > 0 && (
-                  <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 p-3">
-                    <p className="font-mono text-xs uppercase tracking-wider text-[var(--danger)] mb-2">
-                      Failed to parse {bulkErrors.length} line(s):
+                  <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger)]/5 p-3 space-y-2">
+                    <p className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--danger)]">
+                      Failed to parse {bulkErrors.length} line(s)
                     </p>
                     <ul className="text-xs text-[var(--danger)] space-y-1">
                       {bulkErrors.map((err, i) => (
                         <li key={i} className="font-mono">
-                          <span className="bg-[var(--danger)]/20 px-1 rounded">
-                            Line {err.line}:
-                          </span>{" "}
-                          &nbsp;
-                          {err.content.substring(0, 50)}...
+                          <span className="bg-[var(--danger)]/10 px-1.5 py-0.5 rounded text-[0.65rem]">
+                            Line {err.line}
+                          </span>
+                          <span className="ml-1.5 opacity-70">
+                            {err.content.substring(0, 60)}
+                            {err.content.length > 60 ? "..." : ""}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {/* Preview Items */}
+                {/* Preview Items -- cleaner cards */}
                 <div className="space-y-2 max-h-64 overflow-auto">
                   {bulkPreview.map((item, index) => (
                     <div
                       key={index}
-                      className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3"
+                      className="flex items-start gap-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5"
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs text-[var(--text-muted)]">
-                          #{index + 1}
-                        </span>
+                      <span className="font-mono text-[0.65rem] text-[var(--text-muted)] shrink-0 mt-0.5">
+                        #{index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
                         <span className="text-sm font-medium text-[var(--accent)]">
                           {item.email}
                         </span>
+                        <pre className="text-[0.7rem] text-[var(--text-muted)] font-mono whitespace-pre-wrap mt-0.5 leading-relaxed">
+                          {item.rawContent}
+                        </pre>
                       </div>
-                      <pre className="text-xs text-[var(--text-muted)] font-mono whitespace-pre-wrap">
-                        {item.rawContent}
-                      </pre>
                     </div>
                   ))}
                 </div>
@@ -514,102 +525,107 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
         )}
       </Panel>
 
-      {/* Stock Items List */}
+      {/* Stock Items List -- stronger header, cleaner rows */}
       <Panel monoLabel="INVENTORY" title={`Stock Items (${stockItems.length})`} padding="sm">
         {stockItems.length === 0 ? (
-          <div className="py-8 text-center">
-            <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
-              No stock items yet. Add your first stock item above.
+          <div className="py-10 text-center">
+            <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+              No stock items yet
             </span>
+            <p className="text-sm text-[var(--text-muted)] mt-1.5 opacity-70">
+              Add your first stock item above.
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-[var(--line)]">
             {stockItems.map((item, index) => (
-              <div key={item.id} className={`p-4 ${item.isSold ? "opacity-60" : ""}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-mono text-xs text-[var(--text-muted)]">
-                        #{index + 1}
-                      </span>
-                      {item.isSold ? (
-                        <StatusBadge status="info">Sold</StatusBadge>
-                      ) : (
-                        <StatusBadge status="success">Available</StatusBadge>
-                      )}
-                      {item.soldAt && (
-                        <span className="font-mono text-xs text-[var(--text-muted)]">
-                          {new Date(item.soldAt).toLocaleString()}
-                        </span>
-                      )}
+              <div
+                key={item.id}
+                className={`group px-4 py-3.5 transition-colors hover:bg-[var(--panel-2)]/50 ${item.isSold ? "opacity-50" : ""}`}
+              >
+                {/* Row header: index + status + meta */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-[0.65rem] text-[var(--text-muted)] tabular-nums w-5 shrink-0">
+                    {index + 1}
+                  </span>
+                  {item.isSold ? (
+                    <StatusBadge status="info">Sold</StatusBadge>
+                  ) : (
+                    <StatusBadge status="success">Available</StatusBadge>
+                  )}
+                  {item.soldAt && (
+                    <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+                      {new Date(item.soldAt).toLocaleString()}
+                    </span>
+                  )}
+                  {item.orderId && (
+                    <Link
+                      href={`/admin/orders?id=${item.orderId}`}
+                      className="font-mono text-[0.65rem] text-[var(--accent)] hover:underline ml-auto"
+                    >
+                      View Order
+                    </Link>
+                  )}
+                </div>
+
+                {/* Content area */}
+                {editingId === item.id ? (
+                  <div className="space-y-3 pl-5">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      rows={3}
+                      className="font-mono text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="xs" onClick={() => handleEditStock(item.id)}>
+                        Save
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={cancelEditing}>
+                        Cancel
+                      </Button>
                     </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-3 pl-5">
+                    <pre className="flex-1 text-sm font-mono text-[var(--text-muted)] bg-[var(--panel-2)] border border-[var(--line)] p-3 rounded-md overflow-auto max-h-24 min-w-0 leading-relaxed">
+                      {item.content}
+                    </pre>
+                    {!item.isSold && (
+                      <div className="flex gap-1.5 shrink-0 items-start pt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="xs" variant="outline" onClick={() => startEditing(item)}>
+                          Edit
+                        </Button>
 
-                    {editingId === item.id ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          rows={3}
-                          className="font-mono text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <Button size="xs" onClick={() => handleEditStock(item.id)}>
-                            Save
-                          </Button>
-                          <Button size="xs" variant="outline" onClick={cancelEditing}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <pre className="text-sm font-mono text-[var(--text-muted)] bg-[var(--panel-2)] border border-[var(--line)] p-3 rounded-md overflow-auto max-h-24">
-                        {item.content}
-                      </pre>
-                    )}
-
-                    {item.orderId && (
-                      <div className="mt-2">
-                        <Link
-                          href={`/admin/orders?id=${item.orderId}`}
-                          className="font-mono text-xs text-[var(--accent)] hover:underline"
-                        >
-                          View Order
-                        </Link>
+                        <AlertDialog>
+                          <AlertDialogTrigger>
+                            <Button size="xs" variant="destructive">
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Stock Item</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This stock item will be permanently
+                                removed from inventory.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25"
+                                onClick={() => handleDeleteStock(item.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     )}
                   </div>
-
-                  {!item.isSold && editingId !== item.id && (
-                    <div className="flex gap-2 shrink-0 items-center">
-                      <Button size="xs" variant="outline" onClick={() => startEditing(item)}>
-                        Edit
-                      </Button>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger>
-                          <Button size="xs" variant="destructive">
-                            Delete
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Stock Item</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This stock item will be permanently
-                              removed from inventory.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteStock(item.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </div>
@@ -617,16 +633,16 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
       </Panel>
 
       {/* Quick Actions */}
-      <div className="flex gap-4 justify-center">
+      <div className="flex gap-6 justify-center pb-4">
         <Link
           href={`/admin/products/${slug}/edit`}
-          className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] hover:underline"
+          className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--accent)] hover:underline"
         >
           Edit Product Details
         </Link>
         <Link
           href="/admin/products"
-          className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--foreground)]"
+          className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
         >
           Back to Products
         </Link>

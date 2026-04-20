@@ -3,70 +3,96 @@ import { Panel } from "@/components/ui/panel";
 
 export function ProductGridSkeleton() {
   return (
-    <div className="space-y-24 pb-20 animate-in fade-in-50">
-      {/* Hero Section Skeleton */}
-      <Panel padding="lg" className="text-center py-28 px-4">
-        <div className="space-y-6">
-          <div className="flex justify-center">
-            <Skeleton className="h-8 w-48 rounded-full" />
-          </div>
-          <Skeleton className="h-16 md:h-20 w-3/4 max-w-2xl mx-auto rounded-2xl" />
-          <Skeleton className="h-6 w-2/3 max-w-xl mx-auto" />
-          <div className="pt-4 flex justify-center">
-            <Skeleton className="h-14 w-48 rounded-xl" />
-          </div>
-        </div>
-      </Panel>
+    <div className="space-y-20 pb-28 md:pb-24 animate-in fade-in-50">
+      {/* ── Hero Section Skeleton — matches featured Panel hero ── */}
+      <section className="relative mx-4 md:mx-6 lg:mx-8">
+        <Panel featured padding="xl" className="relative overflow-hidden">
+          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
+            {/* Left: headline area */}
+            <div className="flex flex-1 flex-col items-center gap-5 text-center lg:items-start lg:text-left">
+              <Skeleton className="h-5 w-40 rounded-full" />
+              <div className="space-y-2 w-full">
+                <Skeleton className="h-10 md:h-12 w-4/5 max-w-lg mx-auto lg:mx-0 rounded-xl" />
+                <Skeleton className="h-10 md:h-12 w-3/5 max-w-md mx-auto lg:mx-0 rounded-xl" />
+              </div>
+              <Skeleton className="h-5 w-72 max-w-sm rounded-lg" />
+              <Skeleton className="h-10 w-36 rounded-lg" />
+              {/* Trust signals row */}
+              <div className="mt-2 flex items-center gap-5">
+                <Skeleton className="h-3.5 w-20 rounded" />
+                <Skeleton className="h-3.5 w-20 rounded" />
+                <Skeleton className="h-3.5 w-20 rounded" />
+              </div>
+            </div>
 
-      {/* Grid Header Skeleton */}
-      <section id="products" className="scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div className="flex items-start gap-4">
-            <Skeleton className="w-12 h-12 rounded-xl hidden sm:block" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-56" />
-              <Skeleton className="h-5 w-72" />
+            {/* Right: featured product strip (desktop) */}
+            <div className="hidden w-full max-w-[280px] shrink-0 flex-col gap-3 pt-2 lg:flex">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-2.5"
+                >
+                  <Skeleton className="size-12 shrink-0 rounded-md" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-24 rounded" />
+                    <Skeleton className="h-3 w-16 rounded" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <Skeleton className="h-10 w-32 rounded-xl" />
+        </Panel>
+      </section>
+
+      {/* ── Product Grid Section Skeleton ── */}
+      <section id="products" className="scroll-mt-24 space-y-10 px-4 md:px-6 lg:px-8">
+        {/* Grid header */}
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-16 rounded-full" />
+            <Skeleton className="h-7 w-48 rounded-lg" />
+            <Skeleton className="h-4 w-64 rounded" />
+          </div>
+          <Skeleton className="h-4 w-16 rounded" />
         </div>
 
-        {/* Product Cards Grid */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Product Cards Grid — matches new card layout */}
+        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Panel key={i} padding="sm" className="h-full flex flex-col overflow-hidden">
-              {/* Card Media Area */}
-              <div className="h-52 relative overflow-hidden rounded-lg bg-[var(--panel-2)] mb-4">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="space-y-3 text-center">
-                    <Skeleton className="h-8 w-24 mx-auto" />
-                    <Skeleton className="h-4 w-16 mx-auto rounded-lg" />
-                  </div>
+            <div
+              key={i}
+              className="flex h-full flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)]"
+            >
+              {/* Image / poster area — aspect ratio matches ProductCard */}
+              <div className="relative aspect-[4/3] overflow-hidden bg-[var(--panel-3)]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                  <Skeleton className="h-px w-8 rounded" />
+                  <Skeleton className="h-6 w-24 rounded-lg" />
+                  <Skeleton className="h-px w-8 rounded" />
                 </div>
               </div>
 
-              <div className="flex flex-1 flex-col px-2 pb-2">
-                <div className="flex-grow space-y-4">
-                  {/* Title */}
-                  <Skeleton className="h-7 w-3/4" />
+              {/* Card body — price-first layout */}
+              <div className="flex flex-1 flex-col gap-2 p-5">
+                {/* Price */}
+                <Skeleton className="h-6 w-24 rounded-lg" />
 
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                  </div>
+                {/* Title */}
+                <Skeleton className="h-4 w-3/4 rounded" />
+
+                {/* Description — 2 lines */}
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3.5 w-full rounded" />
+                  <Skeleton className="h-3.5 w-5/6 rounded" />
                 </div>
 
-                {/* Footer */}
-                <div className="mt-6 flex items-center justify-between border-t border-[var(--line)] pt-5">
-                  <div className="space-y-2">
-                    <Skeleton className="h-3 w-12" />
-                    <Skeleton className="h-6 w-28" />
-                  </div>
-                  <Skeleton className="w-12 h-12 rounded-xl" />
-                </div>
+                {/* Stock */}
+                <Skeleton className="h-3 w-16 rounded" />
+
+                {/* CTA button */}
+                <Skeleton className="mt-2 h-8 w-full rounded-lg" />
               </div>
-            </Panel>
+            </div>
           ))}
         </div>
       </section>

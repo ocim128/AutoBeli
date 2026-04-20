@@ -122,7 +122,7 @@ function CreateProductContent() {
       />
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-2 text-sm text-[var(--danger)]">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--danger)]/25 bg-[var(--danger)]/5 px-4 py-2.5 text-sm text-[var(--danger)]">
           <span>{error}</span>
           <Button variant="ghost" size="xs" onClick={() => setError("")} className="font-mono">
             DISMISS
@@ -131,7 +131,7 @@ function CreateProductContent() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Panel>
+        <Panel padding="md">
           <div className="space-y-5">
             {/* Title */}
             <Field label="Title" monoLabel htmlFor="title">
@@ -153,18 +153,14 @@ function CreateProductContent() {
             </Field>
 
             {/* Slug */}
-            <Field
-              label="Slug (URL)"
-              monoLabel
-              htmlFor="slug"
-              helper="URL-safe identifier for this product."
-            >
+            <Field label="Slug (URL)" monoLabel htmlFor="slug" helper="URL-safe identifier.">
               <Input
                 type="text"
                 id="slug"
                 name="slug"
                 required
                 value={form.slug}
+                className="font-mono text-sm"
                 onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
               />
             </Field>
@@ -178,6 +174,7 @@ function CreateProductContent() {
                 required
                 min={0}
                 value={form.priceIdr}
+                className="font-mono tabular-nums"
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
@@ -211,12 +208,12 @@ function CreateProductContent() {
                 onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
               />
               {form.imageUrl && (
-                <div className="mt-2">
+                <div className="mt-2 inline-flex">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={form.imageUrl}
                     alt="Preview"
-                    className="h-20 w-auto rounded-md border border-[var(--line)]"
+                    className="h-16 w-auto rounded-md border border-[var(--line)] opacity-90"
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />
                 </div>
@@ -230,7 +227,7 @@ function CreateProductContent() {
               label="Content (The Product)"
               monoLabel
               htmlFor="content"
-              helper="This text will be encrypted and delivered only after payment."
+              helper="Encrypted and delivered only after payment."
             >
               <Textarea
                 id="content"
@@ -247,7 +244,7 @@ function CreateProductContent() {
             <Separator />
 
             {/* Active Toggle */}
-            <div className="flex items-center gap-3">
+            <label htmlFor="isActive" className="flex items-center gap-3 cursor-pointer group">
               <input
                 type="checkbox"
                 id="isActive"
@@ -255,20 +252,17 @@ function CreateProductContent() {
                 onChange={handleCheckbox}
                 className="h-4 w-4 rounded border-[var(--line)] accent-[var(--accent)]"
               />
-              <label
-                htmlFor="isActive"
-                className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]"
-              >
-                Active (Visible in store)
-              </label>
-            </div>
+              <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-[var(--text-muted)] group-hover:text-[var(--foreground)] transition-colors">
+                Active &middot; Visible in store
+              </span>
+            </label>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-3">
               <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} size="sm">
+              <Button type="submit" disabled={loading} size="lg">
                 {loading ? "Saving..." : "Create Product"}
               </Button>
             </div>
