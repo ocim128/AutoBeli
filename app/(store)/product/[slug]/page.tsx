@@ -45,6 +45,8 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const serializedProduct = serializeProductForClient(product);
+  const raw = process.env.PAYMENT_GATEWAY || "MOCK";
+  const paymentGateway: "MOCK" | "PAKASIR" = raw === "PAKASIR" ? "PAKASIR" : "MOCK";
 
-  return <ProductClient product={serializedProduct} />;
+  return <ProductClient product={serializedProduct} paymentGateway={paymentGateway} />;
 }

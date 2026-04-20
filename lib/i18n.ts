@@ -81,8 +81,10 @@ export const translations = {
       quantity: "Jumlah",
       fullAccessPrice: "Harga Akses Penuh",
       digitalAsset: "Aset Digital",
-      secureCopy: "Dapatkan aset digital unik ini. Pengiriman otomatis melalui Pakasir.",
+      secureCopy: "Dapatkan aset digital unik ini. Pengiriman otomatis setelah pembayaran.",
       featuresLabel: "Fitur",
+      decreaseQuantity: "Kurangi jumlah",
+      increaseQuantity: "Tambah jumlah",
     },
     checkout: {
       securePayment: "Pembayaran Aman",
@@ -174,6 +176,7 @@ export const translations = {
       statusDecrypted: "Terbuka",
       statusEncrypted: "Terkunci",
       statusError: "Kesalahan",
+      copyLine: "Salin baris",
     },
     apiDoc: {
       eyebrow: "REFERENSI API",
@@ -261,8 +264,10 @@ export const translations = {
       quantity: "Quantity",
       fullAccessPrice: "Full Access Price",
       digitalAsset: "Digital Asset",
-      secureCopy: "Purchase this unique digital asset. Automated delivery via Pakasir.",
+      secureCopy: "Purchase this unique digital asset. Automated delivery after payment.",
       featuresLabel: "Features",
+      decreaseQuantity: "Decrease quantity",
+      increaseQuantity: "Increase quantity",
     },
     checkout: {
       securePayment: "Secure Payment",
@@ -354,6 +359,7 @@ export const translations = {
       statusDecrypted: "Decrypted",
       statusEncrypted: "Encrypted",
       statusError: "Error",
+      copyLine: "Copy line",
     },
     apiDoc: {
       eyebrow: "API REFERENCE",

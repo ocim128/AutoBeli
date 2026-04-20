@@ -9,7 +9,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import LazyImage from "@/components/ui/LazyImage";
 import type { SerializedProduct } from "@/lib/products";
 
-export function ProductClient({ product }: { product: SerializedProduct }) {
+export function ProductClient({
+  product,
+  paymentGateway,
+}: {
+  product: SerializedProduct;
+  paymentGateway: "MOCK" | "PAKASIR";
+}) {
   const { t } = useLanguage();
 
   const features = [
@@ -184,7 +190,11 @@ export function ProductClient({ product }: { product: SerializedProduct }) {
               <div className="border-t border-[var(--line)]" />
 
               {/* Buy action */}
-              <BuyButton slug={product.slug} maxQuantity={product.availableStock || 1} />
+              <BuyButton
+                slug={product.slug}
+                maxQuantity={product.availableStock || 1}
+                paymentGateway={paymentGateway}
+              />
             </Panel>
           </div>
         </div>

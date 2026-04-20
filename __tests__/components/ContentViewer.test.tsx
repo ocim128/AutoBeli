@@ -75,4 +75,25 @@ describe("ContentViewer", () => {
 
     expect(screen.getByRole("button", { name: /copy/i })).toHaveTextContent("COPY");
   });
+
+  it("renders multiline content with line copy actions and preserved formatting classes", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ content: "alpha   beta\r\n\r\nhttps://example.com" }),
+    });
+
+    render(<ContentViewer token="token-456" />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /unlock content/i }));
+    });
+
+    const firstLine = await screen.findByText(
+      (_, element) =>
+        element?.tagName.toLowerCase() === "p" && element.textContent === "alpha   beta"
+    );
+
+    expect(firstLine).toHaveClass("whitespace-pre-wrap");
+    expect(screen.getAllByRole("button", { name: /copy line/i })).toHaveLength(2);
+  });
 });

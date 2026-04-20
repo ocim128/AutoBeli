@@ -207,69 +207,7 @@ export default function RecoverPage() {
           </form>
         </Panel>
 
-        {results && results.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                {t("checkout.foundOrders").replace("{count}", String(results.length))}
-              </span>
-              <StatusBadge status="success">
-                {t("checkout.result").replace("{count}", String(results.length))}
-              </StatusBadge>
-            </div>
-            <div className="space-y-2">
-              {results.map((order) => (
-                <Link key={order.orderId} href={`/order/${order.orderId}`} className="group block">
-                  <Panel
-                    padding="md"
-                    className="transition-colors group-hover:border-[var(--line-strong)]"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <h3 className="truncate text-sm font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
-                          {order.productTitle}
-                        </h3>
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-xs text-[var(--success)]">
-                            Rp {order.amountPaid.toLocaleString("id-ID")}
-                          </span>
-                          <span className="text-[var(--line)]" aria-hidden="true">
-                            /
-                          </span>
-                          <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
-                            {new Date(order.paidAt).toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent)]">
-                        <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em]">
-                          {t("checkout.access")}
-                        </span>
-                        <svg
-                          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </Panel>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {results && results.length > 0 && <RecoverResults results={results} />}
 
         {results && results.length === 0 && (
           <EmptyState
@@ -306,5 +244,77 @@ export default function RecoverPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Recover Results List ──────────────────────────── */
+
+function RecoverResults({ results }: { results: OrderResult[] }) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
+          {t("checkout.foundOrders").replace("{count}", String(results.length))}
+        </span>
+        <StatusBadge status="success">
+          {t("checkout.result").replace("{count}", String(results.length))}
+        </StatusBadge>
+      </div>
+      <div className="space-y-2">
+        {results.map((order) => (
+          <RecoverResultCard key={order.orderId} order={order} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Single Result Card ────────────────────────────── */
+
+function RecoverResultCard({ order }: { order: OrderResult }) {
+  const { t } = useLanguage();
+
+  return (
+    <Link href={`/order/${order.orderId}`} className="group block">
+      <Panel padding="md" className="transition-colors group-hover:border-[var(--line-strong)]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <h3 className="truncate text-sm font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
+              {order.productTitle}
+            </h3>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs text-[var(--success)]">
+                Rp {order.amountPaid.toLocaleString("id-ID")}
+              </span>
+              <span className="text-[var(--line)]" aria-hidden="true">
+                /
+              </span>
+              <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
+                {new Date(order.paidAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent)]">
+            <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em]">
+              {t("checkout.access")}
+            </span>
+            <svg
+              className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </Panel>
+    </Link>
   );
 }

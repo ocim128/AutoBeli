@@ -183,22 +183,24 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         </Button>
       </form>
 
-      {/* Payment Methods — cleaner, icon-style presentation */}
-      <div className="mt-10 pt-6 border-t border-[var(--line)]">
-        <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--text-muted)] text-center mb-4">
-          {t("checkout.supportedMethods")}
-        </p>
-        <div className="flex justify-center items-center gap-5">
-          {["QRIS", "BCA", "GOPAY", "OVO"].map((method) => (
-            <span
-              key={method}
-              className="flex items-center justify-center h-8 px-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]"
-            >
-              {method}
-            </span>
-          ))}
+      {/* Payment Methods — only shown for real gateway */}
+      {paymentGateway === "PAKASIR" && (
+        <div className="mt-10 pt-6 border-t border-[var(--line)]">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--text-muted)] text-center mb-4">
+            {t("checkout.supportedMethods")}
+          </p>
+          <div className="flex justify-center items-center gap-5">
+            {["QRIS", "BCA", "GOPAY", "OVO"].map((method) => (
+              <span
+                key={method}
+                className="flex items-center justify-center h-8 px-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]"
+              >
+                {method}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </Panel>
   );
 }

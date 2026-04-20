@@ -10,9 +10,10 @@ import { toast } from "sonner";
 interface BuyButtonProps {
   slug: string;
   maxQuantity?: number;
+  paymentGateway: "MOCK" | "PAKASIR";
 }
 
-function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
+function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
@@ -60,7 +61,7 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
                 onClick={() => canDecrement && setQuantity((current) => current - 1)}
                 disabled={!canDecrement || loading}
                 className="flex h-12 items-center justify-center border-r border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
-                aria-label="Decrease quantity"
+                aria-label={t("product.decreaseQuantity")}
               >
                 &minus;
               </button>
@@ -79,7 +80,7 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
                 onClick={() => canIncrement && setQuantity((current) => current + 1)}
                 disabled={!canIncrement || loading}
                 className="flex h-12 items-center justify-center border-l border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
-                aria-label="Increase quantity"
+                aria-label={t("product.increaseQuantity")}
               >
                 +
               </button>
@@ -110,30 +111,32 @@ function BuyButton({ slug, maxQuantity = 1 }: BuyButtonProps) {
         </span>
       </Button>
 
-      <div className="grid gap-3 border-t border-[var(--line)] pt-4 text-left sm:grid-cols-3">
-        <div className="space-y-1">
-          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            {t("common.securePayment")}
-          </span>
-          <span className="block text-xs text-[var(--foreground)]">Pakasir</span>
+      {paymentGateway === "PAKASIR" && (
+        <div className="grid gap-3 border-t border-[var(--line)] pt-4 text-left sm:grid-cols-3">
+          <div className="space-y-1">
+            <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("common.securePayment")}
+            </span>
+            <span className="block text-xs text-[var(--foreground)]">Pakasir</span>
+          </div>
+          <div className="space-y-1">
+            <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("checkout.paymentMethod")}
+            </span>
+            <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+              QRIS / VA / Wallet
+            </span>
+          </div>
+          <div className="space-y-1">
+            <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("common.instantDelivery")}
+            </span>
+            <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+              {t("common.ready")}
+            </span>
+          </div>
         </div>
-        <div className="space-y-1">
-          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            {t("checkout.paymentMethod")}
-          </span>
-          <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
-            QRIS / VA / Wallet
-          </span>
-        </div>
-        <div className="space-y-1">
-          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            {t("common.instantDelivery")}
-          </span>
-          <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
-            {t("common.ready")}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

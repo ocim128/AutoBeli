@@ -51,8 +51,8 @@ describe("BuyButton Component", () => {
     mockFetch.mockReset();
   });
 
-  function renderBuyButton(slug: string) {
-    return render(<BuyButton slug={slug} />);
+  function renderBuyButton(slug: string, paymentGateway: "MOCK" | "PAKASIR" = "PAKASIR") {
+    return render(<BuyButton slug={slug} paymentGateway={paymentGateway} />);
   }
 
   it("renders Secure Access button", () => {
@@ -72,6 +72,13 @@ describe("BuyButton Component", () => {
 
     expect(screen.getByText(/secure payment/i)).toBeInTheDocument();
     expect(screen.getByText(/qris/i)).toBeInTheDocument();
+  });
+
+  it("hides payment trust badges for mock gateway", () => {
+    renderBuyButton("test-product", "MOCK");
+
+    expect(screen.queryByText(/secure payment/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/qris/i)).not.toBeInTheDocument();
   });
 
   it("calls API and redirects on successful purchase", async () => {

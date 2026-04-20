@@ -61,6 +61,20 @@ describe("CheckoutForm Component", () => {
     expect(screen.getByRole("button")).toHaveTextContent("2.500.000");
   });
 
+  it("shows supported payment methods only for Pakasir", () => {
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
+
+    expect(screen.getByText(/payment methods/i)).toBeInTheDocument();
+    expect(screen.getByText(/^QRIS$/i)).toBeInTheDocument();
+  });
+
+  it("hides supported payment methods for mock gateway", () => {
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="MOCK" />);
+
+    expect(screen.queryByText(/payment methods/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^QRIS$/i)).not.toBeInTheDocument();
+  });
+
   it("shows validation error for empty contact", async () => {
     render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="PAKASIR" />);
 

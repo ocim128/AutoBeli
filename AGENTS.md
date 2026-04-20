@@ -11,12 +11,14 @@ If a simpler approach exists, say so. Push back when warranted.
 If something is unclear, stop. Name what's confusing. Ask. 2. Simplicity First
 Minimum code that solves the problem. Nothing speculative.
 
-No features beyond what was asked.
-No abstractions for single-use code.
-No "flexibility" or "configurability" that wasn't requested.
-No error handling for impossible scenarios.
-If you write 200 lines and it could be 50, rewrite it.
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+2. simplicity is a flex
+   code like ur getting paid per deletion, if not needed then nuke it.
+   No features beyond what was asked.
+   No abstractions for single-use code.
+   No "flexibility" or "configurability" that wasn't requested.
+   No error handling for impossible scenarios.
+   If you write 200 lines and it could be 50, rewrite it.
+   Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
 3. Surgical Changes
    Touch only what you must. Clean up only your own mess.

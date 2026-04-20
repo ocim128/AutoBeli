@@ -42,11 +42,10 @@ function ContentViewer({ token }: { token: string }) {
     }
   }, [token, t]);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopyAll = useCallback(async () => {
     if (!content) return;
 
     if (!navigator.clipboard?.writeText) {
-      setCopied(false);
       toast.error(t("contentViewer.copyFailed"));
       return;
     }
@@ -59,7 +58,6 @@ function ContentViewer({ token }: { token: string }) {
       setCopied(true);
       copyResetTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      setCopied(false);
       toast.error(t("contentViewer.copyFailed"));
     }
   }, [content, t]);
@@ -151,17 +149,16 @@ function ContentViewer({ token }: { token: string }) {
         </Panel>
       ) : (
         <div className="space-y-4">
-          {/* Copy button row */}
+          {/* Actions row */}
           <div className="flex items-center justify-between">
             <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
               {t("contentViewer.decryptedData")}
             </span>
             <button
               type="button"
-              onClick={handleCopy}
+              onClick={handleCopyAll}
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--foreground)]"
             >
-              {/* Clipboard icon */}
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -174,11 +171,9 @@ function ContentViewer({ token }: { token: string }) {
             </button>
           </div>
 
-          {/* Content display with corner frame */}
+          {/* Structured content display */}
           <CornerFrame size="lg" color="var(--accent)">
-            <pre className="max-h-[600px] overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-6 font-mono text-sm leading-relaxed text-[var(--foreground)] whitespace-pre-wrap break-all">
-              {content}
-            </pre>
+            <StructuredContent content={content} />
           </CornerFrame>
 
           {/* Integrity footer */}
@@ -206,6 +201,118 @@ function ContentViewer({ token }: { token: string }) {
             </p>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Structured Content Renderer ────────────────────── */
+
+function StructuredContent({ content }: { content: string }) {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+
+  // Single-line content (e.g. a license key, single code)
+  if (lines.length === 1) {
+    return (
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-6">
+        <p className="break-all font-mono text-sm leading-relaxed text-[var(--foreground)]">
+          {content}
+        </p>
+      </div>
+    );
+  }
+
+  // Multi-line structured display
+  return (
+    <div className="max-h-[600px] overflow-y-auto rounded-lg border border-[var(--line)] bg-[var(--panel)]">
+      <div className="divide-y divide-[var(--line)]">
+        {lines.map((line, i) => (
+          <ContentLine key={i} index={i} line={line} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Single Content Line with per-line copy ─────────── */
+
+function ContentLine({ index, line }: { index: number; line: string }) {
+  const { t } = useLanguage();
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCopyLine = useCallback(async () => {
+    if (!navigator.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(line);
+      setCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(t("contentViewer.copyFailed"));
+    }
+  }, [line, t]);
+
+  const isEmpty = line.trim() === "";
+
+  return (
+    <div
+      className={`group flex items-start gap-3 px-4 py-2.5 transition-colors ${
+        isEmpty ? "bg-transparent" : "hover:bg-[var(--panel-2)]"
+      }`}
+    >
+      {/* Line number */}
+      <span className="shrink-0 w-6 text-right font-mono text-[0.6rem] leading-[1.7] text-[var(--text-muted)]/50 tabular-nums select-none">
+        {index + 1}
+      </span>
+
+      {/* Content */}
+      <p className="min-w-0 flex-1 break-all whitespace-pre-wrap font-mono text-sm leading-relaxed text-[var(--foreground)]">
+        {isEmpty ? "\u00A0" : line}
+      </p>
+
+      {/* Per-line copy — always visible on touch, hover on larger screens */}
+      {!isEmpty && (
+        <button
+          type="button"
+          onClick={handleCopyLine}
+          className="shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          aria-label={t("contentViewer.copyLine")}
+        >
+          {copied ? (
+            <svg
+              className="h-3.5 w-3.5 text-[var(--success)]"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--foreground)]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+          )}
+        </button>
       )}
     </div>
   );

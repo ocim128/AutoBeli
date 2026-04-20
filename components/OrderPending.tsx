@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
@@ -20,6 +22,33 @@ export default function OrderPending({
   createdAt,
 }: OrderPendingProps) {
   const { t, language } = useLanguage();
+  const router = useRouter();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const expiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-poll for payment status updates.
+  // The server page (order/[orderId]/page.tsx) calls syncOrderPaymentStatus()
+  // on every render, so router.refresh() triggers a server re-check.
+  // If status changed to PAID, the server renders OrderPaid instead.
+  useEffect(() => {
+    pollingRef.current = setInterval(() => {
+      router.refresh();
+    }, 8000);
+
+    // Stop polling after 3 minutes to avoid unnecessary server load
+    expiryRef.current = setTimeout(() => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      expiryRef.current = null;
+    }, 180_000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (expiryRef.current) clearTimeout(expiryRef.current);
+    };
+  }, [router]);
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
