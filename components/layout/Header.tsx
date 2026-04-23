@@ -25,32 +25,42 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[var(--panel)]">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[var(--background)]">
+      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 md:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-baseline gap-1.5 group focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-sm"
+          className="group rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
         >
-          <span className="font-serif text-[1.35rem] font-semibold tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
-            AutoBeli
+          <span className="flex flex-col">
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-serif text-[1.35rem] font-semibold tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
+                AutoBeli
+              </span>
+              <span className="hidden h-1.5 w-1.5 rounded-full bg-[var(--accent)] sm:block" />
+            </span>
+            <span className="hidden font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)] md:block">
+              {t("common.digitalStore")}
+            </span>
           </span>
-          <span className="hidden h-1.5 w-1.5 rounded-full bg-[var(--accent)] sm:block" />
         </Link>
 
         {/* Desktop: Nav left, utilities right */}
-        <div className="hidden items-center gap-10 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           {/* Navigation links */}
-          <nav className="flex items-center gap-8" aria-label="Main navigation">
+          <nav
+            className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-2 py-1.5"
+            aria-label="Main navigation"
+          >
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative font-mono text-[11px] uppercase tracking-[0.14em] transition-colors py-2",
+                  "relative rounded-full px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 rounded-sm",
                   isActive(link.href)
-                    ? "text-[var(--foreground)] font-semibold"
+                    ? "bg-[var(--panel-2)] text-[var(--foreground)] font-semibold"
                     : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
                 )}
               >
@@ -63,11 +73,8 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Divider between nav and utilities */}
-          <span className="h-5 w-px bg-[var(--line)]" />
-
           {/* Utility controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-full border border-[var(--line)] bg-[var(--panel)] px-2 py-1.5">
             {/* Language Toggle */}
             <div className="flex items-center gap-0.5 rounded border border-[var(--line)] p-0.5">
               <button
@@ -146,7 +153,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-[var(--text-muted)] transition-colors hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -156,10 +163,15 @@ export function Header() {
 
       {/* Mobile Sheet Drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="bg-[var(--panel)] border-[var(--line)] w-72">
-          <SheetTitle className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
-            AutoBeli
-          </SheetTitle>
+        <SheetContent side="right" className="w-72 border-[var(--line)] bg-[var(--panel)]">
+          <div className="space-y-1">
+            <SheetTitle className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
+              AutoBeli
+            </SheetTitle>
+            <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              {t("common.digitalStore")}
+            </p>
+          </div>
 
           <nav className="flex flex-col gap-1 pt-6">
             {navLinks.map((link) => (
@@ -184,8 +196,8 @@ export function Header() {
             <div className="mb-5">
               <ThemeToggle compact />
             </div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
-              {t("common.digitalStore")}
+            <p className="max-w-[15rem] text-sm leading-6 text-[var(--text-muted)]">
+              {t("common.secureAutomatedDigital")}
             </p>
           </div>
         </SheetContent>

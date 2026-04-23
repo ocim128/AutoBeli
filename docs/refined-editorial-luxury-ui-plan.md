@@ -2,222 +2,116 @@
 
 ## Purpose
 
-Implement a stronger, more attractive version of AutoBeli's current visual direction without changing the product model, payment flow, or route architecture.
+Execute a stronger version of AutoBeli's current UI without changing business logic, route structure, payment flow, or security behavior.
 
-This plan is for execution, not brainstorming. Another AI agent should be able to follow it phase by phase and implement the redesign with minimal ambiguity.
+Keep the existing light-first editorial identity. Improve hierarchy, trust, product presentation, and admin usability.
 
-This document should be treated as the source of truth for the current redesign direction. It supersedes the older dark tactical direction in `docs/hybrid-tactical-ui-redesign-plan.md` for this workstream.
-
-## Audit Resolutions
-
-This audit found four concrete weaknesses in the first version of the plan and resolves them here:
-
-1. Coverage gap for special routes and loading states.
-   The first version focused on primary pages but did not explicitly pull `not-found`, `error`, `loading`, and route-level skeleton states into scope.
-   Resolution: those files are now called out as required redesign coverage and added to the file map.
-
-2. CRUD scope ambiguity.
-   The phrase "any create, edit, stock, and broadcast admin pages" was too loose and could lead to incomplete implementation.
-   Resolution: the exact admin CRUD routes now appear in phase scope and in the file map.
-
-3. Accessibility and performance ambiguity.
-   The first version asked for polish but did not define minimum implementation standards.
-   Resolution: this version adds non-negotiable accessibility, responsive behavior, and performance guardrails.
-
-4. Mobile table behavior ambiguity.
-   The first version said to keep tables as tables, but did not say what should happen on small screens.
-   Resolution: this version explicitly allows controlled horizontal scrolling on mobile instead of cardifying dense admin tables.
+This document is the source of truth for this redesign workstream. It replaces `docs/hybrid-tactical-ui-redesign-plan.md` for this direction.
 
 ## Assumptions
 
-- The target direction is light-first editorial luxury, not a dark tactical interface.
-- The warm ivory / serif / mono identity is worth keeping.
-- The current theme toggle stays. Light mode is the visual source of truth. Dark mode must remain coherent, but it is not the primary design reference.
-- Public UI remains bilingual through `LanguageContext`.
+- Keep the current light-first editorial direction.
+- Keep the warm ivory, serif headline, and mono utility system.
+- Keep the theme toggle. Light mode is the design reference.
+- Public routes remain bilingual through `LanguageContext`.
 - Admin remains English-only.
-- This is primarily a UI implementation effort. Backend logic, payment rules, security invariants, and data shape are out of scope unless a visual requirement is blocked by an existing UI contract.
+- This is a UI workstream. Do not change payment, auth, delivery, or data-model behavior unless a page is blocked by an existing UI contract.
 
-If any of those assumptions change, the plan should be revised before implementation starts.
+If any assumption changes, revise this plan before implementation starts.
 
-## What This Redesign Must Fix
+## Architecture Invariants
 
-The current UI already has a premium foundation, but it still feels underpowered in the following ways:
+- `app/layout.tsx` stays minimal. It owns fonts, providers, metadata, viewport, and global CSS only.
+- `app/(store)/layout.tsx` owns the public shell: header, footer, main wrapper, and WhatsApp CTA.
+- `app/admin/layout.tsx` owns the admin shell only.
+- Admin must not render public header, public footer, or WhatsApp CTA.
+- Do not move routes between public and admin shells as part of this redesign.
 
-- The homepage hero has too much empty space and not enough product presence.
-- The grid background is visually louder than the content it is supposed to support.
-- Product cards feel unfinished because the image area, title, price, stock, and CTA do not form a strong hierarchy.
-- Storefront panels rely too heavily on borders and too little on composition, contrast, and surface depth.
-- Admin pages are readable but passive. They feel like lightly styled default tables rather than a deliberate operations console.
-- Important actions are sometimes visually hidden or feel disconnected from the data they act on.
-- Light mode lacks enough contrast between background, surface, border, and text values, so pages can feel flat.
+## Success Criteria
 
-## Non-Goals
+- The homepage explains what the store sells and why it is safe within the first viewport.
+- Product cards feel finished with and without images.
+- Product detail, checkout, order, recovery, and delivery feel like one purchase system.
+- Admin feels like a deliberate operator console, not lightly styled CRUD.
+- Loading, empty, sold-out, and error states follow the same visual system.
+- Light and dark themes preserve the same hierarchy and usability.
 
-Do not expand scope into these areas during implementation:
+## Design Rules
 
-- No data model changes.
-- No payment gateway changes.
-- No auth flow changes beyond UI presentation.
-- No new business metrics endpoints unless a page is already impossible to lay out with existing data.
-- No full component-library rewrite.
-- No large animation system.
-- No marketing-copy rewrite beyond tightening short UI strings when a layout needs it.
+### Hierarchy
 
-## Hard Decisions
+- Reduce empty hero space that does not support comprehension.
+- Let products carry more visual weight than decorative frames.
+- Use composition, spacing, and contrast before adding more borders.
+- Above the fold, prioritize value proposition, trust, and visible product context.
 
-These decisions are resolved by this plan and should not be reopened during implementation:
+### Color And Surfaces
 
-- Keep the current route split:
-  - `app/layout.tsx` stays minimal.
-  - `app/(store)/layout.tsx` owns the public shell.
-  - `app/admin/layout.tsx` owns the admin shell.
-- Reuse and refine the existing primitives before inventing new ones:
-  - `Panel`
-  - `PageHeader`
-  - `SectionEyebrow`
-  - `StatusBadge`
-  - `DataTableShell`
-  - `MetricCard`
-  - existing form and table primitives
-- The redesign is light-first and editorial, with deeper contrast and richer composition.
-- Dark mode remains supported, but implementation decisions should be judged from light mode first.
-- Dark mode parity means preserving the same hierarchy and interaction quality, not inventing separate layouts or decorative systems for dark mode.
-- Storefront and admin should feel related, but not identical:
-  - storefront = editorial commerce
-  - admin = restrained operational console
-- Product presentation must become more visual and more conversion-focused without becoming noisy.
-- If a product has no image, the fallback should still feel designed, not like missing content.
-- Special routes and loading states are part of the redesign scope and must not be left on an older visual system.
-- Dense admin tables stay tables on desktop. On mobile, use controlled horizontal overflow before considering any structural change.
-
-## Visual Direction
-
-### Brand Character
-
-The intended character is:
-
-- premium
-- calm
-- precise
-- product-led
-- modern enough to convert
-- distinctive enough to avoid generic template energy
-
-The UI should feel like a curated digital boutique with disciplined operational tooling behind it.
-
-### Color Strategy
-
-Use the existing token structure in `app/globals.css`, but strengthen the light theme.
-
-Recommended light-mode direction:
-
-- `--background`: warm ivory paper
-- `--panel`: clean cream surface
-- `--panel-2`: slightly darker paper step
-- `--panel-3`: stronger structural fill for media frames, hover layers, and table emphasis
-- `--foreground`: near-black brown, not gray
-- `--text-muted`: warm muted brown with better readability than the current value
-- `--line`: subtle hairline
-- `--line-strong`: clearly visible border for active or elevated surfaces
-- `--accent`: coral-orange
-- `--success`: muted emerald or green for stock and paid states
-
-Target effect:
-
-- less washed out
-- more depth between page and card
-- more authority in headings and prices
-- accent used with intent, not everywhere
+- Keep the current token structure in `app/globals.css`.
+- Strengthen contrast between page background, default panel, inset panel, border, and text.
+- Use accent color for CTA, active state, and key numbers only.
+- Keep shadows restrained. Prefer hairlines, layered paper surfaces, and inset depth.
 
 ### Typography
 
-Keep the existing font stack already loaded in `app/layout.tsx`:
+- `Cormorant Garamond` for major headlines and large prices.
+- `Geist` for body text, forms, tables, and dense admin content.
+- `IBM Plex Mono` for labels, stock, tags, status, nav items, and small metadata.
+- Do not use serif for dense admin tables or form labels.
 
-- display: `Cormorant Garamond`
-- body/UI: `Geist`
-- utility: `IBM Plex Mono`
+### Product Media
 
-Typography rules:
+- Standardize media ratio on cards and product pages.
+- If a product image is weak or missing, wrap it in a branded frame or use a designed typographic fallback.
+- Reuse `LazyImage` and existing image-loading patterns.
+- Do not allow poor source images to collapse the perceived quality of the page.
 
-- serif only for major headlines, section titles, big prices, and select product titles
-- mono only for utility text: labels, breadcrumbs, stock, IDs, tags, status, helper metadata
-- sans for body copy, controls, table cells, and dense admin content
+### Interaction
 
-Do not let serif leak into dense admin tables or form labels where scan speed matters more than personality.
+- Make CTA hierarchy obvious without oversizing every button.
+- Status must use text plus color.
+- Row actions, filters, and menus must feel anchored to the data they control.
+- Focus-visible must remain obvious on all controls.
 
-### Composition Rules
+### Motion
 
-- Use the grid texture only where it supports the composition. It should not sit behind every large surface by default.
-- Surfaces need three levels:
-  - page background
-  - default paper panel
-  - emphasized or inset panel
-- Use spacing and grouped alignment to create hierarchy before adding more borders.
-- Prefer inset highlights, paper layering, and subtle shadow direction over soft cloud shadows.
-- Public surfaces can keep slightly softer rounding than admin.
-- Admin surfaces should feel tighter and more controlled.
+- Keep motion short and useful: hover lift, image scale, divider reveal, fade-up.
+- Do not add decorative ambient animation, floating ornaments, or motion that delays interaction.
 
-### Motion Rules
+### Responsive Rules
 
-Allowed:
+- Product cards, hero, checkout, and admin tables must stay readable on mobile.
+- Dense admin tables remain tables. Use horizontal overflow on smaller screens before changing structure.
+- Touch targets must remain usable on mobile.
 
-- subtle fade-up on section entry
-- short hover lift on cards
-- controlled image scale on hover
-- divider or underline reveal
-- restrained button and focus transitions
+### Accessibility And Performance
 
-Avoid:
+- Keep readable text and control contrast in both themes.
+- Preserve media aspect ratios to avoid layout shift.
+- Keep status readable without color dependence.
+- Do not add autoplay video, heavy canvas effects, or large background media.
 
-- decorative motion with no information value
-- large floating ornaments
-- constant ambient animation
+## Guardrails
 
-### Accessibility Rules
+- Do not refactor `lib/` for visual polish.
+- Do not invent testimonials, ratings, categories, or marketing claims.
+- Do not add sections that need new backend data unless current data makes the layout impossible.
+- Do not split public and admin into unrelated visual systems.
+- Do not ship a surface redesign without its loading, empty, and error states.
+- Public copy changes must go through `lib/i18n.ts`. Do not hardcode translated strings in page components.
+- If touched UI strings contain malformed encoding, normalize them.
 
-These are minimum implementation requirements, not suggestions:
-
-- Body text, labels, controls, and status indicators must maintain readable contrast in both light and dark themes.
-- Primary interactive controls on mobile should target at least `44px` in one dimension unless an existing compact admin control has a strong reason to be smaller.
-- Focus-visible states must remain obvious on every interactive element, including icon-only controls, menu triggers, and theme/language toggles.
-- Status must not rely on color alone. Pair color with text, iconography, or both.
-- Heading scale must remain readable without causing destructive overflow on mobile widths.
-- Dense tables may scroll horizontally on smaller screens, but the scroll container must make that behavior visually obvious and usable.
-
-### Performance Rules
-
-These guardrails exist to prevent the redesign from adding visual debt:
-
-- Preserve stable media ratios to avoid layout shift, especially on homepage cards and product detail media.
-- Reuse existing image-loading patterns such as `LazyImage` instead of adding decorative media systems.
-- Do not introduce autoplay video, heavy canvas effects, or large background media.
-- Prefer CSS and existing primitives over new client-side animation logic where possible.
-- Keep transitions short and controlled. Motion should support hierarchy, not create latency.
-
-## Implementation Strategy
-
-Implement in phases. Do not jump across all surfaces at once.
-
-Each phase has four parts:
-
-- purpose
-- scope
-- implementation details
-- exit criteria
-
-The next phase should not start until the current phase has passed its exit criteria.
-
-## Phase 1: Strengthen the Visual Foundation
+## Phase 1: Foundation And Primitives
 
 ### Purpose
 
-Create a more convincing editorial luxury system at the token and primitive level so later page work does not devolve into page-specific overrides.
+Build a stronger shared UI system so later page work does not rely on page-specific fixes.
 
 ### Scope
 
-Primary files:
-
+- `app/layout.tsx`
 - `app/globals.css`
+- `components/Providers.tsx`
 - `components/ui/panel.tsx`
 - `components/ui/page-header.tsx`
 - `components/ui/section-eyebrow.tsx`
@@ -226,120 +120,102 @@ Primary files:
 - `components/ui/input.tsx`
 - `components/ui/textarea.tsx`
 - `components/ui/field.tsx`
-- `components/ui/Skeleton.tsx`
-- `components/ui/data-table-shell.tsx`
 - `components/ui/table.tsx`
+- `components/ui/data-table-shell.tsx`
 - `components/ui/metric-card.tsx`
+- `components/ui/Skeleton.tsx`
 - `components/layout/ThemeToggle.tsx`
 
-### Implementation Details
+### Implementation
 
-- Tighten light-mode contrast first.
-- Keep the current token names. Do not invent a second parallel token system.
-- Refine `Panel` so it can carry more of the brand weight:
-  - clearer surface elevation
-  - cleaner border behavior
-  - more consistent padding rhythm
-  - optional stronger visual treatment for feature panels
-- Refine `PageHeader` so storefront and admin can share structure while differing in scale and density.
-- Make utility labels more deliberate:
-  - eyebrow spacing
-  - mono tracking
-  - muted text contrast
-- Standardize control heights and radii so buttons, inputs, selects, and badges feel like one system.
-- Improve table shells:
-  - stronger header separation
-  - cleaner row hover behavior
-  - more useful density
-  - less empty chrome
-- Preserve dark mode support by updating only the existing token bridge. Do not create separate one-off dark styles per page.
-
-### Phase 1 Rules
-
-- Prefer extending current primitives over adding new base components.
-- Add a new primitive only if it will be reused across at least two major surfaces.
-- Avoid page-specific CSS hacks in this phase.
+- Tighten light-mode tokens first.
+- Keep existing token names. Do not add a second token system.
+- Refine `Panel` to carry more surface depth and more consistent spacing.
+- Standardize control heights, radii, borders, and label rhythm.
+- Improve table header separation, row hover states, and data density.
+- Make badges and status treatments more readable at a glance.
+- Keep dark mode coherent by updating shared tokens and primitives, not page-level overrides.
 
 ### Exit Criteria
 
-- Light mode has noticeably stronger hierarchy without feeling heavier or muddy.
-- Panels, tables, badges, buttons, and fields feel like one design language.
-- Dark mode still renders coherently after token updates.
-- No business logic files are touched.
+- Panels, fields, tables, badges, and buttons feel like one system.
+- Light mode has clearer hierarchy without feeling heavy.
+- Dark mode still renders correctly.
+- No business logic files are changed.
 
-## Phase 2: Rebuild the Storefront Landing Experience
+## Phase 2: Public Shell And Homepage
 
 ### Purpose
 
-Make the homepage feel intentional, conversion-oriented, and visually complete.
+Make the storefront landing experience feel complete, trustworthy, and product-led.
 
 ### Scope
 
-Primary files:
-
+- `app/(store)/layout.tsx`
+- `app/(store)/page.tsx`
+- `app/(store)/loading.tsx`
 - `components/home/HomeClient.tsx`
 - `components/layout/Header.tsx`
 - `components/layout/Footer.tsx`
 - `components/WhatsAppButton.tsx`
-- `app/(store)/loading.tsx`
 - `components/skeletons/ProductGridSkeleton.tsx`
-- optionally `components/ui/empty-state.tsx` if the empty storefront state needs alignment
+- `lib/i18n.ts`
 
-### Implementation Details
+### Implementation
 
-- Recompose the hero so it has real structure, not just centered type in a large empty box.
-- The hero should include:
-  - headline
-  - concise value proposition
-  - primary CTA
-  - trust or service signals
-  - visible product context, such as a featured card strip or a product preview block
-- Reduce the dominance of the grid background. It should frame the hero, not overpower it.
-- Make the header feel more premium and less crowded:
-  - cleaner spacing
-  - clearer separation between navigation and utility controls
-  - calmer active state treatment
-- Product cards must be redesigned, not lightly tweaked.
-
-For product cards:
-
-- Keep a strong image or poster area.
-- If `imageUrl` is missing, render a designed typographic poster using product title or slug fragments.
-- Group price, title, stock, and CTA more tightly.
-- Clamp descriptions aggressively so cards scan faster.
-- Make hover states feel tactile but restrained.
-- Ensure cards remain attractive with very long titles and with no image.
-
-Footer and floating contact CTA:
-
-- Keep them useful, but reduce the feeling of generic utility clutter.
-- The footer should support the brand tone instead of reading as a default four-column site map.
-- The WhatsApp button should feel integrated into the visual system.
-
-### Phase 2 Rules
-
-- Do not add extra homepage sections unless they clearly strengthen trust or conversion.
-- Do not invent categories, testimonials, or marketing claims that are not backed by current product reality.
-- Reuse current product data only.
+- Recompose the hero so it includes a headline, concise value proposition, primary CTA, trust signals, and visible product context.
+- Reduce the dominance of the grid background. It should frame the content, not compete with it.
+- Redesign homepage product cards instead of lightly tweaking them.
+- Give cards a fixed media ratio, tighter content grouping, faster description scan, and clearer price-stock-action hierarchy.
+- Add a designed no-image fallback so missing media still feels intentional.
+- Make the header calmer and clearer, with better separation between navigation and utility controls.
+- Rework the footer into a trust and utility surface that supports recovery, contact, payment, and delivery context.
+- Make the WhatsApp button feel integrated with the rest of the UI.
 
 ### Exit Criteria
 
-- Above the fold clearly communicates what AutoBeli sells and why it is trustworthy.
-- The homepage feels product-led rather than frame-led.
+- The first viewport explains what AutoBeli sells and why it is trustworthy.
+- The hero feels product-led rather than frame-led.
 - Product cards look finished with and without images.
-- Mobile layout remains clean, especially in hero, header, and card CTA areas.
+- Mobile layout stays clean in the hero, header, and CTA areas.
 
-## Phase 3: Align Product Detail and Transaction Flows
+## Phase 3: Product Detail And Purchase Entry
 
 ### Purpose
 
-Carry the refined storefront language into the purchase journey so the product page, checkout, paid order, pending order, and recovery flow feel like one experience.
+Carry the stronger storefront system into product detail so buyers reach checkout with more confidence and less visual friction.
 
 ### Scope
 
-Primary files:
-
+- `app/(store)/product/[slug]/page.tsx`
+- `app/(store)/product/[slug]/loading.tsx`
 - `components/product/ProductClient.tsx`
+- `components/BuyButton.tsx`
+- `lib/i18n.ts`
+
+### Implementation
+
+- Build a stronger relationship between media, title, trust signals, price, stock, and buy action.
+- Turn the purchase area into a clear decision panel instead of a loose collection of controls.
+- Keep the buy action visually strong, but let price and stock remain easy to scan.
+- Use short proof rows such as instant delivery, secure payment, and live stock where that data already exists.
+- Keep long descriptions under control with better sectioning and visual rhythm.
+- Make sold-out and low-stock states obvious without relying on color alone.
+
+### Exit Criteria
+
+- The product page feels more premium and more decisive than the homepage card view.
+- Purchase entry is visually obvious without looking aggressive.
+- Long titles, missing images, and sold-out states still look designed.
+
+## Phase 4: Checkout, Order, Recovery, And Delivery
+
+### Purpose
+
+Make the transaction flow feel as polished and trustworthy as the browsing flow.
+
+### Scope
+
 - `app/(store)/checkout/[orderId]/page.tsx`
 - `app/(store)/checkout/[orderId]/loading.tsx`
 - `components/CheckoutHeader.tsx`
@@ -351,107 +227,70 @@ Primary files:
 - `components/OrderPending.tsx`
 - `components/OrderPaid.tsx`
 - `app/(store)/recover/page.tsx`
-- `app/(store)/product/[slug]/loading.tsx`
+- `components/ContentViewer.tsx`
 - `components/skeletons/CheckoutSkeleton.tsx`
+- `lib/i18n.ts`
 
-### Implementation Details
+### Implementation
 
-- The product page should feel more premium and more decisive:
-  - stronger relationship between media, title, price, and buy action
-  - more deliberate separation between overview, features, and purchase area
-  - sticky purchase panel that feels elegant rather than merely boxed
-- Checkout should become a matched two-column editorial purchase layout:
-  - summary panel as a designed order brief
-  - payment form as the primary action surface
-  - clearer flow from trust to payment
-- Pending and paid order states should feel like polished delivery states, not generic status screens.
-- Recovery should inherit the same premium experience:
-  - tighter form composition
-  - cleaner result cards
-  - better hierarchy between search mode, input, and results
+- Rebuild checkout as a matched two-panel layout: order brief on one side, payment action on the other.
+- Make trust and payment clarity stronger than decorative styling.
+- Tighten spacing, field grouping, and summary hierarchy so the checkout reads faster.
+- Redesign pending and paid order states so they feel like polished delivery states, not generic status pages.
+- Make `ContentViewer` feel secure and premium without becoming visually noisy.
+- Redesign recovery so the input method, search action, and results hierarchy are immediately clear.
+- Keep bilingual public copy intact across all touched flows.
 
-### Critical Functional Constraints
+### Functional Constraints
 
-These must remain intact during UI work:
-
-- `syncOrderPaymentStatus()` call in `app/(store)/order/[orderId]/page.tsx`
-- current redirect behavior between checkout and order routes
-- secure delivery through the token-based content viewer
-- bilingual public copy flow
-
-### Phase 3 Rules
-
-- UI changes must not alter request payloads or API contracts.
-- Payment and delivery logic stay where they already live.
-- If a transaction component needs visual reuse, prefer extending `Panel`, `Field`, `Button`, or `PageHeader` rather than creating parallel versions.
+- Preserve `syncOrderPaymentStatus()` in `app/(store)/order/[orderId]/page.tsx`.
+- Preserve current checkout-to-order route behavior.
+- Preserve secure delivery through the token-based content viewer.
+- Do not change request payloads or API contracts for UI-only work.
 
 ### Exit Criteria
 
-- Product page, checkout, order paid, order pending, and recovery read as one family.
-- Purchase actions are visually obvious.
-- Sensitive delivery content remains visually clear without exposing anything new.
+- Checkout, order, recovery, and delivery feel like one family.
+- Purchase actions are easy to find and trust.
 - No transaction logic regressions are introduced.
 
-## Phase 4: Turn Admin Into a Deliberate Operations Console
+## Phase 5: Admin Shell And Dashboard
 
 ### Purpose
 
-Make admin feel intentional, dense, and useful while staying visually connected to the storefront brand.
+Turn admin into a deliberate operator console while keeping it visually related to the storefront.
 
 ### Scope
-
-Primary files:
 
 - `app/admin/layout.tsx`
 - `app/admin/login/page.tsx`
 - `app/admin/dashboard/page.tsx`
 - `components/admin/AnalyticsChart.tsx`
 - `components/admin/RecentSales.tsx`
-- `components/ui/metric-card.tsx`
 - `components/ui/page-header.tsx`
+- `components/ui/metric-card.tsx`
 
-### Implementation Details
+### Implementation
 
-- Tighten the admin shell:
-  - more disciplined sidebar spacing
-  - stronger active navigation state
-  - cleaner top bar
-  - less dead air around page content
-- Dashboard should feel useful above the fold.
-- Use the existing analytics and recent-sales payloads first. Do not expand data requirements unless a layout is impossible otherwise.
-- Recompose the dashboard so the top area has a strong read order:
-  - page header
-  - key summary metrics
-  - revenue chart
-  - top products
-  - recent orders
-- Loading states should sit inside panels in a polished way, not float in open space.
-- Keep admin surfaces tighter than storefront surfaces:
-  - slightly smaller radii
-  - denser spacing
-  - stronger row and panel structure
-
-### Phase 4 Rules
-
-- Do not give admin the same decorative treatment as marketing surfaces.
-- Do not use large hero-style empty space in admin.
-- Keep English copy concise and operational.
+- Tighten the admin shell with clearer navigation structure, cleaner top-bar behavior, and less dead space.
+- Make the dashboard useful above the fold: header, key metrics, chart, top products, and recent orders must read in that order.
+- Keep admin denser than storefront by using smaller radii, tighter spacing, and stronger panel structure.
+- Make the login page feel part of the same product instead of a detached utility screen.
+- Keep loading states inside panels instead of leaving them in open space.
 
 ### Exit Criteria
 
-- Sidebar, dashboard panels, and top bar feel like one system.
-- Dashboard communicates the most important store information quickly.
-- Admin feels premium and calm, not soft or unfinished.
+- Sidebar, top bar, dashboard panels, and login all feel like one system.
+- Dashboard communicates store health quickly.
+- Admin feels premium and controlled, not blank or passive.
 
-## Phase 5: Polish Admin Data Pages and CRUD Surfaces
+## Phase 6: Admin Data Pages And CRUD Surfaces
 
 ### Purpose
 
-Make list, filter, form, and settings pages feel high quality and easy to scan without changing their underlying behavior.
+Make list, filter, form, and settings surfaces easier to scan and more reliable to operate.
 
 ### Scope
-
-Primary files:
 
 - `app/admin/products/page.tsx`
 - `app/admin/products/create/page.tsx`
@@ -460,200 +299,89 @@ Primary files:
 - `app/admin/products/[slug]/broadcast/page.tsx`
 - `app/admin/orders/page.tsx`
 - `app/admin/audience/page.tsx`
-- `components/admin/AudienceManager.tsx`
 - `app/admin/settings/page.tsx`
+- `components/admin/AudienceManager.tsx`
 - `components/admin/ProductBroadcastPanel.tsx`
 - `components/ui/data-table-shell.tsx`
 - `components/ui/table.tsx`
-- relevant dialog, dropdown, input, textarea, and button primitives already in use
 
-### Implementation Details
+### Implementation
 
-- Standardize list page anatomy:
-  - page header
-  - toolbar / filters
-  - main table or collection view
-  - inline error or empty state
-- Make tables easier to scan:
-  - stronger typographic hierarchy inside rows
-  - better spacing between primary and secondary values
-  - cleaner status placement
-  - more predictable action affordance
-- Fix visually awkward action behavior:
-  - row actions should feel anchored and intentional
-  - avoid menus or triggers that visually float without context
-- Audience page should feel less form-heavy and more like a proper management surface.
-- Settings should become quieter and more structured:
-  - notice panel less visually overpowering
-  - delivery and recovery cards more balanced
-- Product list should make title, slug, price, stock, and state readable at a glance.
-- Any touched create/edit/stock/broadcast pages should use the same field density, sectioning, and button hierarchy as the rest of admin.
+- Standardize list-page anatomy: page header, toolbar, main table, and inline empty or error state.
+- Make rows easier to scan by separating primary and secondary values more clearly.
+- Anchor row actions so they feel attached to the data they affect.
+- Improve filter, search, and bulk-action spacing so controls do not feel scattered.
+- Make the products table easier to read at a glance for title, slug, price, stock, and state.
+- Make audience and settings feel like management surfaces, not loose forms on a page.
+- Apply the same field density, section rhythm, and CTA hierarchy to create, edit, stock, and broadcast pages.
 
-### Phase 5 Rules
+### Rules
 
-- Keep tables as tables. Do not convert dense admin data pages into oversized cards on desktop.
-- On mobile, prefer horizontal overflow containers, column prioritization, and tighter density before redesigning a table into a card list.
-- Do not hide critical information behind tabs unless the current page is genuinely overloaded.
-- Reuse existing API responses and form logic.
+- Keep dense data pages as tables on desktop.
+- On mobile, prefer horizontal overflow, column prioritization, and tighter density before changing structure.
+- Reuse existing data and form logic.
 
 ### Exit Criteria
 
-- Products, orders, audience, and settings all look like part of the same admin system.
+- Products, orders, audience, and settings all feel like the same admin system.
 - Dense pages remain readable on desktop and mobile.
-- Row actions, filters, and dialogs feel predictable and refined.
+- Filters, row actions, and dialogs feel predictable and refined.
 
-## Phase 6: Final Integration, Accessibility, and QA
+## Phase 7: Special Routes, States, And QA
 
 ### Purpose
 
-Finish the redesign with enough polish and verification that it can ship without introducing UI regressions.
+Finish the redesign cleanly and verify it across edge cases, themes, and route boundaries.
 
 ### Scope
 
-Cross-cutting verification over all touched surfaces, plus special routes and shared loading/error states.
+- `app/(store)/api-doc/page.tsx`
+- `app/(store)/api-doc/api-doc-client.tsx`
+- `app/(store)/api-doc/react-swagger.tsx`
+- `app/not-found.tsx`
+- `app/error.tsx`
+- `app/global-error.tsx`
+- `app/loading.tsx`
+- all touched route-level loading, empty, sold-out, and error states
 
-### Implementation Details
+### Implementation
 
-- Review all touched pages in both light and dark mode.
+- Align special routes with the same visual system used by the storefront shell.
+- Review all touched pages in light and dark mode.
 - Review public pages in both languages.
-- Review admin login and all touched admin CRUD screens.
-- Review special routes and global states:
-  - `app/not-found.tsx`
-  - `app/error.tsx`
-  - `app/global-error.tsx`
-  - `app/loading.tsx`
-- Review edge cases:
-  - no product image
-  - long product title
-  - long description
-  - zero stock
-  - single stock
-  - empty tables
-  - loading states
-  - inline error states
-- Validate keyboard navigation and focus treatment on:
-  - header controls
-  - buttons
-  - menus
-  - forms
-  - dialogs
-- Verify visual consistency of radii, borders, control heights, and spacing.
-- Confirm no public/admin shell leakage.
+- Review edge cases: no image, long title, long description, zero stock, single stock, empty tables, and inline errors.
+- Verify keyboard navigation and focus treatment across buttons, menus, dialogs, and forms.
+- Confirm no public shell elements leak into admin and no admin patterns leak into storefront.
 
-### Verification Commands
+### Verification
 
 Minimum:
 
 - `npm run lint`
 
-Targeted verification based on touched surfaces:
+Targeted:
 
 - `npm run test:run`
 - `npm run test:e2e`
 
-E2E coverage matters if checkout, order, recovery, or admin auth-related pages are materially changed.
+Run E2E when checkout, order, recovery, or admin auth-related surfaces are materially changed.
 
 ### Exit Criteria
 
 - No obvious visual regressions remain across major routes.
 - Public and admin both feel intentionally redesigned.
-- Lint passes.
-- Required tests for touched flows pass, or any gaps are documented clearly.
+- Required lint and targeted tests pass, or gaps are documented clearly.
 
-## Surface-by-Surface File Map
+## Delivery Order
 
-This file map is here to reduce guesswork during implementation.
+Implement in this order:
 
-### Foundation
+1. Phase 1 foundation and primitives
+2. Phase 2 public shell and homepage
+3. Phase 3 product detail and purchase entry
+4. Phase 4 checkout, order, recovery, and delivery
+5. Phase 5 admin shell and dashboard
+6. Phase 6 admin data pages and CRUD surfaces
+7. Phase 7 special routes, states, and QA
 
-- `app/globals.css`
-- `app/layout.tsx`
-- `components/ui/panel.tsx`
-- `components/ui/page-header.tsx`
-- `components/ui/section-eyebrow.tsx`
-- `components/ui/status-badge.tsx`
-- `components/ui/button.tsx`
-- `components/ui/input.tsx`
-- `components/ui/textarea.tsx`
-- `components/ui/field.tsx`
-- `components/ui/table.tsx`
-- `components/ui/data-table-shell.tsx`
-- `components/ui/metric-card.tsx`
-
-### Public Shell and Storefront
-
-- `app/(store)/layout.tsx`
-- `app/(store)/loading.tsx`
-- `components/layout/Header.tsx`
-- `components/layout/Footer.tsx`
-- `components/layout/ThemeToggle.tsx`
-- `components/WhatsAppButton.tsx`
-- `components/home/HomeClient.tsx`
-- `components/product/ProductClient.tsx`
-- `components/skeletons/ProductGridSkeleton.tsx`
-
-### Transaction Flow
-
-- `app/(store)/checkout/[orderId]/page.tsx`
-- `app/(store)/checkout/[orderId]/loading.tsx`
-- `components/CheckoutHeader.tsx`
-- `components/CheckoutBreadcrumb.tsx`
-- `components/CheckoutSummary.tsx`
-- `components/CheckoutForm.tsx`
-- `app/(store)/order/[orderId]/page.tsx`
-- `app/(store)/order/[orderId]/loading.tsx`
-- `components/OrderPending.tsx`
-- `components/OrderPaid.tsx`
-- `app/(store)/recover/page.tsx`
-- `app/(store)/product/[slug]/loading.tsx`
-- `components/skeletons/CheckoutSkeleton.tsx`
-
-### Admin
-
-- `app/admin/layout.tsx`
-- `app/admin/login/page.tsx`
-- `app/admin/dashboard/page.tsx`
-- `app/admin/products/page.tsx`
-- `app/admin/products/create/page.tsx`
-- `app/admin/products/[slug]/edit/page.tsx`
-- `app/admin/products/[slug]/stock/page.tsx`
-- `app/admin/products/[slug]/broadcast/page.tsx`
-- `app/admin/orders/page.tsx`
-- `app/admin/audience/page.tsx`
-- `app/admin/settings/page.tsx`
-- `components/admin/AnalyticsChart.tsx`
-- `components/admin/RecentSales.tsx`
-- `components/admin/AudienceManager.tsx`
-- `components/admin/ProductBroadcastPanel.tsx`
-
-### Special Routes
-
-- `app/not-found.tsx`
-- `app/error.tsx`
-- `app/global-error.tsx`
-- `app/loading.tsx`
-
-## Guardrails For The Implementing AI
-
-- Stay inside the current architecture unless blocked.
-- Do not refactor `lib/` logic for a UI-only phase.
-- Treat `Panel`, `PageHeader`, `DataTableShell`, and existing form primitives as the first place to concentrate improvements.
-- Prefer improving one shared primitive over patching five individual pages.
-- If a page needs a one-off hero or special composition, keep that one-off local to the page.
-- Do not invent product metadata, categories, ratings, or testimonial content.
-- Do not remove bilingual support from public routes.
-- Do not move admin to bilingual mode.
-- Keep delivery and security invariants intact.
-
-## Recommended Delivery Sequence
-
-Implement in this exact order:
-
-1. Phase 1 foundation
-2. Phase 2 homepage and public shell
-3. Phase 3 product and transaction flows
-4. Phase 4 admin shell and dashboard
-5. Phase 5 admin data pages
-6. Phase 6 QA and cleanup
-
-This order matters because the primitive layer must stabilize before broad surface polish begins.
+Do not start a later phase until the current phase meets its exit criteria.

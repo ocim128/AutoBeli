@@ -10,17 +10,18 @@ const paddingMap = {
   xl: "p-12",
 } as const;
 
-const variantBase = "rounded-[14px] border bg-[var(--panel)]";
+const variantBase =
+  "rounded-[18px] border bg-[var(--panel)] shadow-[0_18px_36px_rgba(29,23,20,0.04)]";
 
 const variantBorderMap = {
   default: "border-[var(--line)]",
   accent:
-    "border-[var(--line-strong)] [background-image:linear-gradient(180deg,var(--accent-soft)_0%,transparent_32%)]",
+    "border-[var(--line-strong)] [background-image:linear-gradient(180deg,var(--accent-soft)_0%,transparent_34%)]",
   ghost: "border-transparent bg-transparent",
 } as const;
 
 const featuredStyles =
-  "border-t-2 border-t-[var(--accent)] border-x-[var(--line-strong)] border-b-[var(--line-strong)] shadow-[0_1px_3px_rgba(23,19,16,0.06),0_1px_2px_rgba(23,19,16,0.04)] dark:shadow-none";
+  "border-[var(--line-strong)] [background-image:linear-gradient(180deg,var(--accent-soft)_0%,transparent_40%)] shadow-[0_24px_48px_rgba(29,23,20,0.06)]";
 
 export interface PanelProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;

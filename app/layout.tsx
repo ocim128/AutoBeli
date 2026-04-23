@@ -72,15 +72,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${cormorantGaramond.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <Providers>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--accent-foreground)] shadow-lg"
-          >
-            Skip to content
-          </a>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

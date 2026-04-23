@@ -18,8 +18,13 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const { t } = useLanguage();
+  const isUnavailable = maxQuantity < 1;
 
   const handleBuy = useCallback(async () => {
+    if (loading || isUnavailable) {
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -36,9 +41,9 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
       toast.error(t("common.createOrderFailed"));
       setLoading(false);
     }
-  }, [slug, quantity, router, t]);
+  }, [slug, quantity, router, t, loading, isUnavailable]);
 
-  const canIncrement = quantity < maxQuantity;
+  const canIncrement = !isUnavailable && quantity < maxQuantity;
   const canDecrement = quantity > 1;
 
   return (
@@ -54,13 +59,13 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
             </span>
           </div>
 
-          <div className="overflow-hidden rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)]">
+          <div className="overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)]">
             <div className="grid grid-cols-[3rem_1fr_3rem] items-stretch">
               <button
                 type="button"
                 onClick={() => canDecrement && setQuantity((current) => current - 1)}
                 disabled={!canDecrement || loading}
-                className="flex h-12 items-center justify-center border-r border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
+                className="flex h-12 items-center justify-center border-r border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-2)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
                 aria-label={t("product.decreaseQuantity")}
               >
                 &minus;
@@ -79,7 +84,7 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
                 type="button"
                 onClick={() => canIncrement && setQuantity((current) => current + 1)}
                 disabled={!canIncrement || loading}
-                className="flex h-12 items-center justify-center border-l border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-3)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
+                className="flex h-12 items-center justify-center border-l border-[var(--line)] font-mono text-base text-[var(--foreground)] transition-colors hover:bg-[var(--panel-2)] disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/40 disabled:hover:bg-transparent"
                 aria-label={t("product.increaseQuantity")}
               >
                 +
@@ -91,10 +96,10 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
 
       <Button
         onClick={handleBuy}
-        disabled={loading}
+        disabled={loading || isUnavailable}
         aria-busy={loading}
-        variant="outline"
-        className="h-12 w-full rounded-[10px] border border-[var(--accent)]/65 bg-transparent px-4 font-mono text-[0.78rem] uppercase tracking-[0.18em] text-[var(--foreground)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] disabled:border-[var(--line)] disabled:bg-transparent disabled:text-[var(--text-muted)]"
+        variant="default"
+        className="h-12 w-full rounded-full px-4 font-mono text-[0.78rem] uppercase tracking-[0.18em] disabled:border-[var(--line)] disabled:bg-[var(--panel-2)] disabled:text-[var(--text-muted)] disabled:shadow-none"
       >
         <span className="flex items-center justify-center gap-2">
           {loading ? (
@@ -102,6 +107,8 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
               <Spinner size={18} variant="classic" />
               <span>{t("common.securingAccess")}</span>
             </>
+          ) : isUnavailable ? (
+            <span>{t("common.soldOut")}</span>
           ) : (
             <>
               <span>{t("common.getAccessNow")}</span>
@@ -117,13 +124,15 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
             <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
               {t("common.securePayment")}
             </span>
-            <span className="block text-xs text-[var(--foreground)]">Pakasir</span>
+            <span className="block rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--foreground)]">
+              Pakasir
+            </span>
           </div>
           <div className="space-y-1">
             <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
               {t("checkout.paymentMethod")}
             </span>
-            <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+            <span className="block rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
               QRIS / VA / Wallet
             </span>
           </div>
@@ -131,8 +140,8 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
             <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
               {t("common.instantDelivery")}
             </span>
-            <span className="block font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
-              {t("common.ready")}
+            <span className="block rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
+              {isUnavailable ? t("common.soldOut") : t("common.ready")}
             </span>
           </div>
         </div>

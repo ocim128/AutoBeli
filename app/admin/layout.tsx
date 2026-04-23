@@ -18,6 +18,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/admin/login";
+  const skipLink = (
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-[var(--accent-foreground)] focus:shadow-lg"
+    >
+      Skip to content
+    </a>
+  );
 
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -54,166 +62,178 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   /* ── Loading state ── */
   if (checking) {
     return (
-      <main
-        id="main-content"
-        className="flex min-h-screen items-center justify-center bg-[var(--background)]"
-        role="status"
-        aria-live="polite"
-      >
-        <svg
-          className="h-5 w-5 animate-spin text-[var(--text-muted)]"
-          viewBox="0 0 24 24"
-          fill="none"
+      <>
+        {skipLink}
+        <main
+          id="main-content"
+          className="flex min-h-screen items-center justify-center bg-[var(--background)]"
+          role="status"
+          aria-live="polite"
         >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="3"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
-        <span className="sr-only">Checking admin session</span>
-      </main>
+          <svg
+            className="h-5 w-5 animate-spin text-[var(--text-muted)]"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          <span className="sr-only">Checking admin session</span>
+        </main>
+      </>
     );
   }
 
   /* ── Login page: no sidebar ── */
   if (isLoginPage) {
     return (
-      <main
-        id="main-content"
-        className="flex min-h-screen items-center justify-center bg-[var(--background)]"
-      >
-        {children}
-      </main>
+      <>
+        {skipLink}
+        <main
+          id="main-content"
+          className="flex min-h-screen items-center justify-center bg-[var(--background)]"
+        >
+          {children}
+        </main>
+      </>
     );
   }
 
   /* ── Not authenticated but not on login: just render children (pages redirect themselves) ── */
   if (!authed) {
     return (
-      <main id="main-content" className="min-h-screen bg-[var(--background)]">
-        {children}
-      </main>
+      <>
+        {skipLink}
+        <main id="main-content" className="min-h-screen bg-[var(--background)]">
+          {children}
+        </main>
+      </>
     );
   }
 
   /* ── Authenticated shell ── */
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <>
+      {skipLink}
+      <div className="flex min-h-screen bg-[var(--background)]">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* ── Sidebar ── */}
-      <aside
-        className={`
-            fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-[var(--line)]
-            bg-[var(--panel)] transition-transform duration-200 ease-out
-            lg:static lg:translate-x-0
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          `}
-      >
-        {/* Brand */}
-        <div className="flex h-14 items-center border-b border-[var(--line)] px-5">
-          <span className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
-            AutoBeli
-          </span>
-          <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
-            admin
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 pt-5 pb-3">
-          <span className="block px-3 pb-3 font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
-            Navigation
-          </span>
-          <div className="space-y-0.5">
-            {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`
-                    group flex items-center gap-3 rounded-md px-3 py-2.5 text-[0.8125rem] font-medium transition-colors
-                    ${
-                      active
-                        ? "border-l-2 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--foreground)]"
-                        : "border-l-2 border-transparent text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)]"
-                    }
-                  `}
-                >
-                  <span
-                    className={
-                      active ? "text-[var(--accent)]" : "opacity-50 group-hover:opacity-80"
-                    }
-                  >
-                    <Icon />
-                  </span>
-                  {label}
-                </Link>
-              );
-            })}
+        {/* ── Sidebar ── */}
+        <aside
+          className={`
+              fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-[var(--line)]
+              bg-[var(--panel)] transition-transform duration-200 ease-out
+              lg:static lg:translate-x-0
+              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            `}
+        >
+          {/* Brand */}
+          <div className="flex h-14 items-center border-b border-[var(--line)] px-5">
+            <span className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
+              AutoBeli
+            </span>
+            <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              admin
+            </span>
           </div>
-        </nav>
 
-        {/* Logout */}
-        <div className="border-t border-[var(--line)] p-3">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-[0.8125rem] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--panel-2)] hover:text-[var(--danger)]"
-          >
-            <LogoutIcon />
-            Sign Out
-          </button>
-        </div>
-      </aside>
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto px-3 pt-5 pb-3">
+            <span className="block px-3 pb-3 font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
+              Navigation
+            </span>
+            <div className="space-y-0.5">
+              {NAV.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`
+                      group flex items-center gap-3 rounded-md px-3 py-2.5 text-[0.8125rem] font-medium transition-colors
+                      ${
+                        active
+                          ? "border-l-2 border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--foreground)]"
+                          : "border-l-2 border-transparent text-[var(--text-muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)]"
+                      }
+                    `}
+                  >
+                    <span
+                      className={
+                        active ? "text-[var(--accent)]" : "opacity-50 group-hover:opacity-80"
+                      }
+                    >
+                      <Icon />
+                    </span>
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
 
-      {/* ── Main area ── */}
-      <div className="flex flex-1 flex-col min-w-0">
-        {/* Top bar */}
-        <header className="flex h-14 items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-4 lg:px-5">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-[var(--text-muted)] transition-colors hover:text-[var(--foreground)] lg:hidden"
-            aria-label="Toggle sidebar"
-          >
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
+          {/* Logout */}
+          <div className="border-t border-[var(--line)] p-3">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-[0.8125rem] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--panel-2)] hover:text-[var(--danger)]"
             >
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <span className="font-mono text-[11px] tracking-wide text-[var(--text-muted)] hidden sm:inline">
-            admin{pathname.replace("/admin", "") || "/dashboard"}
-          </span>
-        </header>
+              <LogoutIcon />
+              Sign Out
+            </button>
+          </div>
+        </aside>
 
-        {/* Page content */}
-        <main id="main-content" className="flex-1 p-5 lg:p-6 overflow-y-auto">
-          {children}
-        </main>
+        {/* ── Main area ── */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top bar */}
+          <header className="flex h-14 items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-4 lg:px-5">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md text-[var(--text-muted)] transition-colors hover:text-[var(--foreground)] lg:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className="hidden font-mono text-[11px] tracking-wide text-[var(--text-muted)] sm:inline">
+              admin{pathname.replace("/admin", "") || "/dashboard"}
+            </span>
+          </header>
+
+          {/* Page content */}
+          <main id="main-content" className="flex-1 overflow-y-auto p-5 lg:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

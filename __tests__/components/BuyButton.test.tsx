@@ -185,4 +185,17 @@ describe("BuyButton Component", () => {
       );
     });
   });
+
+  it("disables purchase when stock is unavailable", async () => {
+    render(<BuyButton slug="sold-out-product" paymentGateway="PAKASIR" maxQuantity={0} />);
+
+    const button = screen.getByRole("button");
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("SOLD OUT");
+
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
 });
