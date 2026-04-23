@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 /* ── Nav links ── */
 const NAV = [
@@ -146,9 +147,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {/* Brand */}
           <div className="flex h-14 items-center border-b border-[var(--line)] px-5">
-            <span className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)]">
-              AutoBeli
-            </span>
+            <Link
+              href="/"
+              className="group rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
+              aria-label="Go to storefront"
+            >
+              <span className="font-serif text-lg font-semibold tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
+                AutoBeli
+              </span>
+            </Link>
             <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
               admin
             </span>
@@ -222,9 +229,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="hidden font-mono text-[11px] tracking-wide text-[var(--text-muted)] sm:inline">
+            <span className="mr-auto hidden font-mono text-[11px] tracking-wide text-[var(--text-muted)] sm:inline">
               admin{pathname.replace("/admin", "") || "/dashboard"}
             </span>
+            <ThemeToggle compact />
           </header>
 
           {/* Page content */}
