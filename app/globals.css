@@ -131,14 +131,14 @@ html.dark {
 
 html.light {
   color-scheme: light;
-  --background: #efe8da;
+  --background: #ebe1cf;
   --foreground: #151110;
-  --panel: #f5efe3;
-  --panel-2: #ece4d4;
-  --panel-3: #ddd1bc;
-  --text-muted: #635848;
-  --line: rgba(23, 19, 16, 0.14);
-  --line-strong: rgba(23, 19, 16, 0.3);
+  --panel: #f8f2e7;
+  --panel-2: #efe5d4;
+  --panel-3: #e2d4bd;
+  --text-muted: #584c3e;
+  --line: rgba(23, 19, 16, 0.16);
+  --line-strong: rgba(23, 19, 16, 0.34);
   --accent: #ff5a36;
   --accent-foreground: #fff7f2;
   --success: #1a8a5c;
