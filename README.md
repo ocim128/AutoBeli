@@ -10,6 +10,7 @@ AutoBeli is a Next.js storefront for selling text-based digital products with se
 - Order-page-first delivery flow with recovery by email or order ID
 - AES-256 encrypted product content, decrypted only at delivery time
 - Admin dashboard for products, orders, analytics, audience, settings, and broadcast
+- Admin inventory tools for single add, bulk stock import, bulk delete by pasted username, and unsold-only copy actions
 - Audience sync from paid orders and product-specific outbound email broadcasts
 - Swagger-backed API docs at `/api-doc`
 
@@ -32,6 +33,23 @@ AutoBeli is a Next.js storefront for selling text-based digital products with se
 4. Webhook or order-page sync marks the order `PAID`, assigns stock, creates an access token, and attempts a confirmation email.
 5. Customer opens `/order/[orderId]`, which fetches the token and unlocks delivery through `/api/delivery/[token]`.
 6. If email is lost, `/recover` lets customers find paid orders by email or order ID.
+
+## Product inventory model
+
+- Products support two storage modes:
+  - legacy single-content products stored in `contentEncrypted`
+  - stock-based products stored in `stockItems`
+- Paid orders only consume unsold stock items.
+- Admin inventory actions that copy or bulk delete by username operate on unsold stock only and do not touch sold content.
+
+## Admin inventory tools
+
+- `/admin/products` lets admins copy all unsold usernames for one product, copy all unsold usernames across the catalog, and copy all unsold stock content across the catalog.
+- `/admin/products/[slug]/stock` supports:
+  - single stock add
+  - bulk stock import from raw credential lines
+  - single stock edit/delete
+  - bulk delete by pasted username list, scoped to matching unsold stock in that product only
 
 ## Local setup
 
@@ -142,6 +160,10 @@ npm run db:backfill-audience
 - `/admin/login` admin auth
 - `/admin/dashboard` admin overview
 - `/admin/products` product management
+- `/admin/products/create` product creation
+- `/admin/products/[slug]/edit` product editing
+- `/admin/products/[slug]/stock` stock management
+- `/admin/products/[slug]/broadcast` product broadcast
 - `/admin/orders` order management
 - `/admin/audience` audience management
 

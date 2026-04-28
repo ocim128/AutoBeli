@@ -72,6 +72,8 @@ export default function StockManagementPage({ params }: StockPageProps) {
   const [bulkPreview, setBulkPreview] = useState<BulkPreviewItem[]>([]);
   const [bulkErrors, setBulkErrors] = useState<BulkError[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [bulkDeleteUsernames, setBulkDeleteUsernames] = useState("");
+  const [deletingBulk, setDeletingBulk] = useState(false);
 
   // Unwrap params
   useEffect(() => {
@@ -90,15 +92,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
           setProductTitle(productData.product.title);
         }
 
-        const stockRes = await fetch(`/api/products/stock?slug=${slug}`);
-        const stockData = await stockRes.json();
-
-        if (stockData.stockItems) {
-          setStockItems(stockData.stockItems);
-        }
-        if (stockData.legacyContent) {
-          setLegacyContent(stockData.legacyContent);
-        }
+        await refreshStockData(slug);
       } catch (err) {
         console.error("Failed to load stock data:", err);
         setError("Failed to load stock data");
@@ -109,6 +103,18 @@ export default function StockManagementPage({ params }: StockPageProps) {
 
     fetchData();
   }, [slug]);
+
+  const refreshStockData = async (productSlug: string) => {
+    const stockRes = await fetch(`/api/products/stock?slug=${productSlug}`);
+    const stockData = await stockRes.json();
+
+    if (!stockRes.ok) {
+      throw new Error(stockData.error || "Failed to load stock data");
+    }
+
+    setStockItems(stockData.stockItems || []);
+    setLegacyContent(stockData.legacyContent ?? null);
+  };
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,11 +136,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
       }
 
       // Refresh stock list
-      const stockRes = await fetch(`/api/products/stock?slug=${slug}`);
-      const stockData = await stockRes.json();
-      if (stockData.stockItems) {
-        setStockItems(stockData.stockItems);
-      }
+      await refreshStockData(slug);
 
       setNewContent("");
       toast.success("Stock item added successfully.");
@@ -162,7 +164,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
         throw new Error(data.error || "Failed to delete");
       }
 
-      setStockItems((prev) => prev.filter((item) => item.id !== stockItemId));
+      await refreshStockData(slug);
       setDeleteTarget(null);
       toast.success("Stock item removed.");
     } catch (err: unknown) {
@@ -253,11 +255,7 @@ export default function StockManagementPage({ params }: StockPageProps) {
       }
 
       // Refresh stock list
-      const stockRes = await fetch(`/api/products/stock?slug=${slug}`);
-      const stockData = await stockRes.json();
-      if (stockData.stockItems) {
-        setStockItems(stockData.stockItems);
-      }
+      await refreshStockData(slug);
 
       setBulkContent("");
       setBulkPreview([]);
@@ -273,6 +271,46 @@ export default function StockManagementPage({ params }: StockPageProps) {
       }
     } finally {
       setAddingBulk(false);
+    }
+  };
+
+  const handleDeleteBulkStock = async () => {
+    if (!bulkDeleteUsernames.trim()) return;
+
+    setDeletingBulk(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/products/stock", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, usernamesRaw: bulkDeleteUsernames.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete bulk stock");
+      }
+
+      await refreshStockData(slug);
+
+      setBulkDeleteUsernames("");
+
+      const missingSummary =
+        data.missingUsernames && data.missingUsernames.length > 0
+          ? ` ${data.missingUsernames.length} username(s) not found.`
+          : "";
+
+      toast.success(`Deleted ${data.deletedCount} unsold stock item(s).${missingSummary}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to delete bulk stock");
+      }
+    } finally {
+      setDeletingBulk(false);
     }
   };
 
@@ -521,6 +559,65 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
                 </div>
               </div>
             )}
+
+            <div className="pt-4 border-t border-[var(--line)] space-y-4">
+              <div className="space-y-1">
+                <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--foreground)]">
+                  Delete Bulk Stock
+                </h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  Paste one username per line. Only matching unsold stock items will be deleted.
+                  Sold items stay untouched.
+                </p>
+              </div>
+
+              <Field
+                label="Usernames to delete"
+                monoLabel
+                htmlFor="bulkDeleteUsernames"
+                helper="Example: hatm881100"
+              >
+                <Textarea
+                  id="bulkDeleteUsernames"
+                  value={bulkDeleteUsernames}
+                  onChange={(e) => setBulkDeleteUsernames(e.target.value)}
+                  placeholder={`hatm881100
+psseed240
+another_username`}
+                  rows={5}
+                  className="font-mono text-sm"
+                />
+              </Field>
+
+              <div className="flex justify-end">
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    disabled={deletingBulk || !bulkDeleteUsernames.trim()}
+                    render={<Button type="button" size="sm" variant="destructive" />}
+                  >
+                    {deletingBulk ? "Deleting..." : "Delete Matched Unsold Stock"}
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Bulk Stock</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Matching unsold stock items will be removed from this product. Sold stock
+                        items will not be touched.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-[var(--danger)]/15 text-[var(--danger)] hover:bg-[var(--danger)]/25"
+                        onClick={handleDeleteBulkStock}
+                      >
+                        Delete Unsold Stock
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
           </div>
         )}
       </Panel>
@@ -598,10 +695,8 @@ csseed240my00 57 *180  2019 @psseed240 =13115626853%3AsXmi2TaS4UQEry%3A0 @asem77
                         </Button>
 
                         <AlertDialog>
-                          <AlertDialogTrigger>
-                            <Button size="xs" variant="destructive">
-                              Delete
-                            </Button>
+                          <AlertDialogTrigger render={<Button size="xs" variant="destructive" />}>
+                            Delete
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

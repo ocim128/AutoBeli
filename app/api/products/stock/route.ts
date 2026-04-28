@@ -4,7 +4,11 @@ import { getSession } from "@/lib/auth";
 import { Product, StockItem } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
 import { invalidateProductCache } from "@/lib/products";
-import { convertBulkRawInput } from "@/lib/stockConverter";
+import {
+  convertBulkRawInput,
+  matchUnsoldStockItemIdsByUsername,
+  parseUsernameList,
+} from "@/lib/stockConverter";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -38,7 +42,7 @@ import { v4 as uuidv4 } from "uuid";
  *       404:
  *         description: Product not found
  *   delete:
- *     description: Remove a stock item from a product (Admin only)
+ *     description: Remove stock item(s) from a product (Admin only)
  *     tags: [Products]
  *     security:
  *       - BearerAuth: []
@@ -50,15 +54,18 @@ import { v4 as uuidv4 } from "uuid";
  *             type: object
  *             required:
  *               - slug
- *               - stockItemId
  *             properties:
  *               slug:
  *                 type: string
  *               stockItemId:
  *                 type: string
+ *                 description: Single stock item id for one-item deletion
+ *               usernamesRaw:
+ *                 type: string
+ *                 description: Newline-separated usernames for bulk deletion of matching unsold stock
  *     responses:
  *       200:
- *         description: Stock item removed
+ *         description: Stock item(s) removed
  *       404:
  *         description: Product or stock item not found
  *   get:
@@ -237,14 +244,10 @@ export async function DELETE(request: Request) {
 
   try {
     const body = await request.json();
-    const { slug, stockItemId } = body;
+    const { slug, stockItemId, usernamesRaw } = body;
 
     if (!slug || typeof slug !== "string") {
       return NextResponse.json({ error: "Product slug is required" }, { status: 400 });
-    }
-
-    if (!stockItemId || typeof stockItemId !== "string") {
-      return NextResponse.json({ error: "Stock item ID is required" }, { status: 400 });
     }
 
     const client = await getMongoClient();
@@ -254,6 +257,63 @@ export async function DELETE(request: Request) {
     const product = await collection.findOne({ slug });
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (typeof usernamesRaw === "string" && usernamesRaw.trim().length > 0) {
+      const usernames = parseUsernameList(usernamesRaw);
+
+      if (usernames.length === 0) {
+        return NextResponse.json({ error: "At least one username is required" }, { status: 400 });
+      }
+
+      const matchedStock = matchUnsoldStockItemIdsByUsername(
+        (product.stockItems || []).map((item) => ({
+          id: item.id,
+          content: decryptContent(item.contentEncrypted),
+          isSold: item.isSold,
+        })),
+        usernames
+      );
+
+      if (matchedStock.stockItemIds.length === 0) {
+        return NextResponse.json(
+          {
+            error: "No matching unsold stock items found",
+            missingUsernames: matchedStock.missingUsernames,
+          },
+          { status: 400 }
+        );
+      }
+
+      const remainingItems = (product.stockItems || []).filter(
+        (item) => !matchedStock.stockItemIds.includes(item.id) && !item.isSold
+      );
+
+      await collection.updateOne(
+        { slug },
+        {
+          $pull: { stockItems: { id: { $in: matchedStock.stockItemIds } } },
+          $set: {
+            updatedAt: new Date(),
+            ...(remainingItems.length === 0 && !product.contentEncrypted ? { isSold: true } : {}),
+          },
+        }
+      );
+
+      invalidateProductCache(slug);
+
+      return NextResponse.json({
+        success: true,
+        mode: "bulk",
+        deletedCount: matchedStock.stockItemIds.length,
+        matchedUsernames: matchedStock.matchedUsernames,
+        missingUsernames: matchedStock.missingUsernames,
+        remainingStock: remainingItems.length,
+      });
+    }
+
+    if (!stockItemId || typeof stockItemId !== "string") {
+      return NextResponse.json({ error: "Stock item ID is required" }, { status: 400 });
     }
 
     const stockItem = product.stockItems?.find((item) => item.id === stockItemId);

@@ -22,6 +22,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table-shell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Panel } from "@/components/ui/panel";
+import { collectUnsoldUsernames } from "@/lib/stockConverter";
+import { toast } from "sonner";
 
 interface ProductWithStock {
   slug: string;
@@ -31,6 +33,28 @@ interface ProductWithStock {
   isSold?: boolean;
   createdAt: Date;
   stockItems?: Array<{ isSold: boolean }>;
+}
+
+interface StockResponse {
+  stockItems?: Array<{ content: string; isSold: boolean }>;
+  legacyContent?: string | null;
+  error?: string;
+}
+
+function collectUnsoldContent(
+  stockItems: Array<{ content: string; isSold: boolean }>,
+  legacyContent?: string | null
+) {
+  const contentList = stockItems
+    .filter((item) => !item.isSold)
+    .map((item) => item.content.trim())
+    .filter(Boolean);
+
+  if (stockItems.length > 0 || !legacyContent?.trim()) {
+    return contentList;
+  }
+
+  return [legacyContent.trim()];
 }
 
 function getStockInfo(product: ProductWithStock) {
@@ -51,6 +75,9 @@ export default function ProductList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [copyingSlug, setCopyingSlug] = useState<string | null>(null);
+  const [copyingAll, setCopyingAll] = useState(false);
+  const [copyingAllUnsold, setCopyingAllUnsold] = useState(false);
 
   useEffect(() => {
     fetch("/api/products")
@@ -62,11 +89,121 @@ export default function ProductList() {
       .finally(() => setLoading(false));
   }, []);
 
+  const getUnsoldUsernamesForProduct = async (product: ProductWithStock) => {
+    const res = await fetch(`/api/products/stock?slug=${encodeURIComponent(product.slug)}`);
+    const data = (await res.json()) as StockResponse;
+
+    if (!res.ok) {
+      throw new Error(data.error || `Failed to load stock for ${product.slug}`);
+    }
+
+    return collectUnsoldUsernames(data.stockItems || [], data.legacyContent);
+  };
+
+  const getUnsoldContentForProduct = async (product: ProductWithStock) => {
+    const res = await fetch(`/api/products/stock?slug=${encodeURIComponent(product.slug)}`);
+    const data = (await res.json()) as StockResponse;
+
+    if (!res.ok) {
+      throw new Error(data.error || `Failed to load stock for ${product.slug}`);
+    }
+
+    return collectUnsoldContent(data.stockItems || [], data.legacyContent);
+  };
+
+  const copyUsernamesToClipboard = async (usernames: string[], successLabel: string) => {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("Clipboard is unavailable in this browser");
+    }
+
+    if (usernames.length === 0) {
+      throw new Error("No usernames found in unsold content");
+    }
+
+    await navigator.clipboard.writeText(usernames.join("\n"));
+    toast.success(successLabel);
+  };
+
+  const copyUnsoldContentToClipboard = async (contentList: string[], successLabel: string) => {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("Clipboard is unavailable in this browser");
+    }
+
+    if (contentList.length === 0) {
+      throw new Error("No unsold content found");
+    }
+
+    await navigator.clipboard.writeText(contentList.join("\n\n"));
+    toast.success(successLabel);
+  };
+
+  const handleCopyAllUsernames = async (product: ProductWithStock) => {
+    setCopyingSlug(product.slug);
+    setError("");
+
+    try {
+      const usernames = await getUnsoldUsernamesForProduct(product);
+      await copyUsernamesToClipboard(
+        usernames,
+        `Copied ${usernames.length} unsold username${usernames.length > 1 ? "s" : ""}.`
+      );
+    } catch (copyError) {
+      setError(copyError instanceof Error ? copyError.message : "Failed to copy usernames");
+    } finally {
+      setCopyingSlug(null);
+    }
+  };
+
+  const handleCopyAllProductsUsernames = async () => {
+    setCopyingAll(true);
+    setError("");
+
+    try {
+      const productsWithStock = products.filter((product) => getStockInfo(product).available > 0);
+      const usernameLists = await Promise.all(
+        productsWithStock.map((product) => getUnsoldUsernamesForProduct(product))
+      );
+      const usernames = usernameLists.flat();
+
+      await copyUsernamesToClipboard(
+        usernames,
+        `Copied ${usernames.length} unsold username${usernames.length > 1 ? "s" : ""} from ${productsWithStock.length} product${productsWithStock.length > 1 ? "s" : ""}.`
+      );
+    } catch (copyError) {
+      setError(copyError instanceof Error ? copyError.message : "Failed to copy usernames");
+    } finally {
+      setCopyingAll(false);
+    }
+  };
+
+  const handleCopyAllUnsold = async () => {
+    setCopyingAllUnsold(true);
+    setError("");
+
+    try {
+      const productsWithStock = products.filter((product) => getStockInfo(product).available > 0);
+      const contentLists = await Promise.all(
+        productsWithStock.map((product) => getUnsoldContentForProduct(product))
+      );
+      const contentList = contentLists.flat();
+
+      await copyUnsoldContentToClipboard(
+        contentList,
+        `Copied ${contentList.length} unsold item${contentList.length > 1 ? "s" : ""} from ${productsWithStock.length} product${productsWithStock.length > 1 ? "s" : ""}.`
+      );
+    } catch (copyError) {
+      setError(copyError instanceof Error ? copyError.message : "Failed to copy unsold content");
+    } finally {
+      setCopyingAllUnsold(false);
+    }
+  };
+
   const filtered = products.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase())
   );
+  const hasAvailableProducts = products.some((product) => getStockInfo(product).available > 0);
 
   return (
     <div className="space-y-6">
@@ -99,6 +236,34 @@ export default function ProductList() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full text-xs sm:w-56"
               />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopyAllProductsUsernames}
+                disabled={
+                  loading ||
+                  !hasAvailableProducts ||
+                  copyingAll ||
+                  copyingAllUnsold ||
+                  copyingSlug !== null
+                }
+              >
+                {copyingAll ? "Copying All..." : "Copy All Usernames"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopyAllUnsold}
+                disabled={
+                  loading ||
+                  !hasAvailableProducts ||
+                  copyingAll ||
+                  copyingAllUnsold ||
+                  copyingSlug !== null
+                }
+              >
+                {copyingAllUnsold ? "Copying Unsold..." : "Copy All Unsold"}
+              </Button>
               <Link href="/admin/products/create">
                 <Button size="sm">Add New</Button>
               </Link>
@@ -201,7 +366,7 @@ export default function ProductList() {
                             <circle cx="12" cy="19" r="1" />
                           </svg>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-36">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem>
                             <Link href={`/admin/products/${p.slug}/edit`} className="flex w-full">
                               Edit
@@ -211,6 +376,14 @@ export default function ProductList() {
                             <Link href={`/admin/products/${p.slug}/stock`} className="flex w-full">
                               Stock
                             </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={
+                              isSoldOut || copyingAll || copyingAllUnsold || copyingSlug === p.slug
+                            }
+                            onClick={() => handleCopyAllUsernames(p)}
+                          >
+                            {copyingSlug === p.slug ? "Copying..." : "Copy All Usernames"}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Link

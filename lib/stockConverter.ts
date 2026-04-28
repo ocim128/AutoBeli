@@ -19,6 +19,19 @@ const INSTAGRAM_PARSE_PATTERN = new RegExp(
 );
 const POST_PATTERN = new RegExp(`^(\\d+)${SPADE}`);
 
+function normalizeExtractedUsername(username?: string | null): string | null {
+  const normalized = username?.trim().replace(/^@/, "");
+  if (!normalized || normalized.toUpperCase() === "N/A") {
+    return null;
+  }
+  return normalized;
+}
+
+function getUsernameKey(username?: string | null): string | null {
+  const normalized = normalizeExtractedUsername(username);
+  return normalized ? normalized.toLowerCase() : null;
+}
+
 export interface ConvertedStock {
   email: string;
   username: string;
@@ -30,6 +43,122 @@ export interface ConvertedStock {
 
 function normalizeRawLineSymbols(line: string): string {
   return line.replaceAll("â™¦", DIAMOND).replaceAll("â€¢", BULLET).replaceAll("â™ ", SPADE);
+}
+
+export function extractUsernameFromContent(content: string): string | null {
+  const normalizedContent = normalizeRawLineSymbols(content).replace(/\r\n?/g, "\n");
+  const usernameMatch = normalizedContent.match(/^username\s*[:=]\s*([^\r\n]+)$/im);
+  const directUsername = normalizeExtractedUsername(usernameMatch?.[1]);
+
+  if (directUsername) {
+    return directUsername;
+  }
+
+  const summaryPrefix = `Username${BULLET}Post${BULLET}Follower${BULLET}Tahun =`;
+  const summaryLine = normalizedContent
+    .split("\n")
+    .find((line) => line.trimStart().startsWith(summaryPrefix));
+
+  if (summaryLine) {
+    const summaryValue = summaryLine.split("=").slice(1).join("=").trim();
+    const [summaryUsername] = summaryValue.split(BULLET);
+    const extractedSummaryUsername = normalizeExtractedUsername(summaryUsername);
+
+    if (extractedSummaryUsername) {
+      return extractedSummaryUsername;
+    }
+  }
+
+  const atLineMatch = normalizedContent.match(/^@([A-Z0-9._]+)$/im);
+  return normalizeExtractedUsername(atLineMatch?.[1]);
+}
+
+export function collectUnsoldUsernames(
+  stockItems: Array<{ content: string; isSold: boolean }>,
+  legacyContent?: string | null
+): string[] {
+  const usernames = stockItems
+    .filter((item) => !item.isSold)
+    .map((item) => extractUsernameFromContent(item.content))
+    .filter((username): username is string => Boolean(username));
+
+  if (stockItems.length > 0 || !legacyContent) {
+    return usernames;
+  }
+
+  const legacyUsername = extractUsernameFromContent(legacyContent);
+  return legacyUsername ? [legacyUsername] : [];
+}
+
+export function parseUsernameList(rawInput: string): string[] {
+  const usernames: string[] = [];
+  const seenKeys = new Set<string>();
+
+  rawInput
+    .split("\n")
+    .map((line) => normalizeExtractedUsername(line))
+    .forEach((username) => {
+      const key = getUsernameKey(username);
+      if (!username || !key || seenKeys.has(key)) {
+        return;
+      }
+
+      seenKeys.add(key);
+      usernames.push(username);
+    });
+
+  return usernames;
+}
+
+export function matchUnsoldStockItemIdsByUsername(
+  stockItems: Array<{ id: string; content: string; isSold: boolean }>,
+  usernames: string[]
+): {
+  stockItemIds: string[];
+  matchedUsernames: string[];
+  missingUsernames: string[];
+} {
+  const usernameMap = new Map<string, string>();
+
+  usernames.forEach((username) => {
+    const key = getUsernameKey(username);
+    if (key && !usernameMap.has(key)) {
+      usernameMap.set(key, username);
+    }
+  });
+
+  const matchedKeys = new Set<string>();
+  const stockItemIds: string[] = [];
+
+  stockItems.forEach((item) => {
+    if (item.isSold) {
+      return;
+    }
+
+    const key = getUsernameKey(extractUsernameFromContent(item.content));
+    if (!key || !usernameMap.has(key)) {
+      return;
+    }
+
+    stockItemIds.push(item.id);
+    matchedKeys.add(key);
+  });
+
+  const matchedUsernames = usernames.filter((username) => {
+    const key = getUsernameKey(username);
+    return Boolean(key && matchedKeys.has(key));
+  });
+
+  const missingUsernames = usernames.filter((username) => {
+    const key = getUsernameKey(username);
+    return Boolean(key && !matchedKeys.has(key));
+  });
+
+  return {
+    stockItemIds,
+    matchedUsernames,
+    missingUsernames,
+  };
 }
 
 /**
