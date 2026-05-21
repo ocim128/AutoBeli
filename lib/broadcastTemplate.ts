@@ -1,8 +1,4 @@
-const DEFAULT_BASE_URL = "http://localhost:3000";
-
-function getBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
-}
+import { getBaseUrl } from "@/lib/baseUrl";
 
 export function buildProductUrl(slug: string): string {
   return `${getBaseUrl()}/product/${slug}`;

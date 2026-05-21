@@ -34,6 +34,7 @@ export interface Product {
   imageUrl?: string; // Optional product image URL
   isActive: boolean;
   isSold?: boolean; // True when product has been purchased (all stock sold for legacy, or no stock left)
+  soldOrderId?: ObjectId; // Legacy product sale owner, used for idempotent completion recovery
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +58,8 @@ export interface Order {
   customerContact?: string; // Email for order recovery
   paidAt?: Date; // When payment was confirmed
   emailSent?: boolean; // True when order confirmation email has been sent
+  paymentCompletionStartedAt?: Date; // Internal idempotency lock for payment completion
+  paymentCompletionError?: string; // Last stock/payment completion failure, if any
   createdAt: Date;
   updatedAt: Date;
 }

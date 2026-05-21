@@ -114,6 +114,14 @@ async function setupIndexes() {
 
     // Compound index for admin order listing
     await db.collection("orders").createIndex({ createdAt: -1 }, { name: "idx_orders_by_date" });
+    await db
+      .collection("orders")
+      .createIndex({ status: 1, paidAt: -1 }, { name: "idx_paid_orders_recent" });
+    console.log("  ✅ Created index: orders.status + paidAt");
+    await db
+      .collection("orders")
+      .createIndex({ status: 1, productId: 1 }, { name: "idx_paid_orders_by_product" });
+    console.log("  ✅ Created index: orders.status + productId");
     console.log("  ✅ Created index: orders.createdAt (descending)");
 
     // TTL index for unpaid orders (expire after 24 hours)
@@ -134,8 +142,36 @@ async function setupIndexes() {
     console.log("\n📄 Setting up TOKENS indexes...");
 
     // Index on orderId for token lookups
-    await db.collection("tokens").createIndex({ orderId: 1 }, { name: "idx_token_order" });
-    console.log("  ✅ Created index: tokens.orderId");
+    const duplicateTokenOrders = await db
+      .collection("tokens")
+      .aggregate([
+        { $group: { _id: "$orderId", count: { $sum: 1 } } },
+        { $match: { _id: { $ne: null }, count: { $gt: 1 } } },
+        { $limit: 5 },
+      ])
+      .toArray();
+
+    if (duplicateTokenOrders.length > 0) {
+      console.warn("  Skipped unique index for tokens.orderId because duplicate token rows exist.");
+      console.warn(
+        `     Review duplicate order IDs before re-running: ${duplicateTokenOrders
+          .map((row) => row._id?.toString())
+          .join(", ")}`
+      );
+      await db.collection("tokens").createIndex({ orderId: 1 }, { name: "idx_token_order" });
+    } else {
+      const tokenIndexes = await db.collection("tokens").indexes();
+      const oldTokenOrderIndex = tokenIndexes.find((index) => index.name === "idx_token_order");
+
+      if (oldTokenOrderIndex && !oldTokenOrderIndex.unique) {
+        await db.collection("tokens").dropIndex("idx_token_order");
+      }
+
+      await db
+        .collection("tokens")
+        .createIndex({ orderId: 1 }, { unique: true, name: "idx_token_order_unique" });
+    }
+    console.log("  ✅ Ensured index: tokens.orderId");
 
     // Unique index on token for validation
     await db

@@ -32,6 +32,34 @@ interface LazyImageProps {
   priority?: boolean;
 }
 
+const optimizedImageHostnames = (process.env.NEXT_PUBLIC_IMAGE_HOSTS || "")
+  .split(",")
+  .map((hostname) => hostname.trim().toLowerCase())
+  .filter(Boolean);
+
+function shouldUseNextImage(src: string): boolean {
+  if (src.startsWith("/") && !src.startsWith("//")) {
+    return true;
+  }
+
+  try {
+    const url = new URL(src);
+    return (
+      url.protocol === "https:" && optimizedImageHostnames.includes(url.hostname.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
+}
+
+function shouldUseNativeImage(src: string): boolean {
+  try {
+    return new URL(src).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Optimized image component using Next.js Image with:
  * - Intersection Observer for viewport-based loading
@@ -73,9 +101,12 @@ function LazyImage({
 
   // Start loading when in view or priority
   const shouldLoad = priority || hasBeenInView;
+  const useNextImage = shouldUseNextImage(src);
+  const useNativeImage = !useNextImage && shouldUseNativeImage(src);
+  const unsupportedSrc = shouldLoad && !useNextImage && !useNativeImage;
   const isLoading = loadState === "idle";
   const isLoaded = loadState === "loaded";
-  const hasError = loadState === "error";
+  const hasError = loadState === "error" || unsupportedSrc;
 
   return (
     <div
@@ -87,14 +118,14 @@ function LazyImage({
       )}
     >
       {/* Shimmer loading state */}
-      {isLoading && !blurDataURL && (
+      {isLoading && !hasError && !blurDataURL && (
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--panel-2)] via-[var(--panel)] to-[var(--panel-2)] animate-pulse">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
       )}
 
       {/* Main image using Next.js Image */}
-      {shouldLoad && !hasError && (
+      {shouldLoad && !hasError && useNextImage && (
         <Image
           src={src}
           alt={alt}
@@ -109,6 +140,26 @@ function LazyImage({
           placeholder={blurDataURL ? "blur" : "empty"}
           blurDataURL={blurDataURL}
           priority={priority}
+        />
+      )}
+
+      {shouldLoad && !hasError && useNativeImage && (
+        // Intentional: arbitrary HTTPS product image URLs bypass the Next image optimizer.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          width={fill ? undefined : width || 800}
+          height={fill ? undefined : height || 600}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={cn(
+            "transition-opacity duration-500",
+            fill ? "absolute inset-0 h-full w-full" : "h-auto w-full",
+            isLoaded ? "opacity-100" : "opacity-0"
+          )}
+          style={{ objectFit }}
+          loading={priority ? "eager" : "lazy"}
         />
       )}
 

@@ -252,6 +252,7 @@ export async function PUT(request: Request) {
           : undefined,
       content,
       imageUrl,
+      postPurchaseTemplate,
       isActive,
     });
 

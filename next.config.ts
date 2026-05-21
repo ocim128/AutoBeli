@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
+const imageHostnames = (process.env.NEXT_PUBLIC_IMAGE_HOSTS || "")
+  .split(",")
+  .map((hostname) => hostname.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
-  // Performance: Remove console logs in production
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
 
   // Performance: Optimize package imports
@@ -11,14 +15,13 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["zod", "jose"],
   },
 
-  // External image hostnames allowed for next/image optimization
+  // Only explicitly approved hosts use next/image optimization.
+  // Arbitrary admin-entered image URLs render through a plain <img> fallback.
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
+    remotePatterns: imageHostnames.map((hostname) => ({
+      protocol: "https",
+      hostname,
+    })),
   },
 
   // Performance: Enable React strict mode for better development practices

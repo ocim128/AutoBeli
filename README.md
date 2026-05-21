@@ -91,9 +91,9 @@ npm run dev
 
 Open:
 
-- Storefront: `http://localhost:3000`
-- Admin login: `http://localhost:3000/admin/login`
-- API docs: `http://localhost:3000/api-doc`
+- Storefront: `http://localhost:3001`
+- Admin login: `http://localhost:3001/admin/login`
+- API docs: `http://localhost:3001/api-doc`
 
 ## Environment variables
 

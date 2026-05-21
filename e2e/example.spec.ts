@@ -128,7 +128,7 @@ test.describe("Product Page", () => {
       await productLink.click();
 
       // Should have breadcrumb with Store link (Toko)
-      await expect(page.getByRole("link", { name: /Toko|Store/i })).toBeVisible();
+      await expect(page.getByRole("link", { name: /Toko|Store/i }).first()).toBeVisible();
     }
   });
 });

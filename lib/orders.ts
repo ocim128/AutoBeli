@@ -1,9 +1,9 @@
 import { getMongoClient } from "@/lib/db";
 import { ObjectId, Db } from "mongodb";
-import { Order, Product, AccessToken } from "@/lib/definitions";
+import { Order, Product } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
 import { getPakasirTransactionStatus } from "@/lib/pakasir";
-import { generateAccessToken } from "@/lib/tokens";
+import { ensureAccessToken } from "@/lib/tokens";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { upsertAudienceFromPaidOrder } from "@/lib/audience";
 
@@ -29,7 +29,7 @@ export async function getOrderWithProduct(orderId: string): Promise<OrderWithPro
       },
       { $unwind: "$product" },
       // Exclude sensitive content
-      { $project: { "product.contentEncrypted": 0 } },
+      { $project: { "product.contentEncrypted": 0, "product.stockItems": 0 } },
     ];
 
     const result = await db.collection<Order>("orders").aggregate(pipeline).toArray();
@@ -55,6 +55,155 @@ export interface PaymentCompletionParams {
   isTest?: boolean;
 }
 
+interface StockAssignmentResult {
+  success: boolean;
+  stockItemId?: string;
+  stockItemIds?: string[];
+  error?: string;
+  product?: Product;
+}
+
+const PAYMENT_COMPLETION_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+
+function getUnsoldStockItems(product: Product) {
+  return (product.stockItems || []).filter((item) => !item.isSold);
+}
+
+function getStockItemsAssignedToOrder(product: Product, orderId: ObjectId) {
+  const orderIdString = orderId.toString();
+  return (product.stockItems || []).filter((item) => item.orderId?.toString() === orderIdString);
+}
+
+async function assignStockForPaidOrder(params: {
+  orderId: ObjectId;
+  product: Product;
+  quantity: number;
+  db: Db;
+  isTestOrder: boolean;
+}): Promise<StockAssignmentResult> {
+  const { orderId, quantity, db, isTestOrder } = params;
+  const productCollection = db.collection<Product>("products");
+
+  if (!params.product._id) {
+    return { success: false, error: "Product is missing an ID" };
+  }
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const product = isTestOrder
+      ? params.product
+      : ((await productCollection.findOne({ _id: params.product._id })) ?? params.product);
+
+    if (product.stockItems && product.stockItems.length > 0) {
+      const alreadyAssignedItems = getStockItemsAssignedToOrder(product, orderId).slice(
+        0,
+        quantity
+      );
+
+      if (alreadyAssignedItems.length >= quantity) {
+        const stockItemIds = alreadyAssignedItems.map((item) => item.id);
+        return {
+          success: true,
+          stockItemId: stockItemIds[0],
+          stockItemIds,
+          product,
+        };
+      }
+
+      const selectedItems = getUnsoldStockItems(product).slice(0, quantity);
+
+      if (selectedItems.length < quantity) {
+        return {
+          success: false,
+          error: "Not enough stock available during payment completion",
+          product,
+        };
+      }
+
+      const stockItemIds = selectedItems.map((item) => item.id);
+
+      if (isTestOrder) {
+        return {
+          success: true,
+          stockItemId: stockItemIds[0],
+          stockItemIds,
+          product,
+        };
+      }
+
+      const now = new Date();
+      const result = await productCollection.updateOne(
+        {
+          _id: product._id,
+          $and: stockItemIds.map((id) => ({
+            stockItems: { $elemMatch: { id, isSold: { $ne: true } } },
+          })),
+        },
+        {
+          $set: {
+            "stockItems.$[item].isSold": true,
+            "stockItems.$[item].soldAt": now,
+            "stockItems.$[item].orderId": orderId,
+            updatedAt: now,
+          },
+        },
+        {
+          arrayFilters: [{ "item.id": { $in: stockItemIds }, "item.isSold": { $ne: true } }],
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        await productCollection.updateOne(
+          {
+            _id: product._id,
+            stockItems: { $not: { $elemMatch: { isSold: { $ne: true } } } },
+          },
+          { $set: { isSold: true, updatedAt: now } }
+        );
+
+        return {
+          success: true,
+          stockItemId: stockItemIds[0],
+          stockItemIds,
+          product,
+        };
+      }
+
+      continue;
+    }
+
+    if (isTestOrder) {
+      return { success: true, product };
+    }
+
+    if (product.isSold && product.soldOrderId?.toString() === orderId.toString()) {
+      return { success: true, product };
+    }
+
+    const result = await productCollection.updateOne(
+      {
+        _id: product._id,
+        $or: [{ isSold: { $exists: false } }, { isSold: false }],
+      },
+      {
+        $set: {
+          isSold: true,
+          soldOrderId: orderId,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      return { success: true, product };
+    }
+  }
+
+  return {
+    success: false,
+    error: "Stock assignment conflict during payment completion",
+  };
+}
+
 /**
  * Handles all the side effects when a payment is successfully completed:
  * 1. Update order status to PAID
@@ -73,110 +222,136 @@ export async function handleSuccessfulPayment({
 }: PaymentCompletionParams): Promise<boolean> {
   const objectId = new ObjectId(orderId);
   const quantityToSell = order.quantity || 1;
+  const orderCollection = db.collection<Order>("orders");
 
   // Auto-detect test orders if not explicitly set
-  const isTestOrder =
-    isTest ||
-    order.customerContact === "customer@example.com" ||
-    order.paymentMetadata?.transaction_ref === "test_ref";
+  const isTestOrder = isTest || order.paymentMetadata?.transaction_ref === "test_ref";
 
-  // 1. Update Order Status
-  await db.collection<Order>("orders").updateOne(
-    { _id: objectId },
+  const lockStartedAt = new Date();
+  const staleLockBefore = new Date(Date.now() - PAYMENT_COMPLETION_LOCK_TIMEOUT_MS);
+  const lockResult = await orderCollection.updateOne(
+    {
+      _id: objectId,
+      status: { $ne: "PAID" },
+      $or: [
+        { paymentCompletionStartedAt: { $exists: false } },
+        { paymentCompletionStartedAt: { $lt: staleLockBefore } },
+      ],
+    },
     {
       $set: {
-        status: "PAID",
-        amountPaid: amount,
-        paidAt: new Date(),
-        updatedAt: new Date(),
+        paymentCompletionStartedAt: lockStartedAt,
+        updatedAt: lockStartedAt,
       },
+      $unset: { paymentCompletionError: "" },
     }
   );
 
-  // 2. Mark stock items as sold
-  if (product.stockItems && product.stockItems.length > 0) {
-    // Stock-based product: Find the N unsold stock items
-    const unsoldIndices = product.stockItems
-      .map((item, index) => ({ item, index }))
-      .filter(({ item }) => !item.isSold)
-      .slice(0, quantityToSell)
-      .map(({ index }) => index);
+  if (lockResult.modifiedCount === 0) {
+    const currentOrder = await orderCollection.findOne({ _id: objectId });
+    if (currentOrder?.status === "PAID") {
+      await ensureAccessToken(orderId, db);
+    }
 
-    if (unsoldIndices.length > 0) {
-      const soldStockItemIds: string[] = [];
-      const updateSet: Record<string, boolean | Date | ObjectId> = { updatedAt: new Date() };
+    return false;
+  }
 
-      // Prepare update for all sold items
-      unsoldIndices.forEach((index) => {
-        const stockItem = product.stockItems![index];
-        soldStockItemIds.push(stockItem.id);
-        updateSet[`stockItems.${index}.isSold`] = true;
-        updateSet[`stockItems.${index}.soldAt`] = new Date();
-        updateSet[`stockItems.${index}.orderId`] = objectId;
-      });
+  let productForSideEffects = product;
 
-      // Mark items as sold (SKIP IF TEST)
-      if (!isTestOrder) {
-        await db
-          .collection<Product>("products")
-          .updateOne({ _id: order.productId }, { $set: updateSet });
-      }
+  try {
+    const stockAssignment = await assignStockForPaidOrder({
+      orderId: objectId,
+      product,
+      quantity: quantityToSell,
+      db,
+      isTestOrder,
+    });
 
-      // Store stock item IDs in order
-      await db.collection<Order>("orders").updateOne(
+    if (!stockAssignment.success) {
+      await orderCollection.updateOne(
         { _id: objectId },
         {
           $set: {
-            stockItemId: soldStockItemIds[0], // Primary item for legacy compat
-            stockItemIds: soldStockItemIds,
-          },
-        }
-      );
-
-      // Check if all stock items are now sold
-      const totalStock = product.stockItems.length;
-      const previousSold = product.stockItems.filter((i) => i.isSold).length;
-      const nowSold = previousSold + unsoldIndices.length;
-
-      if (nowSold >= totalStock && !isTestOrder) {
-        await db
-          .collection<Product>("products")
-          .updateOne({ _id: order.productId }, { $set: { isSold: true } });
-      }
-    }
-  } else {
-    // Legacy product: mark entire product as sold (SKIP IF TEST)
-    if (!isTestOrder) {
-      await db.collection<Product>("products").updateOne(
-        { _id: order.productId },
-        {
-          $set: {
-            isSold: true,
+            paymentCompletionError:
+              stockAssignment.error || "Payment completion failed during stock assignment",
             updatedAt: new Date(),
           },
+          $unset: { paymentCompletionStartedAt: "" },
         }
       );
+      console.error("[Orders] Payment completed but stock assignment failed:", {
+        orderId,
+        productId: order.productId.toString(),
+        error: stockAssignment.error,
+      });
+      return false;
     }
+
+    productForSideEffects = stockAssignment.product || product;
+
+    const paidAt = new Date();
+    const orderUpdateSet: Partial<Order> & {
+      status: "PAID";
+      amountPaid: number;
+      paidAt: Date;
+      updatedAt: Date;
+      stockItemId?: string;
+      stockItemIds?: string[];
+    } = {
+      status: "PAID",
+      amountPaid: amount,
+      paidAt,
+      updatedAt: paidAt,
+    };
+
+    if (stockAssignment.stockItemId) {
+      orderUpdateSet.stockItemId = stockAssignment.stockItemId;
+    }
+
+    if (stockAssignment.stockItemIds) {
+      orderUpdateSet.stockItemIds = stockAssignment.stockItemIds;
+    }
+
+    const paidResult = await orderCollection.updateOne(
+      { _id: objectId, status: { $ne: "PAID" } },
+      {
+        $set: orderUpdateSet,
+        $unset: {
+          paymentCompletionStartedAt: "",
+          paymentCompletionError: "",
+        },
+      }
+    );
+
+    if (paidResult.modifiedCount === 0) {
+      await ensureAccessToken(orderId, db);
+      return false;
+    }
+  } catch (error) {
+    await orderCollection.updateOne(
+      { _id: objectId },
+      {
+        $set: {
+          paymentCompletionError:
+            error instanceof Error ? error.message : "Payment completion failed",
+          updatedAt: new Date(),
+        },
+        $unset: { paymentCompletionStartedAt: "" },
+      }
+    );
+    throw error;
   }
 
-  // 3. Invalidate product cache so the store reflects the sold status
-  invalidateProductCache();
+  invalidateProductCache(productForSideEffects.slug);
 
-  // 4. Ensure Access Token Exists
-  const existingToken = await db.collection<AccessToken>("tokens").findOne({
-    orderId: objectId,
-  });
+  await ensureAccessToken(orderId, db);
 
-  if (!existingToken) {
-    await generateAccessToken(orderId);
-  }
-
-  // 5. Attempt order confirmation email (SKIP IF TEST)
+  // Attempt order confirmation email (SKIP IF TEST)
   if (order.customerContact && !isTestOrder) {
     try {
       const emailResult = await sendOrderConfirmationEmail({
         orderId: orderId,
-        productTitle: product.title,
+        productTitle: productForSideEffects.title,
         amountPaid: amount,
         orderDate: new Date().toLocaleString("en-GB", {
           day: "numeric",
@@ -189,9 +364,7 @@ export async function handleSuccessfulPayment({
       });
 
       if (emailResult.success) {
-        await db
-          .collection<Order>("orders")
-          .updateOne({ _id: objectId }, { $set: { emailSent: true } });
+        await orderCollection.updateOne({ _id: objectId }, { $set: { emailSent: true } });
       } else {
         console.warn("Order confirmation email not sent:", emailResult.error);
       }
@@ -200,7 +373,7 @@ export async function handleSuccessfulPayment({
     }
   }
 
-  // 6. Auto-sync audience from paid order
+  // Auto-sync audience from paid order
   if (order.customerContact && !isTestOrder) {
     try {
       await upsertAudienceFromPaidOrder(order.customerContact, db);
@@ -271,6 +444,7 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
 
     // Only skip if fully synced (PAID and has correct amount AND email was sent)
     if (order.status === "PAID" && order.amountPaid > 0) {
+      await ensureAccessToken(orderId, db);
       // If payment is complete but email wasn't sent, try to send it now
       await retrySendingEmail(orderId, order, db);
       return false;

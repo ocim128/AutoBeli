@@ -1,5 +1,7 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { getBaseUrl } from "@/lib/baseUrl";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 interface EmailData {
   orderId: string;
@@ -22,8 +24,7 @@ export interface EmailSendResult {
 }
 
 function buildOrderLink(orderId: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  return `${baseUrl}/order/${orderId}`;
+  return `${getBaseUrl()}/order/${orderId}`;
 }
 
 function buildSubject(data: EmailData): string {
@@ -171,7 +172,7 @@ async function sendViaCloudflare(
   const requestBody = buildCloudflarePayload(payload);
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetchWithTimeout(apiUrl, {
       method: "POST",
       headers: buildCloudflareHeaders(apiKey),
       body: JSON.stringify(requestBody),

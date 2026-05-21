@@ -10,6 +10,72 @@ async function hasAppError(page: Page): Promise<boolean> {
     .catch(() => false);
 }
 
+async function openFirstProductOrSkip(page: Page): Promise<boolean> {
+  const productLink = page.locator('a[href^="/product/"]').first();
+  await productLink.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+
+  if (!(await productLink.isVisible())) {
+    test.skip(true, "No products available for testing");
+    return false;
+  }
+
+  const href = await productLink.getAttribute("href");
+  if (!href) {
+    test.skip(true, "No product link available for testing");
+    return false;
+  }
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(href, { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveURL(/\/product\/.+/);
+      return true;
+    } catch (error) {
+      const isTransientNavigationAbort = String(error).includes("ERR_ABORTED");
+      if (!isTransientNavigationAbort || attempt === 1) throw error;
+      await page.waitForTimeout(250);
+    }
+  }
+
+  throw new Error("Product page did not open");
+}
+
+async function clickBuyAndWaitForCheckout(page: Page) {
+  const buyButton = page.getByRole("button", { name: /Amankan Akses/i });
+  await expect(buyButton).toBeVisible();
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const orderResponsePromise = page
+      .waitForResponse(
+        (response) =>
+          response.url().includes("/api/orders") && response.request().method() === "POST",
+        { timeout: 5000 }
+      )
+      .catch(() => null);
+
+    await buyButton.click();
+    const orderResponse = await orderResponsePromise;
+
+    if (orderResponse) {
+      if (!orderResponse.ok()) {
+        throw new Error(
+          `Order creation failed with ${orderResponse.status()}: ${await orderResponse.text()}`
+        );
+      }
+      await expect(page).toHaveURL(/\/checkout\/.+/);
+      return;
+    }
+
+    if (/\/checkout\/.+/.test(page.url())) {
+      return;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error("Buy button did not submit an order");
+}
+
 /**
  * Complete checkout flow E2E test
  * Note: This requires a product to exist in the database
@@ -17,6 +83,8 @@ async function hasAppError(page: Page): Promise<boolean> {
  */
 
 test.describe("Checkout Flow", () => {
+  test.describe.configure({ mode: "serial" });
+
   // Skip if no products available
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -27,6 +95,23 @@ test.describe("Checkout Flow", () => {
     await page.route("**/api/payment/pakasir/create", async (route) => {
       const body = await route.request().postDataJSON();
       const orderId = body.orderId;
+      const origin = new URL(route.request().url()).origin;
+
+      const webhookResponse = await fetch(`${origin}/api/webhooks/pakasir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId,
+          amount: 10000,
+          project: "test-project",
+          status: "completed",
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        throw new Error(`Test webhook failed: ${await webhookResponse.text()}`);
+      }
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -45,18 +130,8 @@ test.describe("Checkout Flow", () => {
       return;
     }
 
-    // Step 1: Find a product and click it
-    const productLink = page.locator('a[href^="/product/"]').first();
-    await productLink.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
-
-    // Skip test if no products
-    if (!(await productLink.isVisible())) {
-      test.skip(true, "No products available for testing");
-      return;
-    }
-
-    await productLink.click();
-    await expect(page).toHaveURL(/\/product\/.+/);
+    // Step 1: Find a product and open it
+    if (!(await openFirstProductOrSkip(page))) return;
 
     // Step 2: Verify product page elements
     // Note: Default language is Indonesian
@@ -64,12 +139,7 @@ test.describe("Checkout Flow", () => {
     await expect(page.getByText("Enkripsi Aman", { exact: false }).first()).toBeVisible();
 
     // Step 3: Click buy button
-    const buyButton = page.getByRole("button", { name: /Amankan Akses/i });
-    await expect(buyButton).toBeVisible();
-    await buyButton.click();
-
-    // Step 4: Should navigate to checkout page
-    await expect(page).toHaveURL(/\/checkout\/.+/);
+    await clickBuyAndWaitForCheckout(page);
 
     // Step 5: Fill in contact information (email)
     const contactInput = page.getByPlaceholder(/email@contoh.com/i);
@@ -92,21 +162,9 @@ test.describe("Checkout Flow", () => {
       return;
     }
 
-    const productLink = page.locator('a[href^="/product/"]').first();
-    await productLink.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+    if (!(await openFirstProductOrSkip(page))) return;
 
-    if (!(await productLink.isVisible())) {
-      test.skip(true, "No products available for testing");
-      return;
-    }
-
-    await productLink.click();
-
-    const buyButton = page.getByRole("button", { name: /Amankan Akses/i });
-    await buyButton.waitFor({ state: "visible" });
-    await buyButton.click();
-
-    await expect(page).toHaveURL(/\/checkout\/.+/);
+    await clickBuyAndWaitForCheckout(page);
 
     // Try to submit without contact (email)
     const payButton = page.getByRole("button", { name: /Bayar/i });
@@ -129,14 +187,7 @@ test.describe("Checkout Flow", () => {
       return;
     }
 
-    const productLink = page.locator('a[href^="/product/"]').first();
-
-    if (!(await productLink.isVisible())) {
-      test.skip(true, "No products available for testing");
-      return;
-    }
-
-    await productLink.click();
+    if (!(await openFirstProductOrSkip(page))) return;
 
     // Delay the API response to catch the loading state
     await page.route("**/api/orders", async (route) => {
@@ -150,11 +201,18 @@ test.describe("Checkout Flow", () => {
     const buyButton = page.locator("button[aria-busy]");
     await expect(buyButton).toBeVisible();
 
-    // Click with noWaitAfter to check loading state immediately
-    await buyButton.click({ noWaitAfter: true });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await buyButton.click({ noWaitAfter: true });
 
-    // The button text should change to "Memproses Akses..."
-    await expect(buyButton).toContainText("Mengamankan Akses...", { timeout: 5000 });
+      try {
+        await expect(buyButton).toContainText("Mengamankan Akses...", { timeout: 1000 });
+        break;
+      } catch (error) {
+        if (attempt === 2) throw error;
+        await page.waitForTimeout(250);
+      }
+    }
+
     await expect(buyButton).toHaveAttribute("aria-busy", "true");
   });
 });

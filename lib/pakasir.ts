@@ -1,6 +1,9 @@
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+
 const PAKASIR_API_KEY = process.env.PAKASIR_API_KEY || "";
 const PAKASIR_PROJECT_SLUG = process.env.PAKASIR_PROJECT_SLUG || "";
 const API_BASE_URL = "https://app.pakasir.com/api";
+const STATUS_LOOKUP_RETRIES = 1;
 
 export interface PakasirTransactionRequest {
   order_id: string;
@@ -90,9 +93,25 @@ export async function getPakasirTransactionStatus(
     // transactiondetail endpoint only supports query-param authentication.
     const url = `${API_BASE_URL}/transactiondetail?project=${PAKASIR_PROJECT_SLUG}&amount=${amount}&order_id=${orderId}&api_key=${PAKASIR_API_KEY}`;
 
-    const response = await fetch(url, {
-      method: "GET",
-    });
+    let response: Response | null = null;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= STATUS_LOOKUP_RETRIES; attempt++) {
+      try {
+        response = await fetchWithTimeout(url, { method: "GET" });
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!response) {
+      console.error("Pakasir getTransactionStatus error:", lastError);
+      return {
+        success: false,
+        error: "Failed to get transaction status",
+      };
+    }
 
     if (!response.ok) {
       return {
