@@ -28,7 +28,7 @@ export function StatusBadge({ status, className, children, ...props }: StatusBad
     <Badge
       variant="outline"
       className={cn(
-        "inline-flex h-5 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-0 font-mono text-[0.65rem] font-medium uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
+        "eyebrow-sm inline-flex h-5 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
         statusColorMap[status],
         className
       )}

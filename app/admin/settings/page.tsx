@@ -17,13 +17,11 @@ export default function AdminSettingsPage() {
       <Panel padding="md" className="bg-[var(--panel-2,var(--panel))]">
         <div className="flex items-start gap-3">
           <span
-            className="mt-0.5 inline-block size-1.5 shrink-0 rounded-full bg-amber-400"
+            className="mt-0.5 inline-block size-1.5 shrink-0 rounded-full bg-[var(--warning)]"
             aria-hidden="true"
           />
           <div>
-            <p className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              Email Delivery
-            </p>
+            <p className="eyebrow">Email Delivery</p>
             <p className="mt-1 text-sm leading-relaxed text-[var(--foreground)] opacity-80">
               Customer access is delivered on the order page directly. Email is a best-effort copy
               sent through Cloudflare when the worker endpoint and secret are configured.

@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();

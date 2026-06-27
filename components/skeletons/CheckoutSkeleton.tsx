@@ -1,10 +1,10 @@
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Panel } from "@/components/ui/panel";
 
 export function CheckoutSkeleton() {
   return (
-    <div className="min-h-[80vh] py-8 md:py-16 animate-in fade-in-50">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-[80vh] py-10 md:py-16">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* Breadcrumb */}
         <Skeleton className="h-4 w-56 rounded-md mb-10" />
 

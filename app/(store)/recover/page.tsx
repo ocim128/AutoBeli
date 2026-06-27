@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { REGEX_PATTERNS } from "@/lib/validation";
-import Spinner from "@/components/ui/Spinner";
+import { formatIDR, formatDate } from "@/lib/format";
+import Spinner from "@/components/ui/spinner";
 import { Panel } from "@/components/ui/panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { Field } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -180,20 +182,22 @@ export default function RecoverPage() {
               />
             </Field>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--accent-foreground)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} size="xl" className="w-full">
               {loading ? (
                 <>
-                  <Spinner size={18} className="text-current" variant="classic" />
+                  <Spinner size={18} className="text-current" />
                   <span>{t("checkout.searching")}</span>
                 </>
               ) : (
                 <>
                   <span>{t("checkout.findMyOrders")}</span>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="size-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -203,7 +207,7 @@ export default function RecoverPage() {
                   </svg>
                 </>
               )}
-            </button>
+            </Button>
           </form>
         </Panel>
 
@@ -274,7 +278,7 @@ function RecoverResults({ results }: { results: OrderResult[] }) {
 /* ── Single Result Card ────────────────────────────── */
 
 function RecoverResultCard({ order }: { order: OrderResult }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <Link href={`/order/${order.orderId}`} className="group block">
@@ -286,24 +290,18 @@ function RecoverResultCard({ order }: { order: OrderResult }) {
             </h3>
             <div className="flex items-center gap-3">
               <span className="font-mono text-xs text-[var(--success)]">
-                Rp {order.amountPaid.toLocaleString("id-ID")}
+                {formatIDR(order.amountPaid)}
               </span>
-              <span className="text-[var(--line)]" aria-hidden="true">
+              <span className="text-[var(--text-muted)] opacity-40" aria-hidden="true">
                 /
               </span>
-              <span className="font-mono text-[0.65rem] text-[var(--text-muted)]">
-                {new Date(order.paidAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+              <span className="eyebrow-sm">
+                {formatDate(order.paidAt, language === "id" ? "id-ID" : "en-GB")}
               </span>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent)]">
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em]">
-              {t("checkout.access")}
-            </span>
+            <span className="eyebrow-sm">{t("checkout.access")}</span>
             <svg
               className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
               fill="none"

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatIDR } from "@/lib/format";
 import { Panel } from "@/components/ui/panel";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
-import LazyImage from "@/components/ui/LazyImage";
+import LazyImage from "@/components/ui/lazy-image";
 
 interface Product {
   slug: string;
@@ -41,7 +42,7 @@ export function HomeClient({ products }: { products: Product[] }) {
   const heroPreview = formatProductPreview(heroProduct?.description);
 
   return (
-    <div className="space-y-16 pb-24 md:pb-20">
+    <div className="space-y-16">
       <section className="relative mx-4 md:mx-6 lg:mx-8">
         <Panel featured padding="lg" className="relative overflow-hidden md:p-10 lg:px-12 lg:py-12">
           <div
@@ -92,7 +93,7 @@ export function HomeClient({ products }: { products: Product[] }) {
               <div className="flex flex-wrap items-center gap-3">
                 <a
                   href="#products"
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-primary-foreground shadow-[0_14px_34px_rgba(255,90,54,0.2)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-primary-foreground shadow-[0_14px_34px_rgba(var(--accent-rgb),0.2)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
                 >
                   {t("common.browse")}
                 </a>
@@ -129,7 +130,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                           {t("common.digitalStore")}
                         </span>
                         <div className="space-y-3">
-                          <span className="block max-w-[8ch] text-[2.2rem] font-medium uppercase leading-[0.9] tracking-[-0.035em] text-[var(--accent)] opacity-88">
+                          <span className="block max-w-[8ch] text-[2.2rem] font-medium uppercase leading-[0.9] tracking-[-0.035em] text-[var(--accent)] opacity-80">
                             {heroProduct.slug.split("-").slice(0, 2).join(" ").toUpperCase()}
                           </span>
                           <span className="block h-px w-16 bg-[var(--line-strong)]" />
@@ -153,23 +154,21 @@ export function HomeClient({ products }: { products: Product[] }) {
                         )}
                       </div>
                       <span className="font-mono text-[1.35rem] leading-none tracking-[0.03em] tabular-nums text-white">
-                        Rp {heroProduct.priceIdr.toLocaleString("id-ID")}
+                        {formatIDR(heroProduct.priceIdr)}
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <h2 className="line-clamp-2 text-[1.7rem] font-medium leading-[1.02] tracking-[-0.03em] text-[var(--accent)] transition-colors group-hover:text-[var(--accent)]">
+                      <h2 className="line-clamp-2 text-[1.7rem] font-medium leading-[1.02] tracking-[-0.03em] text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
                         {heroProduct.title}
                       </h2>
                       <p className="mt-2 line-clamp-3 text-sm leading-7 text-[var(--text-muted)]">
                         {heroPreview || t("product.defaultDescription")}
                       </p>
                     </div>
-                    <span className="shrink-0 pt-1 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-                      01
-                    </span>
+                    <span className="eyebrow-sm shrink-0 pt-1">01</span>
                   </div>
                 </Link>
 
@@ -203,12 +202,10 @@ export function HomeClient({ products }: { products: Product[] }) {
                             {product.title}
                           </span>
                           <span className="mt-1 block font-mono text-[0.92rem] leading-none tracking-[0.03em] tabular-nums text-[var(--text-muted)]">
-                            Rp {product.priceIdr.toLocaleString("id-ID")}
+                            {formatIDR(product.priceIdr)}
                           </span>
                         </div>
-                        <span className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-[var(--text-muted)]">
-                          {String(index + 2).padStart(2, "0")}
-                        </span>
+                        <span className="eyebrow-sm">{String(index + 2).padStart(2, "0")}</span>
                       </Link>
                     ))}
                   </div>
@@ -331,7 +328,7 @@ function ProductCard({ product }: { product: Product }) {
                 {t("common.digitalStore")}
               </span>
               <div className="space-y-3">
-                <span className="block max-w-[10ch] text-[1.9rem] font-medium uppercase leading-[0.9] tracking-[-0.035em] text-[var(--accent)] opacity-88">
+                <span className="block max-w-[10ch] text-[1.9rem] font-medium uppercase leading-[0.9] tracking-[-0.035em] text-[var(--accent)] opacity-80">
                   {slugFragments.toUpperCase()}
                 </span>
                 <span className="block h-px w-14 bg-[var(--line-strong)]" />
@@ -342,15 +339,15 @@ function ProductCard({ product }: { product: Product }) {
 
         <div className="flex flex-1 flex-col gap-4 p-5 md:p-6">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="line-clamp-2 min-w-0 flex-1 text-[1.38rem] font-medium leading-[1.02] tracking-[-0.03em] text-[var(--accent)] transition-colors group-hover:text-[var(--accent)]">
+            <h3 className="line-clamp-2 min-w-0 flex-1 text-[1.38rem] font-medium leading-[1.02] tracking-[-0.03em] text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
               {product.title}
             </h3>
             <span
               className={[
-                "shrink-0 rounded-full border px-3 py-1 font-mono text-[0.62rem] uppercase tracking-[0.14em]",
+                "eyebrow-sm shrink-0 rounded-full border px-3 py-1",
                 inStock
-                  ? "border-[var(--line)] bg-[var(--panel-2)] text-[var(--text-muted)]"
-                  : "border-[var(--danger)]/35 bg-[var(--accent-soft)] text-[var(--danger)]",
+                  ? "border-[var(--line)] bg-[var(--panel-2)]"
+                  : "border-[var(--danger)]/35 bg-[var(--accent-soft)] !text-[var(--danger)]",
               ].join(" ")}
             >
               {availabilityLabel}
@@ -361,8 +358,8 @@ function ProductCard({ product }: { product: Product }) {
             {preview || t("product.defaultDescription")}
           </p>
 
-          <span className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[var(--accent)] px-5 font-mono text-[1.05rem] leading-none tracking-[0.04em] tabular-nums text-[var(--accent-foreground)] shadow-[0_12px_30px_rgba(255,90,54,0.16)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_34px_rgba(255,90,54,0.22)]">
-            Rp {product.priceIdr.toLocaleString("id-ID")}
+          <span className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[var(--accent)] px-5 font-mono text-[1.05rem] leading-none tracking-[0.04em] tabular-nums text-[var(--accent-foreground)] shadow-[0_12px_30px_rgba(var(--accent-rgb),0.16)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_34px_rgba(var(--accent-rgb),0.22)]">
+            {formatIDR(product.priceIdr)}
           </span>
         </div>
       </div>

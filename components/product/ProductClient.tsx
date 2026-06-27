@@ -6,7 +6,7 @@ import BuyButton from "@/components/BuyButton";
 import { Panel } from "@/components/ui/panel";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { StatusBadge } from "@/components/ui/status-badge";
-import LazyImage from "@/components/ui/LazyImage";
+import LazyImage from "@/components/ui/lazy-image";
 import type { SerializedProduct } from "@/lib/products";
 
 export function ProductClient({
@@ -38,6 +38,7 @@ export function ProductClient({
   ];
 
   const inStock = product.availableStock === undefined || product.availableStock > 0;
+  // Number-only; the `Rp` prefix is rendered separately as a typographic element below.
   const priceDisplay = product.priceIdr.toLocaleString("id-ID");
   const slugMark = product.slug.split("-").slice(0, 2).join(" ").toUpperCase();
   const stockLabel =
@@ -49,7 +50,7 @@ export function ProductClient({
   const trustItems = [t("common.securePayment"), t("common.instantDelivery"), stockLabel];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 px-4 pb-20 md:px-6">
+    <div className="mx-auto max-w-6xl space-y-10 px-4 md:px-6">
       <div className="space-y-5 pt-1">
         <nav
           aria-label="Breadcrumb"

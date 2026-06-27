@@ -21,7 +21,7 @@ import { Panel } from "@/components/ui/panel";
 import { Field } from "@/components/ui/field";
 import { MetricCard } from "@/components/ui/metric-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 interface StockItem {
@@ -689,7 +689,7 @@ another_username`}
                       {item.content}
                     </pre>
                     {!item.isSold && (
-                      <div className="flex gap-1.5 shrink-0 items-start pt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex shrink-0 items-start gap-1.5 pt-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                         <Button size="xs" variant="outline" onClick={() => startEditing(item)}>
                           Edit
                         </Button>

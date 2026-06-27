@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { formatIDR, shortOrderId } from "@/lib/format";
 import { Panel } from "@/components/ui/panel";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -34,9 +35,7 @@ export default function CheckoutSummary({
           {/* Eyebrow + Order ID */}
           <div className="flex items-center justify-between mb-6">
             <SectionEyebrow>{t("checkout.orderSummary")}</SectionEyebrow>
-            <span className="font-mono text-[0.65rem] text-[var(--text-muted)] tracking-wider">
-              #{orderId.slice(-8).toUpperCase()}
-            </span>
+            <span className="eyebrow-sm">#{shortOrderId(orderId)}</span>
           </div>
 
           {/* Product Title — prominent serif */}
@@ -64,25 +63,19 @@ export default function CheckoutSummary({
           {/* Price Breakdown — mono numbers */}
           <div className="space-y-3.5 text-sm">
             <div className="flex justify-between items-baseline">
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                {t("checkout.unitPrice")}
-              </span>
+              <span className="eyebrow-sm">{t("checkout.unitPrice")}</span>
               <span className="font-mono text-sm tabular-nums text-[var(--text-muted)]">
-                Rp {priceIdr.toLocaleString("id-ID")}
+                {formatIDR(priceIdr)}
               </span>
             </div>
             <div className="flex justify-between items-baseline">
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                {t("checkout.quantity")}
-              </span>
+              <span className="eyebrow-sm">{t("checkout.quantity")}</span>
               <span className="font-mono text-sm tabular-nums text-[var(--text-muted)]">
                 {quantity}
               </span>
             </div>
             <div className="flex justify-between items-baseline">
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                {t("checkout.serviceFee")}
-              </span>
+              <span className="eyebrow-sm">{t("checkout.serviceFee")}</span>
               <span className="font-mono text-sm tabular-nums text-[var(--success)]">
                 {t("checkout.free")}
               </span>
@@ -94,16 +87,12 @@ export default function CheckoutSummary({
 
           {/* Total — very prominent serif */}
           <div className="flex justify-between items-end">
-            <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              {t("checkout.total")}
-            </span>
+            <span className="eyebrow-sm">{t("checkout.total")}</span>
             <div className="text-right">
               <span className="font-serif text-3xl text-[var(--foreground)] tracking-tight">
-                Rp {totalAmount.toLocaleString("id-ID")}
+                {formatIDR(totalAmount)}
               </span>
-              <span className="block font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--accent)] mt-0.5">
-                IDR
-              </span>
+              <span className="eyebrow-sm mt-0.5 block text-[var(--accent)]">IDR</span>
             </div>
           </div>
         </Panel>
@@ -111,7 +100,7 @@ export default function CheckoutSummary({
         {/* Trust Indicators — subtle and refined */}
         <div className="grid grid-cols-2 gap-3">
           <Panel padding="sm" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-[var(--success)]/8 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[var(--success-soft)] flex items-center justify-center shrink-0">
               <svg
                 className="w-3.5 h-3.5 text-[var(--success)]"
                 fill="none"

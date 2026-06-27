@@ -75,10 +75,16 @@
   --line: rgba(23, 18, 16, 0.14);
   --line-strong: rgba(23, 18, 16, 0.28);
   --accent: #ff623d;
+  --accent-rgb: 255, 98, 61;
   --accent-foreground: #fff8f3;
   --success: #1f8b61;
   --warning: #b98225;
   --danger: #d65a48;
+  /* Soft tints — pair with their status token so dark mode stays calibrated */
+  --accent-soft: rgba(var(--accent-rgb), 0.1);
+  --success-soft: rgba(31, 139, 97, 0.1);
+  --warning-soft: rgba(185, 130, 37, 0.12);
+  --danger-soft: rgba(214, 90, 72, 0.1);
   --scrollbar-thumb: #d4c7b3;
   --scrollbar-thumb-2: #c3b39b;
   --scrollbar-thumb-hover: #bdac92;
@@ -97,7 +103,6 @@
   --secondary-foreground: var(--foreground);
   --muted: var(--panel-2);
   --muted-foreground: var(--text-muted);
-  --accent-soft: rgba(255, 98, 61, 0.1);
   --border: var(--line);
   --input: var(--line);
   --ring: var(--accent);
@@ -138,10 +143,16 @@ html.dark {
   --line: rgba(255, 255, 255, 0.1);
   --line-strong: rgba(255, 255, 255, 0.2);
   --accent: #ff623d;
+  --accent-rgb: 255, 98, 61;
   --accent-foreground: #fff3ee;
   --success: #7bc490;
   --warning: #f0b35f;
   --danger: #ff6b5f;
+  /* Soft tints calibrated brighter for dark surfaces */
+  --accent-soft: rgba(var(--accent-rgb), 0.14);
+  --success-soft: rgba(123, 196, 144, 0.12);
+  --warning-soft: rgba(240, 179, 95, 0.14);
+  --danger-soft: rgba(255, 107, 95, 0.14);
   --scrollbar-thumb: #2c2826;
   --scrollbar-thumb-2: #1f1b19;
   --scrollbar-thumb-hover: #3a3430;
@@ -156,7 +167,6 @@ html.dark {
   --secondary-foreground: var(--foreground);
   --muted: #161311;
   --muted-foreground: var(--text-muted);
-  --accent-soft: rgba(255, 98, 61, 0.12);
   --border: var(--line);
   --input: var(--line);
   --ring: var(--accent);
@@ -220,7 +230,7 @@ body {
 
 /* Selection Color */
 ::selection {
-  background: rgba(255, 90, 54, 0.25);
+  background: rgba(var(--accent-rgb), 0.25);
   color: inherit;
 }
 
@@ -234,92 +244,29 @@ body {
    CSS Utilities — Editorial Luxury Theme
    ────────────────────────────────────────────── */
 
-/* Subtle grid background pattern */
-.grid-bg {
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 52px 52px;
-}
-
-/* Thin border panel with corner accents */
-.framed-panel {
-  position: relative;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--panel);
-}
-
-.framed-panel::before,
-.framed-panel::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-color: var(--accent);
-  border-style: solid;
-  pointer-events: none;
-}
-
-.framed-panel::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
-  border-radius: var(--radius) 0 0 0;
-}
-
-.framed-panel::after {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 2px 2px 0;
-  border-radius: 0 0 var(--radius) 0;
-}
-
-/* Decorative corner marks (standalone) */
-.corner-accent {
-  position: relative;
-}
-
-.corner-accent::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 12px;
-  height: 12px;
-  border-top: 2px solid var(--accent);
-  border-left: 2px solid var(--accent);
-  pointer-events: none;
-}
-
-.corner-accent::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  border-bottom: 2px solid var(--accent);
-  border-right: 2px solid var(--accent);
-  pointer-events: none;
-}
-
-/* IBM Plex Mono styled label */
-.mono-label {
+/*
+ * Eyebrow recipe — the canonical mono-uppercase micro-label.
+ * Use .eyebrow (0.7rem / 0.1em) for panel headers, table column titles,
+ * field groups. Use .eyebrow-sm (0.65rem / 0.14em) for denser contexts
+ * (status pills, breadcrumbs, metadata). Replaces the 5+ ad-hoc
+ * font-size/letter-spacing combinations that had drifted across the app.
+ */
+.eyebrow {
   font-family: var(--font-mono), "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.7rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
-/* Horizontal divider */
-.divider-rule {
-  border: none;
-  height: 1px;
-  background: var(--line);
-  margin: 1rem 0;
+.eyebrow-sm {
+  font-family: var(--font-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 /* ──────────────────────────────────────────────
@@ -347,12 +294,10 @@ body {
   }
 }
 
-@keyframes editorial-draw {
-  from {
-    stroke-dashoffset: 24;
-  }
-  to {
-    stroke-dashoffset: 0;
+/* Shimmer placeholder sweep — used by LazyImage loading state. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
@@ -449,17 +394,18 @@ body {
 }
 
 /* ──────────────────────────────────────────────
-   GPU Hints
+   GPU Hints — attached to the actual transform classes
+   used by interactive cards/buttons (see ProductCard,
+   hero media, primary CTA hover lifts).
    ────────────────────────────────────────────── */
 
-.hover\:-translate-y-1:hover,
-.hover\:-translate-y-2:hover,
 .hover\:-translate-y-0\.5:hover,
-.group-hover\:scale-105,
-.group-hover\:scale-110,
-.group-hover\:translate-x-1\.5,
-.group-hover\:translate-x-2,
-.group-hover\:rotate-12 {
+.hover\:-translate-y-1:hover,
+.group-hover\:-translate-y-0\.5,
+.group-hover\:-translate-y-1,
+.group-hover\:scale-\[1\.03\],
+.group-hover\:scale-\[1\.04\],
+.group-hover\:translate-x-0\.5 {
   will-change: transform;
 }
 

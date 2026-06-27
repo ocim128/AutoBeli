@@ -2,7 +2,7 @@
 
 import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -104,7 +104,7 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
         <span className="flex items-center justify-center gap-2">
           {loading ? (
             <>
-              <Spinner size={18} variant="classic" />
+              <Spinner size={18} />
               <span>{t("common.securingAccess")}</span>
             </>
           ) : isUnavailable ? (

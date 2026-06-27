@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatIDR, formatDate, shortOrderId } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -45,27 +46,21 @@ export default function OrderPaid({
             <Panel featured monoLabel={t("checkout.orderDetails")} padding="lg">
               <div className="space-y-0 divide-y divide-[var(--line)]">
                 <div className="pb-4">
-                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    {t("checkout.product")}
-                  </span>
+                  <span className="eyebrow-sm mb-1 block">{t("checkout.product")}</span>
                   <span className="text-sm font-medium text-[var(--foreground)]">
                     {productTitle}
                   </span>
                 </div>
                 <div className="py-4">
-                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    {t("checkout.totalPaid")}
-                  </span>
+                  <span className="eyebrow-sm mb-1 block">{t("checkout.totalPaid")}</span>
                   <span className="font-mono text-lg font-medium text-[var(--success)]">
-                    Rp {amountPaid.toLocaleString("id-ID")}
+                    {formatIDR(amountPaid)}
                   </span>
                 </div>
                 <div className="py-4">
-                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    {t("checkout.date")}
-                  </span>
+                  <span className="eyebrow-sm mb-1 block">{t("checkout.date")}</span>
                   <span className="text-sm text-[var(--text-muted)]">
-                    {new Date(createdAt).toLocaleString(language === "id" ? "id-ID" : "en-GB", {
+                    {formatDate(createdAt, language === "id" ? "id-ID" : "en-GB", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -75,18 +70,14 @@ export default function OrderPaid({
                   </span>
                 </div>
                 <div className="py-4">
-                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    {t("checkout.paymentMethod")}
-                  </span>
+                  <span className="eyebrow-sm mb-1 block">{t("checkout.paymentMethod")}</span>
                   <span className="text-sm text-[var(--foreground)]">{paymentGateway}</span>
                 </div>
                 <div className="pt-4">
-                  <span className="mb-1 block font-mono text-[0.6rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    {t("checkout.orderId")}
-                  </span>
+                  <span className="eyebrow-sm mb-1 block">{t("checkout.orderId")}</span>
                   <CornerFrame size="sm">
                     <span className="block rounded bg-[var(--panel-2)] px-2 py-1 font-mono text-xs text-[var(--text-muted)]">
-                      {orderId}
+                      #{shortOrderId(orderId)}
                     </span>
                   </CornerFrame>
                 </div>

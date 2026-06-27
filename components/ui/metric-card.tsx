@@ -10,7 +10,7 @@ const trendIcon = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="inline-block h-3 w-3 text-emerald-500 opacity-70"
+      className="inline-block h-3 w-3 text-[var(--success)] opacity-70"
     >
       <path
         fillRule="evenodd"
@@ -24,7 +24,7 @@ const trendIcon = {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="inline-block h-3 w-3 text-red-400 opacity-70"
+      className="inline-block h-3 w-3 text-[var(--danger)] opacity-70"
     >
       <path
         fillRule="evenodd"
@@ -65,11 +65,9 @@ export function MetricCard({
   ...props
 }: MetricCardProps) {
   return (
-    <Panel padding="md" className={cn("", className)} {...props}>
+    <Panel padding="md" className={cn(className)} {...props}>
       <div className="flex flex-col gap-2">
-        <span className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
-          {label}
-        </span>
+        <span className="eyebrow-sm">{label}</span>
         <div className="flex items-baseline gap-2">
           <span className="font-serif text-3xl font-semibold tracking-tight text-[var(--foreground)] lg:text-4xl">
             {value}

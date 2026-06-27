@@ -22,7 +22,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 
 interface ProductBroadcastPanelProps {
   product: {
@@ -90,15 +89,9 @@ export default function ProductBroadcastPanel({
           ? `Test email sent to ${testEmail}. ${json.warning}`
           : `Test email sent to ${testEmail}.`
       );
-      toast.success(
-        json.warning
-          ? `Test email sent to ${testEmail}. ${json.warning}`
-          : `Test email sent to ${testEmail}.`
-      );
     } catch (sendError) {
       const msg = sendError instanceof Error ? sendError.message : "Failed to send test email";
       setError(msg);
-      toast.error(msg);
     } finally {
       setSendingTest(false);
     }
@@ -130,12 +123,10 @@ export default function ProductBroadcastPanel({
           ? `Broadcast partially sent: ${json.sentCount} sent, ${json.failedCount} failed.`
           : `Broadcast sent to ${json.sentCount} contacts.`;
       setMessage(json.warning ? `${summary} ${json.warning}` : summary);
-      toast.success(json.warning ? `${summary} ${json.warning}` : summary);
       setAdminPassword("");
     } catch (sendError) {
       const msg = sendError instanceof Error ? sendError.message : "Failed to send broadcast";
       setError(msg);
-      toast.error(msg);
     } finally {
       setSendingLive(false);
       setConfirmLive(false);
@@ -272,7 +263,7 @@ export default function ProductBroadcastPanel({
       {/* ── Send actions — flat row, no nested panels ── */}
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Test Send */}
-        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+        <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--panel)] p-4">
           <span className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
             TEST SEND
           </span>
@@ -304,7 +295,7 @@ export default function ProductBroadcastPanel({
         </div>
 
         {/* Live Broadcast */}
-        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+        <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--panel)] p-4">
           <span className="mb-3 block font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
             LIVE BROADCAST
           </span>
@@ -364,12 +355,12 @@ export default function ProductBroadcastPanel({
 
       {/* ── Inline feedback ── */}
       {error && (
-        <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger)]/5 px-4 py-2.5 font-mono text-[0.7rem] tracking-wide text-[var(--danger)]">
+        <div className="rounded-[var(--radius-md)] border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-2.5 font-mono text-[0.7rem] tracking-wide text-[var(--danger)]">
           {error}
         </div>
       )}
       {message && (
-        <div className="rounded-lg border border-[var(--success)]/20 bg-[var(--success)]/5 px-4 py-2.5 font-mono text-[0.7rem] tracking-wide text-[var(--success)]">
+        <div className="rounded-[var(--radius-md)] border border-[var(--success)]/30 bg-[var(--success-soft)] px-4 py-2.5 font-mono text-[0.7rem] tracking-wide text-[var(--success)]">
           {message}
         </div>
       )}

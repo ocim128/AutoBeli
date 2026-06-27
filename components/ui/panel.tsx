@@ -11,7 +11,7 @@ const paddingMap = {
 } as const;
 
 const variantBase =
-  "rounded-[18px] border bg-[var(--panel)] shadow-[0_18px_36px_rgba(29,23,20,0.04)]";
+  "rounded-[var(--radius-xl)] border bg-[var(--panel)] shadow-[0_18px_36px_rgba(29,23,20,0.04)]";
 
 const variantBorderMap = {
   default: "border-[var(--line)]",
@@ -56,11 +56,7 @@ export function Panel({
     >
       {(monoLabel || title) && (
         <div className="mb-5 flex flex-col gap-1.5">
-          {monoLabel && (
-            <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              {monoLabel}
-            </span>
-          )}
+          {monoLabel && <span className="eyebrow">{monoLabel}</span>}
           {title && (
             <h3 className="font-serif text-xl leading-snug text-[var(--foreground)]">{title}</h3>
           )}

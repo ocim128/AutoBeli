@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Panel } from "@/components/ui/panel";
 import { MetricCard } from "@/components/ui/metric-card";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 
 interface DailyData {
   date: string;
@@ -69,7 +69,7 @@ export default function AnalyticsChart() {
     return (
       <Panel monoLabel="ANALYTICS">
         <div className="flex items-center justify-center py-10">
-          <Spinner size={28} variant="classic" className="text-[var(--text-muted)]" />
+          <Spinner size={28} className="text-[var(--text-muted)]" />
         </div>
       </Panel>
     );

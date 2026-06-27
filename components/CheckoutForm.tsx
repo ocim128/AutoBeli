@@ -3,7 +3,8 @@
 import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { REGEX_PATTERNS } from "@/lib/validation";
-import Spinner from "@/components/ui/Spinner";
+import { formatIDR, shortOrderId } from "@/lib/format";
+import Spinner from "@/components/ui/spinner";
 import { useLanguage } from "@/context/LanguageContext";
 import { Panel } from "@/components/ui/panel";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
@@ -103,8 +104,8 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         <h2 className="font-serif text-3xl text-[var(--foreground)] mt-3 leading-tight">
           {t("checkout.securePayment")}
         </h2>
-        <p className="font-mono text-[0.65rem] text-[var(--text-muted)] mt-2 uppercase tracking-[0.14em]">
-          {t("checkout.digitalOrder")} #{orderId.slice(-6).toUpperCase()}
+        <p className="eyebrow-sm mt-2">
+          {t("checkout.digitalOrder")} #{shortOrderId(orderId)}
         </p>
       </div>
 
@@ -113,7 +114,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         {error && (
           <div
             role="alert"
-            className="flex items-start gap-2.5 px-4 py-3 rounded-lg bg-[var(--danger)]/8 border border-[var(--danger)]/15"
+            className="flex items-start gap-2.5 rounded-[var(--radius-md)] border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-3"
           >
             <svg
               className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5"
@@ -151,44 +152,40 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         </Field>
 
         {/* Submit Button — prominent and decisive */}
-        <Button
-          type="submit"
-          disabled={loading}
-          aria-busy={loading}
-          size="lg"
-          className="h-[3.25rem] w-full rounded-lg bg-[var(--accent)] text-base font-semibold text-[var(--accent-foreground)] shadow-md transition-all hover:opacity-90 hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
-        >
-          <div className="flex items-center justify-center gap-2.5">
-            {loading ? (
-              <>
-                <Spinner size={20} />
-                <span>{t("checkout.processing")}</span>
-              </>
-            ) : (
-              <>
-                <span className="font-serif text-lg">
-                  {t("checkout.pay")} Rp{amount.toLocaleString("id-ID")}
-                </span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </>
-            )}
-          </div>
+        <Button type="submit" disabled={loading} aria-busy={loading} size="xl" className="w-full">
+          {loading ? (
+            <>
+              <Spinner size={20} />
+              <span>{t("checkout.processing")}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-serif text-lg">
+                {t("checkout.pay")} {formatIDR(amount)}
+              </span>
+              <svg
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
+              </svg>
+            </>
+          )}
         </Button>
       </form>
 
       {/* Payment Methods — only shown for real gateway */}
       {paymentGateway === "PAKASIR" && (
         <div className="mt-10 pt-6 border-t border-[var(--line)]">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[var(--text-muted)] text-center mb-4">
-            {t("checkout.supportedMethods")}
-          </p>
+          <p className="eyebrow-sm mb-4 text-center">{t("checkout.supportedMethods")}</p>
           <div className="flex justify-center items-center gap-5">
             {["QRIS", "BCA", "GOPAY", "OVO"].map((method) => (
               <span

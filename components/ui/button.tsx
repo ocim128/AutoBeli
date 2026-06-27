@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[0_14px_30px_rgba(255,98,61,0.16)] hover:-translate-y-0.5 hover:bg-primary/92",
+          "bg-primary text-primary-foreground shadow-[0_14px_30px_rgba(var(--accent-rgb),0.16)] hover:-translate-y-0.5 hover:bg-primary/92",
         outline:
           "border-[var(--line)] bg-[var(--panel)] text-[var(--foreground)] hover:border-[var(--line-strong)] hover:bg-[var(--panel-2)] aria-expanded:border-[var(--line-strong)] aria-expanded:bg-[var(--panel-2)]",
         secondary:
@@ -26,6 +26,7 @@ const buttonVariants = cva(
         xs: "h-7 gap-1 min-w-7 rounded-[var(--radius-sm)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1 min-w-8 rounded-[var(--radius-sm)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-11 gap-2 min-w-11 px-4 text-base has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        xl: "h-12 gap-2.5 min-w-12 px-6 text-base has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
         icon: "size-9",
         "icon-xs":
           "size-7 rounded-[var(--radius-sm)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",

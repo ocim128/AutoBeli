@@ -259,11 +259,7 @@ export default function AudienceManager() {
       </div>
 
       {/* Filter Toolbar */}
-      <Panel
-        padding="sm"
-        variant="ghost"
-        className="border border-[var(--line)] rounded-xl bg-[var(--panel)]"
-      >
+      <Panel padding="sm" variant="ghost" className="border border-[var(--line)] bg-[var(--panel)]">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-0 flex-[1.5]">
             <Field label="Search Email" monoLabel>
@@ -284,7 +280,7 @@ export default function AudienceManager() {
               <select
                 value={statusInput}
                 onChange={(e) => setStatusInput(e.target.value)}
-                className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="flex h-8 w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-[var(--line-strong)] focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="" className="bg-[var(--panel)]">
                   All
@@ -344,7 +340,7 @@ export default function AudienceManager() {
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as AudienceStatus)}
-                  className="flex h-8 w-full rounded-lg border border-input bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="flex h-8 w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-sm text-[var(--foreground)] outline-none focus-visible:border-[var(--line-strong)] focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   <option value="ACTIVE" className="bg-[var(--panel)]">
                     Active

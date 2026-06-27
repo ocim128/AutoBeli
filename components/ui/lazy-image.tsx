@@ -119,7 +119,7 @@ function LazyImage({
     >
       {/* Shimmer loading state */}
       {isLoading && !hasError && !blurDataURL && (
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--panel-2)] via-[var(--panel)] to-[var(--panel-2)] animate-pulse">
+        <div className="absolute inset-0 overflow-hidden bg-gradient-to-r from-[var(--panel-2)] via-[var(--panel)] to-[var(--panel-2)]">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
       )}

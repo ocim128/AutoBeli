@@ -192,10 +192,7 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="mt-8 border-t border-[var(--line)] pt-5">
-            <div className="mb-5">
-              <ThemeToggle compact />
-            </div>
+          <div className="mt-auto border-t border-[var(--line)] pt-5">
             <p className="max-w-[15rem] text-sm leading-6 text-[var(--text-muted)]">
               {t("common.secureAutomatedDigital")}
             </p>

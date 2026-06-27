@@ -6,7 +6,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Panel } from "@/components/ui/panel";
 import { CornerFrame } from "@/components/ui/corner-frame";
 import { StatusBadge } from "@/components/ui/status-badge";
-import Spinner from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/button";
+import Spinner from "@/components/ui/spinner";
 import { toast } from "sonner";
 
 function ContentViewer({ token }: { token: string }) {
@@ -81,9 +82,7 @@ function ContentViewer({ token }: { token: string }) {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
-            {t("contentViewer.secureDelivery")}
-          </span>
+          <span className="eyebrow">{t("contentViewer.secureDelivery")}</span>
         </div>
         {content && (
           <StatusBadge status="success">{t("contentViewer.statusDecrypted")}</StatusBadge>
@@ -124,21 +123,16 @@ function ContentViewer({ token }: { token: string }) {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleReveal}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-8 py-3 font-mono text-sm font-medium uppercase tracking-wider text-[var(--accent-foreground)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="button" onClick={handleReveal} disabled={loading} size="xl">
               {loading ? (
                 <>
-                  <Spinner size={16} className="text-current" variant="classic" />
+                  <Spinner size={16} className="text-current" />
                   <span>{t("contentViewer.decrypting")}</span>
                 </>
               ) : (
                 <span>{t("contentViewer.unlockContent")}</span>
               )}
-            </button>
+            </Button>
 
             {error && (
               <p className="font-mono text-xs uppercase tracking-widest text-[var(--danger)]">
@@ -151,15 +145,15 @@ function ContentViewer({ token }: { token: string }) {
         <div className="space-y-4">
           {/* Actions row */}
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              {t("contentViewer.decryptedData")}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopyAll}
-              className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--foreground)]"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="eyebrow">{t("contentViewer.decryptedData")}</span>
+            <Button type="button" variant="outline" size="sm" onClick={handleCopyAll}>
+              <svg
+                className="size-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -168,7 +162,7 @@ function ContentViewer({ token }: { token: string }) {
                 />
               </svg>
               {copied ? t("contentViewer.copied") : t("contentViewer.copyToClipboard")}
-            </button>
+            </Button>
           </div>
 
           {/* Structured content display */}
@@ -179,11 +173,12 @@ function ContentViewer({ token }: { token: string }) {
           {/* Integrity footer */}
           <div className="flex items-center justify-between border-t border-[var(--line)] pt-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--success)]/10">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--success-soft)]">
                 <svg
-                  className="h-3.5 w-3.5 text-[var(--success)]"
+                  className="size-3.5 text-[var(--success)]"
                   fill="currentColor"
                   viewBox="0 0 20 20"
+                  aria-hidden="true"
                 >
                   <path
                     fillRule="evenodd"
@@ -192,9 +187,7 @@ function ContentViewer({ token }: { token: string }) {
                   />
                 </svg>
               </div>
-              <span className="font-mono text-[0.65rem] uppercase tracking-widest text-[var(--text-muted)]">
-                {t("contentViewer.verifiedIntegrity")}
-              </span>
+              <span className="eyebrow-sm">{t("contentViewer.verifiedIntegrity")}</span>
             </div>
             <p className="max-w-[200px] text-right font-mono text-[0.6rem] text-[var(--text-muted)]">
               {t("contentViewer.encryptedSession")}
@@ -268,7 +261,7 @@ function ContentLine({ index, line }: { index: number; line: string }) {
       }`}
     >
       {/* Line number */}
-      <span className="shrink-0 w-6 text-right font-mono text-[0.6rem] leading-[1.7] text-[var(--text-muted)]/50 tabular-nums select-none">
+      <span className="w-6 shrink-0 text-right font-mono text-[0.6rem] leading-[1.7] text-[var(--text-muted)] opacity-50 tabular-nums select-none">
         {index + 1}
       </span>
 

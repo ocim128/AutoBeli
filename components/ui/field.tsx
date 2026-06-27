@@ -26,12 +26,7 @@ export function Field({
     <div data-slot="field" className={cn("flex flex-col gap-2", className)} {...props}>
       <label
         htmlFor={htmlFor}
-        className={cn(
-          "text-sm font-medium text-[var(--foreground)]",
-          monoLabel
-            ? "font-mono text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)]"
-            : ""
-        )}
+        className={monoLabel ? "eyebrow" : "text-sm font-medium text-[var(--foreground)]"}
       >
         {label}
       </label>

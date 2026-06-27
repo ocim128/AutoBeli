@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export interface DataTableShellProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -36,11 +36,7 @@ export function DataTableShell({
       {/* Header / toolbar */}
       {(title || toolbar) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
-          {title && (
-            <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              {title}
-            </span>
-          )}
+          {title && <span className="eyebrow">{title}</span>}
           {toolbar && <div className="flex items-center gap-2">{toolbar}</div>}
         </div>
       )}
@@ -66,13 +62,7 @@ export function DataTableShell({
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            {/* Horizontal scroll indicator for narrow viewports */}
-            <div className="pointer-events-none sticky left-0 top-0 z-10 h-0">
-              <div className="absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-[var(--panel)] to-transparent opacity-0 [supports-selector(:-webkit-scrollbar)]:hidden sm:opacity-0" />
-            </div>
-            {children}
-          </div>
+          <div className="overflow-x-auto">{children}</div>
         )}
       </div>
     </div>

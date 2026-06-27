@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -89,7 +89,7 @@ export default function RecentSales() {
     return (
       <Panel monoLabel="RECENT ORDERS">
         <div className="flex items-center justify-center py-10">
-          <Spinner size={28} variant="classic" className="text-[var(--text-muted)]" />
+          <Spinner size={28} className="text-[var(--text-muted)]" />
         </div>
       </Panel>
     );

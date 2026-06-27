@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Panel } from "@/components/ui/panel";
 
 export function ProductGridSkeleton() {
