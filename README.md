@@ -149,6 +149,7 @@ Notes:
 - If Cloudflare email is not configured, local development can fall back to `.tmp/email-outbox`.
 - Order delivery does not depend on email. Email is a best-effort copy and recovery aid.
 - Mock payment and mock webhook routes are blocked in production.
+- Playwright requires `E2E_MONGODB_URI`, and refuses to run unless it points to a dedicated database whose name contains `e2e`. This prevents checkout tests and the local Qris mock from changing normal or production stock.
 
 ## Common commands
 

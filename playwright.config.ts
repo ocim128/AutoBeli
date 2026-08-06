@@ -1,5 +1,24 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const e2eMongoUri = process.env.E2E_MONGODB_URI?.trim();
+
+if (!e2eMongoUri) {
+  throw new Error(
+    "E2E_MONGODB_URI is required for Playwright. E2E tests refuse to use the app's normal MONGODB_URI."
+  );
+}
+
+let e2eDatabaseName = "";
+try {
+  e2eDatabaseName = decodeURIComponent(new URL(e2eMongoUri).pathname.replace(/^\/+/, ""));
+} catch {
+  throw new Error("E2E_MONGODB_URI must be a valid MongoDB connection string.");
+}
+
+if (!/(^|[-_])e2e([-_]|$)/i.test(e2eDatabaseName)) {
+  throw new Error("E2E_MONGODB_URI must point to a dedicated database whose name contains 'e2e'.");
+}
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -21,8 +40,10 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3001",
-    reuseExistingServer: !process.env.CI,
+    // Never reuse a dev server that may be connected to a non-E2E database.
+    reuseExistingServer: false,
     env: {
+      MONGODB_URI: e2eMongoUri,
       NEXT_PUBLIC_BASE_URL: "http://localhost:3001",
       // Run E2E under the Qris gateway so the Qris flow is exercised end-to-end.
       // The mock/pakasir tests mock provider endpoints at the network layer and
