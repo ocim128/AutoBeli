@@ -6,7 +6,7 @@ AutoBeli is a Next.js storefront for selling text-based digital products with se
 
 - Public storefront with localized product browsing and product detail pages
 - Checkout flow that creates `PENDING` orders and supports quantity-based stock
-- Payment integration with Pakasir, plus a mock gateway for local development
+- Payment integration with **Qris** (production gateway), plus a mock gateway for local development
 - Order-page-first delivery flow with recovery by email or order ID
 - AES-256 encrypted product content, decrypted only at delivery time
 - Admin dashboard for products, orders, analytics, audience, settings, and broadcast
@@ -29,8 +29,8 @@ AutoBeli is a Next.js storefront for selling text-based digital products with se
 
 1. Customer browses active products from `app/(store)`.
 2. `POST /api/orders` creates a `PENDING` order and reserves nothing yet.
-3. Customer pays through Pakasir or the local mock gateway.
-4. Webhook or order-page sync marks the order `PAID`, assigns stock, creates an access token, and attempts a confirmation email.
+3. Customer pays through Qris (or the local mock gateway in development).
+4. A signed Qris webhook (or order-page status sync) marks the order `PAID`, assigns stock, creates an access token, and attempts a confirmation email.
 5. Customer opens `/order/[orderId]`, which fetches the token and unlocks delivery through `/api/delivery/[token]`.
 6. If email is lost, `/recover` lets customers find paid orders by email or order ID.
 
@@ -77,6 +77,8 @@ Important: the current runtime expects `ADMIN_PASSWORD` and `JWT_SECRET`. The ol
 npm run db:setup-indexes
 ```
 
+This creates the Qris transaction lookup index (`idx_qris_payment_ref_unique`) used by webhooks and reconciliation. Run it against the AutoBeli database whenever you deploy; never point it at the Qris database.
+
 If you already have paid orders and want to populate the audience list:
 
 ```bash
@@ -100,7 +102,7 @@ Open:
 ### Required
 
 - `NEXT_PUBLIC_BASE_URL`
-  Public base URL used in links and mock payment flow.
+  Public base URL used for links, the mock payment flow, and the Qris webhook callback URL. **Must be HTTPS in production** so Qris can reach the webhook.
 - `MONGODB_URI`
   MongoDB connection string.
 - `ADMIN_PASSWORD`
@@ -110,12 +112,25 @@ Open:
 - `CONTENT_ENCRYPTION_KEY`
   Exactly 32 characters for AES-256 content encryption.
 - `PAYMENT_GATEWAY`
-  `PAKASIR` or `MOCK`.
+  `QRIS` (production), `MOCK` (local development), or `PAKASIR` (legacy reconciliation only). Production rejects `MOCK` and rejects `QRIS` when any Qris setting is missing or the base URL is not HTTPS.
 
-### Required when `PAYMENT_GATEWAY=PAKASIR`
+### Required when `PAYMENT_GATEWAY=QRIS`
+
+- `QRIS_API_BASE_URL`
+  Absolute HTTPS URL of the Qris service (for the current service, `https://qris.onrender.com`).
+- `QRIS_API_KEY`
+  Machine API key created in the Qris admin panel. This is **not** the panel's `PANEL_API_KEY`. Server-only secret; never expose it to the browser.
+- `QRIS_WEBHOOK_HMAC_KEY`
+  Must equal the Qris server's `WEBHOOK_HMAC_KEY` (configured on the Qris deployment, not through the panel). Used to verify `X-Signature` on incoming webhooks.
+
+In production, AutoBeli fails fast at request time and at the health endpoint if `PAYMENT_GATEWAY=QRIS` and any of these are missing or `QRIS_API_BASE_URL` is not HTTPS.
+
+### Legacy: `PAYMENT_GATEWAY=PAKASIR` (read-only reconciliation)
 
 - `PAKASIR_API_KEY`
 - `PAKASIR_PROJECT_SLUG`
+
+Pakasir remains only to render and reconcile historical orders created under it. No new Pakasir orders can be created once `PAYMENT_GATEWAY=QRIS`.
 
 ### Optional email and broadcast
 
@@ -192,6 +207,7 @@ Transactional and broadcast email is sent through the Cloudflare worker in [`wor
 - [`PERFORMANCE.md`](./PERFORMANCE.md)
 - [`docs/email-audience-and-product-broadcast-plan.md`](./docs/email-audience-and-product-broadcast-plan.md)
 - [`docs/hybrid-tactical-ui-redesign-plan.md`](./docs/hybrid-tactical-ui-redesign-plan.md)
+- [`docs/qris-payment-gateway-integration-plan.md`](./docs/qris-payment-gateway-integration-plan.md)
 
 ## License
 

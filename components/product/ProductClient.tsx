@@ -8,13 +8,20 @@ import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { StatusBadge } from "@/components/ui/status-badge";
 import LazyImage from "@/components/ui/lazy-image";
 import type { SerializedProduct } from "@/lib/products";
+import type { PaymentGateway } from "@/lib/definitions";
+
+const GATEWAY_LABELS: Record<PaymentGateway, string> = {
+  QRIS: "Qris",
+  PAKASIR: "Pakasir",
+  MOCK: "Mock",
+};
 
 export function ProductClient({
   product,
   paymentGateway,
 }: {
   product: SerializedProduct;
-  paymentGateway: "MOCK" | "PAKASIR";
+  paymentGateway: PaymentGateway;
 }) {
   const { t } = useLanguage();
 
@@ -200,7 +207,7 @@ export function ProductClient({
                 />
                 <PurchaseDetail
                   label={t("common.securePayment")}
-                  value={paymentGateway === "PAKASIR" ? "Pakasir" : "Mock"}
+                  value={GATEWAY_LABELS[paymentGateway]}
                 />
                 <PurchaseDetail
                   label={t("product.digitalAsset")}

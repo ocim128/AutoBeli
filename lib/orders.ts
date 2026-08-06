@@ -3,6 +3,7 @@ import { ObjectId, Db } from "mongodb";
 import { Order, Product } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
 import { getPakasirTransactionStatus } from "@/lib/pakasir";
+import { getQrisPayment } from "@/lib/qris";
 import { ensureAccessToken } from "@/lib/tokens";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { upsertAudienceFromPaidOrder } from "@/lib/audience";
@@ -426,6 +427,147 @@ async function retrySendingEmail(orderId: string, order: Order, db: Db): Promise
 }
 
 // ============================================
+// Qris Payment Event Processing
+// ============================================
+
+export interface QrisPaymentEvent {
+  paymentId: string;
+  status: "paid" | "expired";
+  amount: number; // Whole-Rupiah amount from the verified event/provider state
+  paidAmount?: number;
+  paidAt?: number; // Epoch milliseconds
+  expiresAt?: number; // Epoch milliseconds
+  attempt?: string; // Opaque creation-attempt nonce from the payment's webhook URL
+}
+
+export type QrisProcessResult =
+  | "paid"
+  | "already_paid"
+  | "expired"
+  | "already_expired"
+  | "ignored" // Stale/unknown payment ID or amount mismatch — permanent, do not retry
+  | "error"; // AutoBeli cannot safely determine the result — transient
+
+/**
+ * Shared processor for verified Qris status events. Used by the webhook, the
+ * create-route reconciliation, and the status-poll fallback so all paths
+ * converge on one paid order.
+ *
+ * A `paid` event is accepted only when the order is still PENDING, the stored
+ * provider is qris, the payment ID matches, and the event amount equals the
+ * final amount recorded at creation. An `expired` event only transitions
+ * PENDING -> EXPIRED for a matching payment ID and never assigns stock.
+ */
+export async function processQrisPaymentEvent(
+  event: QrisPaymentEvent,
+  db: Db
+): Promise<QrisProcessResult> {
+  const orderCollection = db.collection<Order>("orders");
+
+  let order = await orderCollection.findOne({
+    "paymentMetadata.provider": "qris",
+    "paymentMetadata.transaction_ref": event.paymentId,
+  });
+
+  if (!order && event.attempt) {
+    // Recovery: the webhook arrived before the create response was persisted.
+    // Attach the payment to the matching attempt nonce atomically, and never
+    // to an order that already has a stored payment ID.
+    order = await orderCollection.findOneAndUpdate(
+      {
+        paymentCreationAttempt: event.attempt,
+        status: "PENDING",
+        "paymentMetadata.transaction_ref": { $exists: false },
+      },
+      {
+        $set: {
+          paymentMetadata: {
+            provider: "qris",
+            transaction_ref: event.paymentId,
+            amount: event.amount,
+            ...(event.expiresAt !== undefined ? { expires_at: event.expiresAt } : {}),
+          },
+          updatedAt: new Date(),
+        },
+        $unset: { paymentCreationStartedAt: "", paymentCreationAttempt: "" },
+      },
+      { returnDocument: "after" }
+    );
+  }
+
+  if (!order || !order._id) {
+    return "ignored";
+  }
+
+  if (event.status === "expired") {
+    if (order.status === "PAID") return "already_paid";
+    if (order.status === "EXPIRED") return "already_expired";
+
+    // An expired event must still match the recorded final amount; a mismatch
+    // signals the event refers to a different payment than the one stored.
+    const storedAmount = order.paymentMetadata?.amount;
+    if (storedAmount !== undefined && event.amount !== storedAmount) {
+      console.error("[Qris] Rejected expired event with mismatched amount:", {
+        orderId: order._id.toString(),
+      });
+      return "ignored";
+    }
+
+    const expiredResult = await orderCollection.updateOne(
+      { _id: order._id, status: "PENDING" },
+      { $set: { status: "EXPIRED", updatedAt: new Date() } }
+    );
+
+    return expiredResult.modifiedCount > 0 ? "expired" : "already_expired";
+  }
+
+  // paid event
+  if (order.status === "PAID") return "already_paid";
+  if (order.status !== "PENDING") return "ignored"; // Late paid event after expiry
+
+  const storedAmount = order.paymentMetadata?.amount;
+  if (storedAmount === undefined) {
+    console.error("[Qris] Order has no stored final amount; refusing to fulfill:", {
+      orderId: order._id.toString(),
+    });
+    return "error";
+  }
+
+  if (event.amount !== storedAmount) {
+    console.error("[Qris] Rejected paid event with mismatched amount:", {
+      orderId: order._id.toString(),
+    });
+    return "ignored";
+  }
+
+  if (event.paidAmount !== undefined && event.paidAmount !== storedAmount) {
+    console.error("[Qris] Rejected paid event with mismatched paid_amount:", {
+      orderId: order._id.toString(),
+    });
+    return "ignored";
+  }
+
+  const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+  if (!product) {
+    console.error("[Qris] Product missing for paid order:", { orderId: order._id.toString() });
+    return "error";
+  }
+
+  const completed = await handleSuccessfulPayment({
+    orderId: order._id.toString(),
+    order,
+    product,
+    amount: storedAmount,
+    db,
+  });
+
+  if (completed) return "paid";
+
+  const current = await orderCollection.findOne({ _id: order._id });
+  return current?.status === "PAID" ? "already_paid" : "error";
+}
+
+// ============================================
 // Main Payment Sync Function
 // ============================================
 
@@ -473,6 +615,46 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
           });
         }
       }
+    }
+
+    // Handle Qris provider (reconciliation fallback when the webhook is delayed)
+    if (order.paymentMetadata.provider === "qris") {
+      const transactionRef = order.paymentMetadata.transaction_ref;
+      const statusCheck = await getQrisPayment(transactionRef);
+
+      if (!statusCheck.success) return false;
+
+      const payment = statusCheck.data;
+
+      if (payment.status === "paid") {
+        // processQrisPaymentEvent verifies the amount and paid_amount against
+        // the final amount recorded at creation before fulfilling.
+        const result = await processQrisPaymentEvent(
+          {
+            paymentId: transactionRef,
+            status: "paid",
+            amount: payment.amount,
+            paidAmount: payment.paidAmount,
+            expiresAt: payment.expiresAt,
+          },
+          db
+        );
+        return result === "paid";
+      }
+
+      if (payment.status === "expired" && order.status === "PENDING") {
+        await processQrisPaymentEvent(
+          {
+            paymentId: transactionRef,
+            status: "expired",
+            amount: order.paymentMetadata.amount ?? payment.amount,
+            expiresAt: payment.expiresAt,
+          },
+          db
+        );
+      }
+
+      return false;
     }
 
     // Handle Mock provider (for development/testing)

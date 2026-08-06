@@ -46,6 +46,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
               orderId={orderId}
               amount={totalAmount}
               paymentGateway={order.paymentGateway}
+              retry={isRetrying}
             />
           </div>
 

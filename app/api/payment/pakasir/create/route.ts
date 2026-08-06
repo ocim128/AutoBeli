@@ -70,6 +70,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // This route must not become a way to bypass the gateway the order was
+    // created under (e.g. paying a QRIS order through the legacy endpoint).
+    if (order.paymentGateway !== "PAKASIR") {
+      return NextResponse.json(
+        { error: "Order does not belong to this payment gateway" },
+        { status: 400 }
+      );
+    }
+
     if (order.status !== "PENDING") {
       return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
     }

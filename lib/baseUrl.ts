@@ -4,12 +4,21 @@ export function getBaseUrl(): string {
   const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
 
   if (configuredBaseUrl) {
+    let url: URL;
     try {
-      const url = new URL(configuredBaseUrl);
-      return url.origin.replace(/\/+$/, "");
+      url = new URL(configuredBaseUrl);
     } catch {
       throw new Error("NEXT_PUBLIC_BASE_URL must be an absolute URL");
     }
+
+    // A misconfigured HTTP base URL in production would produce insecure
+    // webhook URLs that the Qris service cannot reach and that leak the
+    // attempt nonce. Fail fast instead.
+    if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
+      throw new Error("NEXT_PUBLIC_BASE_URL must be an HTTPS URL in production");
+    }
+
+    return url.origin.replace(/\/+$/, "");
   }
 
   if (typeof window !== "undefined") {

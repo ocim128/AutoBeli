@@ -1,4 +1,5 @@
 import { getProductBySlug, serializeProductForClient } from "@/lib/products";
+import { getPaymentGateway } from "@/lib/paymentGateway";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductClient } from "@/components/product/ProductClient";
@@ -45,8 +46,7 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const serializedProduct = serializeProductForClient(product);
-  const raw = process.env.PAYMENT_GATEWAY || "MOCK";
-  const paymentGateway: "MOCK" | "PAKASIR" = raw === "PAKASIR" ? "PAKASIR" : "MOCK";
+  const paymentGateway = getPaymentGateway();
 
   return <ProductClient product={serializedProduct} paymentGateway={paymentGateway} />;
 }

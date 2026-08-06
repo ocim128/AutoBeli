@@ -91,37 +91,10 @@ test.describe("Checkout Flow", () => {
   });
 
   test("complete purchase flow - product to order confirmation", async ({ page }) => {
-    // Set up payment mock for Pakasir endpoint
-    await page.route("**/api/payment/pakasir/create", async (route) => {
-      const body = await route.request().postDataJSON();
-      const orderId = body.orderId;
-      const origin = new URL(route.request().url()).origin;
-
-      const webhookResponse = await fetch(`${origin}/api/webhooks/pakasir`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: orderId,
-          amount: 10000,
-          project: "test-project",
-          status: "completed",
-        }),
-      });
-
-      if (!webhookResponse.ok) {
-        throw new Error(`Test webhook failed: ${await webhookResponse.text()}`);
-      }
-
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          payment_url: `/order/${orderId}`,
-          transaction_ref: "test_ref",
-        }),
-      });
-    });
+    // Under PAYMENT_GATEWAY=QRIS the CheckoutForm posts to the qris create
+    // endpoint, which calls the local Qris mock server (see playwright.config.ts
+    // and e2e/helpers/qris-mock-server.ts). The order page then renders the
+    // pending state. Full settlement is covered by qris-checkout.spec.ts.
 
     // Check for app error (DB down)
     const hasError = await hasAppError(page);
@@ -150,7 +123,7 @@ test.describe("Checkout Flow", () => {
     const payButton = page.getByRole("button", { name: /Bayar/i });
     await payButton.click();
 
-    // Step 7: Should navigate to order confirmation page
+    // Step 7: Should navigate to the order page (pending state under QRIS).
     await expect(page).toHaveURL(/\/order\/.+/, { timeout: 10000 });
   });
 

@@ -65,8 +65,9 @@ AutoBeli is a digital text storefront built on Next.js App Router. It supports s
   - `JWT_SECRET`
 - Product content is encrypted with `CONTENT_ENCRYPTION_KEY` and must only be decrypted in secure delivery paths.
 - Payment gateway is selected by `PAYMENT_GATEWAY`:
-  - `PAKASIR` for real transactions
+  - `QRIS` for real transactions (the only production gateway)
   - `MOCK` for local development only
+  - `PAKASIR` is legacy: orders created under it remain readable and reconcilable, but no new orders can be created under Pakasir once `PAYMENT_GATEWAY=QRIS`.
 
 Important: `.env.example` still contains some older auth naming. Follow the runtime code, not the stale names.
 

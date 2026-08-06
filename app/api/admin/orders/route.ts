@@ -38,7 +38,15 @@ export async function GET(request: Request) {
           },
         },
         { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-        { $project: { "product.contentEncrypted": 0, "product.stockItems.contentEncrypted": 0 } },
+        {
+          $project: {
+            "product.contentEncrypted": 0,
+            "product.stockItems.contentEncrypted": 0,
+            // Internal payment-creation lease fields must not reach the browser
+            paymentCreationStartedAt: 0,
+            paymentCreationAttempt: 0,
+          },
+        },
       ])
       .toArray();
 

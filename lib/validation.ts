@@ -136,6 +136,29 @@ export const pakasirWebhookSchema = z.object({
   completed_at: z.string().optional(),
 });
 
+export const qrisPaymentCreateSchema = z.object({
+  orderId: z
+    .string()
+    .min(1, "Order ID is required")
+    .regex(REGEX_PATTERNS.objectId, "Invalid order ID format"),
+  retry: z.boolean().optional(),
+});
+
+export const qrisWebhookSchema = z.object({
+  payment_id: z.string().min(1).max(200),
+  payment_status: z.enum(["paid", "expired"]),
+  amount: z.number().int().positive("Amount must be positive"),
+  // `paid_amount` is intentionally optional: the Qris webhook body does not
+  // carry it (settlement amount lives on the REST record, not the event).
+  // The settlement-time amount check uses the amount recorded at creation.
+  paid_amount: z.number().int().positive().optional(),
+  // `paid_at` is an epoch-millisecond number in the Qris webhook; accept the
+  // ISO sibling too for forward compatibility.
+  paid_at: z.union([z.number().positive(), z.string().max(100)]).optional(),
+  expires_at: z.union([z.number(), z.string().max(100)]).optional(),
+  provider_transaction: z.record(z.string(), z.unknown()).optional(),
+});
+
 // ============================================
 // Settings Schemas
 // ============================================
@@ -229,6 +252,8 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type MockPaymentInput = z.infer<typeof mockPaymentSchema>;
 export type PakasirPaymentInput = z.infer<typeof pakasirPaymentSchema>;
 export type PakasirWebhookInput = z.infer<typeof pakasirWebhookSchema>;
+export type QrisPaymentCreateInput = z.infer<typeof qrisPaymentCreateSchema>;
+export type QrisWebhookInput = z.infer<typeof qrisWebhookSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 export type AudienceQueryInput = z.infer<typeof audienceQuerySchema>;
 export type UpdateAudienceInput = z.infer<typeof updateAudienceSchema>;

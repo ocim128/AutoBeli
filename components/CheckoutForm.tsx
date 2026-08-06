@@ -11,14 +11,16 @@ import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import type { PaymentGateway } from "@/lib/definitions";
 
 interface CheckoutFormProps {
   orderId: string;
   amount: number;
-  paymentGateway: "MOCK" | "PAKASIR";
+  paymentGateway: PaymentGateway;
+  retry?: boolean;
 }
 
-function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
+function CheckoutForm({ orderId, amount, paymentGateway, retry = false }: CheckoutFormProps) {
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,8 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
   // Get the correct payment endpoint based on gateway
   const getPaymentEndpoint = useCallback(() => {
     switch (paymentGateway) {
+      case "QRIS":
+        return "/api/payment/qris/create";
       case "PAKASIR":
         return "/api/payment/pakasir/create";
       case "MOCK":
@@ -67,7 +71,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         const payRes = await fetch(getPaymentEndpoint(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId }),
+          body: JSON.stringify({ orderId, ...(retry ? { retry: true } : {}) }),
         });
 
         const payData = await payRes.json();
@@ -93,7 +97,7 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         setLoading(false);
       }
     },
-    [contact, orderId, router, t, getPaymentEndpoint]
+    [contact, orderId, router, t, getPaymentEndpoint, retry]
   );
 
   return (
@@ -182,19 +186,28 @@ function CheckoutForm({ orderId, amount, paymentGateway }: CheckoutFormProps) {
         </Button>
       </form>
 
-      {/* Payment Methods — only shown for real gateway */}
-      {paymentGateway === "PAKASIR" && (
+      {/* Server-managed pricing note for Qris */}
+      {paymentGateway === "QRIS" && (
+        <p className="mt-4 text-center text-xs leading-5 text-[var(--text-muted)]">
+          {t("checkout.qrisUniqueAmountNote")}
+        </p>
+      )}
+
+      {/* Payment Methods — only shown for real gateways */}
+      {paymentGateway !== "MOCK" && (
         <div className="mt-10 pt-6 border-t border-[var(--line)]">
           <p className="eyebrow-sm mb-4 text-center">{t("checkout.supportedMethods")}</p>
           <div className="flex justify-center items-center gap-5">
-            {["QRIS", "BCA", "GOPAY", "OVO"].map((method) => (
-              <span
-                key={method}
-                className="flex items-center justify-center h-8 px-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]"
-              >
-                {method}
-              </span>
-            ))}
+            {(paymentGateway === "QRIS" ? ["Qris"] : ["QRIS", "BCA", "GOPAY", "OVO"]).map(
+              (method) => (
+                <span
+                  key={method}
+                  className="flex items-center justify-center h-8 px-3 rounded-md border border-[var(--line)] bg-[var(--panel-2)] font-mono text-[0.65rem] tracking-wider text-[var(--text-muted)]"
+                >
+                  {method}
+                </span>
+              )
+            )}
           </div>
         </div>
       )}

@@ -18,6 +18,12 @@ interface OrderPaidProps {
   token: string | null;
 }
 
+const GATEWAY_LABELS: Record<string, string> = {
+  QRIS: "Qris",
+  PAKASIR: "Pakasir",
+  MOCK: "Mock",
+};
+
 export default function OrderPaid({
   orderId,
   productTitle,
@@ -27,6 +33,7 @@ export default function OrderPaid({
   token,
 }: OrderPaidProps) {
   const { t, language } = useLanguage();
+  const gatewayLabel = GATEWAY_LABELS[paymentGateway] ?? paymentGateway;
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
@@ -71,7 +78,7 @@ export default function OrderPaid({
                 </div>
                 <div className="py-4">
                   <span className="eyebrow-sm mb-1 block">{t("checkout.paymentMethod")}</span>
-                  <span className="text-sm text-[var(--foreground)]">{paymentGateway}</span>
+                  <span className="text-sm text-[var(--foreground)]">{gatewayLabel}</span>
                 </div>
                 <div className="pt-4">
                   <span className="eyebrow-sm mb-1 block">{t("checkout.orderId")}</span>

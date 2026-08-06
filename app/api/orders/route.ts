@@ -8,6 +8,8 @@ import {
 } from "@/lib/audience";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 import { validate, createOrderSchema, updateOrderContactSchema } from "@/lib/validation";
+import { getPaymentGateway } from "@/lib/paymentGateway";
+import { isQrisBaseAmountSupported, isQrisConfigured } from "@/lib/qris";
 
 /**
  * @swagger
@@ -130,7 +132,24 @@ export async function POST(request: Request) {
     }
 
     // Create Order (PENDING)
-    const gateway = (process.env.PAYMENT_GATEWAY || "MOCK") as "MOCK" | "PAKASIR";
+    const gateway = getPaymentGateway();
+
+    if (gateway === "QRIS") {
+      if (!isQrisConfigured()) {
+        console.error("[Orders] PAYMENT_GATEWAY=QRIS but Qris is not configured");
+        return NextResponse.json({ error: "Payment gateway not configured" }, { status: 503 });
+      }
+
+      // Reject totals the configured gateway can never accept, before inserting
+      const totalAmount = product.priceIdr * orderQuantity;
+      if (!isQrisBaseAmountSupported(totalAmount)) {
+        return NextResponse.json(
+          { error: "Order total is outside the supported payment range" },
+          { status: 400 }
+        );
+      }
+    }
+
     const newOrder: Order = {
       productId: product._id!,
       quantity: orderQuantity,

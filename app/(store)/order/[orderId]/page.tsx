@@ -18,9 +18,33 @@ export default async function OrderPage({ params }: Props) {
   const order = await getOrderWithProduct(orderId);
   if (!order) notFound();
 
-  // 2. Handle Pending State
+  // 2. Handle Pending / Expired States
   if (order.status !== "PAID") {
+    const isQris = order.paymentMetadata?.provider === "qris";
     const hasPendingPayment = order.paymentMetadata?.transaction_ref;
+    const quantity = order.quantity || 1;
+
+    // For Qris, the customer must see the final server-managed amount recorded
+    // at creation — never the pending order's amountPaid (which remains zero).
+    const displayAmount =
+      isQris && order.paymentMetadata?.amount !== undefined
+        ? order.paymentMetadata.amount
+        : isQris
+          ? order.product.priceIdr * quantity
+          : order.amountPaid;
+
+    if (order.status === "EXPIRED") {
+      return (
+        <OrderPending
+          orderId={orderId}
+          productTitle={order.product.title}
+          amount={displayAmount}
+          createdAt={order.createdAt}
+          isQris={isQris}
+          isExpired
+        />
+      );
+    }
 
     if (!hasPendingPayment) {
       redirect(`/checkout/${orderId}`);
@@ -31,8 +55,10 @@ export default async function OrderPage({ params }: Props) {
       <OrderPending
         orderId={orderId}
         productTitle={order.product.title}
-        amountPaid={order.amountPaid}
+        amount={displayAmount}
         createdAt={order.createdAt}
+        isQris={isQris}
+        expiresAt={isQris ? order.paymentMetadata?.expires_at : undefined}
       />
     );
   }

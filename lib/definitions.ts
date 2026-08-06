@@ -39,6 +39,8 @@ export interface Product {
   updatedAt: Date;
 }
 
+export type PaymentGateway = "MOCK" | "PAKASIR" | "QRIS";
+
 export interface Order {
   _id?: ObjectId;
   productId: ObjectId;
@@ -47,10 +49,12 @@ export interface Order {
   stockItemIds?: string[]; // For multi-item purchases
   status: "PENDING" | "PAID" | "EXPIRED";
   amountPaid: number;
-  paymentGateway: "MOCK" | "PAKASIR";
+  paymentGateway: PaymentGateway;
   paymentMetadata?: {
-    provider: string;
-    transaction_ref?: string;
+    provider: "qris" | "mock" | "pakasir";
+    transaction_ref?: string; // Qris payment ID (idempotency key); provider-specific otherwise
+    amount?: number; // Final Qris amount (server-managed, may differ from product total)
+    expires_at?: number; // Qris payment expiry, epoch milliseconds
     signature?: string;
     payment_method?: string;
     payment_time?: string;
@@ -60,6 +64,8 @@ export interface Order {
   emailSent?: boolean; // True when order confirmation email has been sent
   paymentCompletionStartedAt?: Date; // Internal idempotency lock for payment completion
   paymentCompletionError?: string; // Last stock/payment completion failure, if any
+  paymentCreationStartedAt?: Date; // Internal Qris creation lease; never serialize to the browser
+  paymentCreationAttempt?: string; // Internal opaque Qris creation-attempt nonce; never serialize
   createdAt: Date;
   updatedAt: Date;
 }

@@ -13,44 +13,100 @@ import Link from "next/link";
 interface OrderPendingProps {
   orderId: string;
   productTitle: string;
-  amountPaid: number;
+  amount: number; // Final payable amount (stored Qris amount for Qris orders)
   createdAt: Date | string;
+  isQris?: boolean;
+  expiresAt?: number; // Qris payment expiry, epoch milliseconds
+  isExpired?: boolean;
 }
+
+const POLL_INTERVAL_MS = 8000;
+const EXPIRY_GRACE_MS = 30_000;
+const FALLBACK_POLL_CUTOFF_MS = 180_000;
 
 export default function OrderPending({
   orderId,
   productTitle,
-  amountPaid,
+  amount,
   createdAt,
+  isQris = false,
+  expiresAt,
+  isExpired = false,
 }: OrderPendingProps) {
   const { t, language } = useLanguage();
   const router = useRouter();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const expiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-poll for payment status updates.
   // The server page (order/[orderId]/page.tsx) calls syncOrderPaymentStatus()
   // on every render, so router.refresh() triggers a server re-check.
   // If status changed to PAID, the server renders OrderPaid instead.
+  // Qris orders poll until the provider expiry plus a short grace period;
+  // other gateways keep the fixed three-minute cutoff.
   useEffect(() => {
-    pollingRef.current = setInterval(() => {
-      router.refresh();
-    }, 8000);
+    if (isExpired) return;
 
-    // Stop polling after 3 minutes to avoid unnecessary server load
-    expiryRef.current = setTimeout(() => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
+    const cutoff = expiresAt ? expiresAt + EXPIRY_GRACE_MS : Date.now() + FALLBACK_POLL_CUTOFF_MS;
+
+    pollingRef.current = setInterval(() => {
+      if (Date.now() > cutoff) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
         pollingRef.current = null;
+        return;
       }
-      expiryRef.current = null;
-    }, 180_000);
+      router.refresh();
+    }, POLL_INTERVAL_MS);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
-      if (expiryRef.current) clearTimeout(expiryRef.current);
     };
-  }, [router]);
+  }, [router, expiresAt, isExpired]);
+
+  if (isExpired) {
+    return (
+      <div className="min-h-[80vh] py-16 px-4">
+        <div className="mx-auto max-w-2xl space-y-10">
+          <PageHeader
+            eyebrow={t("checkout.orderDetails")}
+            title={t("checkout.paymentExpired")}
+            align="center"
+            description={t("checkout.paymentExpiredDesc")}
+            size="lg"
+          />
+
+          <Panel featured monoLabel={t("checkout.orderSummary")} padding="lg">
+            <div className="space-y-0 divide-y divide-[var(--line)]">
+              <div className="flex items-start justify-between gap-4 pb-4">
+                <span className="eyebrow-sm">{t("checkout.product")}</span>
+                <span className="text-right text-sm font-medium text-[var(--foreground)]">
+                  {productTitle}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-4">
+                <span className="eyebrow-sm">{t("checkout.orderId")}</span>
+                <span className="font-mono text-xs text-[var(--text-muted)]">
+                  #{shortOrderId(orderId)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between border-t border-[var(--line)] pt-5">
+              <StatusBadge status="error">{t("checkout.paymentExpired")}</StatusBadge>
+            </div>
+          </Panel>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href={`/checkout/${orderId}?retry=true`}
+              className={buttonVariants({ size: "xl" })}
+            >
+              {t("checkout.createNewPayment")}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] py-16 px-4">
@@ -60,9 +116,45 @@ export default function OrderPending({
           eyebrow={t("checkout.orderDetails")}
           title={t("checkout.paymentVerification")}
           align="center"
-          description={t("checkout.paymentVerificationDesc")}
+          description={
+            isQris ? t("checkout.scanQrInstruction") : t("checkout.paymentVerificationDesc")
+          }
           size="lg"
         />
+
+        {/* Qris QR code */}
+        {isQris && (
+          <Panel featured padding="lg" className="space-y-5">
+            <div className="flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/payment/qris/image?orderId=${orderId}`}
+                alt="Qris QR code"
+                width={280}
+                height={280}
+                className="rounded-[var(--radius-md)] border border-[var(--line)] bg-white p-2"
+              />
+            </div>
+            <div className="space-y-2 text-center">
+              <p className="eyebrow-sm">{t("checkout.payExactAmount")}</p>
+              <p className="font-serif text-3xl tracking-tight text-[var(--foreground)]">
+                {formatIDR(amount)}
+              </p>
+              {expiresAt && (
+                <p className="text-xs text-[var(--text-muted)]">
+                  {t("checkout.expiresAt")}{" "}
+                  {formatDate(new Date(expiresAt), language === "id" ? "id-ID" : "en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
+          </Panel>
+        )}
 
         {/* Order Brief — featured panel */}
         <Panel featured monoLabel={t("checkout.orderSummary")} padding="lg">
@@ -76,7 +168,7 @@ export default function OrderPending({
             <div className="flex items-center justify-between py-4">
               <span className="eyebrow-sm">{t("checkout.amount")}</span>
               <span className="font-mono text-sm font-medium text-[var(--foreground)]">
-                {formatIDR(amountPaid)}
+                {formatIDR(amount)}
               </span>
             </div>
             <div className="flex items-center justify-between py-4">

@@ -159,6 +159,15 @@ export const translations = {
       networkError: "Kesalahan jaringan. Periksa koneksi Anda dan coba lagi.",
       contactSaveFailed: "Gagal menyimpan kontak.",
       paymentCreationFailed: "Gagal membuat pembayaran.",
+      qrisUniqueAmountNote:
+        "Nominal akhir dapat memiliki akhiran unik Rp 0–999 untuk identifikasi pembayaran. Bayar sesuai nominal persis yang ditampilkan pada halaman pesanan.",
+      scanQrInstruction: "Pindai kode QR dengan aplikasi pembayaran apa pun yang mendukung QRIS.",
+      payExactAmount: "Bayar sesuai nominal persis",
+      expiresAt: "Berlaku hingga",
+      paymentExpired: "Pembayaran Kedaluwarsa",
+      paymentExpiredDesc:
+        "Kode QR pembayaran Anda telah kedaluwarsa. Buat pembayaran baru untuk menyelesaikan pesanan.",
+      createNewPayment: "Buat Pembayaran Baru",
     },
     contentViewer: {
       contentEncrypted: "Konten Terenkripsi",
@@ -342,6 +351,15 @@ export const translations = {
       networkError: "Network error. Please check your connection and try again.",
       contactSaveFailed: "Failed to save contact.",
       paymentCreationFailed: "Payment creation failed.",
+      qrisUniqueAmountNote:
+        "The final amount may include a unique IDR 0–999 suffix for payment identification. Pay the exact amount shown on the order page.",
+      scanQrInstruction: "Scan the QR code with any QRIS-supported payment app.",
+      payExactAmount: "Pay the exact amount",
+      expiresAt: "Valid until",
+      paymentExpired: "Payment Expired",
+      paymentExpiredDesc:
+        "Your payment QR code has expired. Create a new payment to complete your order.",
+      createNewPayment: "Create New Payment",
     },
     contentViewer: {
       contentEncrypted: "Content Encrypted",

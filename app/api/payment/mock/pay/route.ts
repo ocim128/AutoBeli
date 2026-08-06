@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getMongoClient } from "@/lib/db";
+import { Order } from "@/lib/definitions";
+import { ObjectId } from "mongodb";
 
 export async function POST(request: Request) {
   // Safety check: mock payment should NEVER be available in production
@@ -9,8 +12,21 @@ export async function POST(request: Request) {
   try {
     const { orderId } = await request.json();
 
-    if (!orderId) {
+    if (!orderId || !ObjectId.isValid(orderId)) {
       return NextResponse.json({ error: "Order ID required" }, { status: 400 });
+    }
+
+    // The mock route must only serve orders stored under the mock gateway so
+    // it cannot be used to "pay" an order from the configured real gateway.
+    const client = await getMongoClient();
+    const db = client.db();
+    const order = await db.collection<Order>("orders").findOne({ _id: new ObjectId(orderId) });
+
+    if (!order || order.paymentGateway !== "MOCK") {
+      return NextResponse.json(
+        { error: "Order does not belong to this payment gateway" },
+        { status: 400 }
+      );
     }
 
     // Simulate Payment Provider Processing delay

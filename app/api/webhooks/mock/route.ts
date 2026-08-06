@@ -30,6 +30,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // The mock webhook must only fulfill orders stored under the mock gateway
+    if (order.paymentGateway !== "MOCK") {
+      return NextResponse.json(
+        { error: "Order does not belong to this payment gateway" },
+        { status: 400 }
+      );
+    }
+
     // Idempotency check: if already paid, just return success
     if (order.status === "PAID") {
       return NextResponse.json({ success: true, message: "Already paid" });

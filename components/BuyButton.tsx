@@ -6,11 +6,18 @@ import Spinner from "@/components/ui/spinner";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import type { PaymentGateway } from "@/lib/definitions";
+
+const GATEWAY_LABELS: Record<PaymentGateway, string> = {
+  QRIS: "Qris",
+  PAKASIR: "Pakasir",
+  MOCK: "Mock",
+};
 
 interface BuyButtonProps {
   slug: string;
   maxQuantity?: number;
-  paymentGateway: "MOCK" | "PAKASIR";
+  paymentGateway: PaymentGateway;
 }
 
 function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
@@ -118,14 +125,14 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
         </span>
       </Button>
 
-      {paymentGateway === "PAKASIR" && (
+      {paymentGateway !== "MOCK" && (
         <div className="grid gap-3 border-t border-[var(--line)] pt-4 text-left sm:grid-cols-3">
           <div className="space-y-1">
             <span className="block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-[var(--text-muted)]">
               {t("common.securePayment")}
             </span>
             <span className="block rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--foreground)]">
-              Pakasir
+              {GATEWAY_LABELS[paymentGateway]}
             </span>
           </div>
           <div className="space-y-1">
@@ -133,7 +140,7 @@ function BuyButton({ slug, maxQuantity = 1, paymentGateway }: BuyButtonProps) {
               {t("checkout.paymentMethod")}
             </span>
             <span className="block rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[var(--foreground)]">
-              QRIS / VA / Wallet
+              {paymentGateway === "QRIS" ? "QRIS" : "QRIS / VA / Wallet"}
             </span>
           </div>
           <div className="space-y-1">

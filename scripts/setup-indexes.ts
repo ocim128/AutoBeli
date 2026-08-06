@@ -136,6 +136,23 @@ async function setupIndexes() {
     );
     console.log("  ✅ Created TTL index: orders.createdAt (24h expiry for PENDING)");
 
+    // Unique partial index for Qris webhook/reconciliation lookups:
+    // one provider payment can never be assigned to two orders
+    await db.collection("orders").createIndex(
+      { "paymentMetadata.provider": 1, "paymentMetadata.transaction_ref": 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          "paymentMetadata.provider": "qris",
+          "paymentMetadata.transaction_ref": { $type: "string", $gt: "" },
+        },
+        name: "idx_qris_payment_ref_unique",
+      }
+    );
+    console.log(
+      "  ✅ Created unique partial index: orders.{paymentMetadata.provider, paymentMetadata.transaction_ref} (qris)"
+    );
+
     // ========================================
     // ACCESS TOKENS COLLECTION INDEXES
     // ========================================
