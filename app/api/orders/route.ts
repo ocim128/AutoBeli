@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { getMongoClient } from "@/lib/db";
 import { Product, Order } from "@/lib/definitions";
 import { ObjectId } from "mongodb";
-import {
-  reconcileAudienceForPaidOrderContactChange,
-  upsertAudienceFromPaidOrder,
-} from "@/lib/audience";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 import { validate, createOrderSchema, updateOrderContactSchema } from "@/lib/validation";
 import { getPaymentGateway } from "@/lib/paymentGateway";
@@ -207,7 +203,6 @@ export async function PATCH(request: Request) {
     const client = await getMongoClient();
     const db = client.db();
 
-    // Load previous contact before update for audience reconciliation
     const existingOrder = await db
       .collection<Order>("orders")
       .findOne({ _id: new ObjectId(orderId) });
@@ -216,10 +211,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const previousContact = existingOrder?.customerContact;
+    if (existingOrder.status === "PAID") {
+      return NextResponse.json(
+        { error: "Customer contact cannot be changed after payment" },
+        { status: 409 }
+      );
+    }
 
-    await db.collection<Order>("orders").updateOne(
-      { _id: new ObjectId(orderId) },
+    const updateResult = await db.collection<Order>("orders").updateOne(
+      { _id: new ObjectId(orderId), status: { $ne: "PAID" } },
       {
         $set: {
           customerContact: normalizedContact,
@@ -228,23 +228,11 @@ export async function PATCH(request: Request) {
       }
     );
 
-    // Sync audience if the contact was added or changed on a PAID order
-    if (existingOrder.status === "PAID") {
-      const normalizedPrev = previousContact ? previousContact.trim().toLowerCase() : "";
-
-      if (!normalizedPrev) {
-        try {
-          await upsertAudienceFromPaidOrder(normalizedContact, db);
-        } catch (audienceError) {
-          console.error("[Audience] Failed to sync new paid order contact:", audienceError);
-        }
-      } else if (normalizedPrev !== normalizedContact) {
-        try {
-          await reconcileAudienceForPaidOrderContactChange(previousContact!, normalizedContact, db);
-        } catch (reconciliationError) {
-          console.error("[Audience] Failed to reconcile contact change:", reconciliationError);
-        }
-      }
+    if (updateResult.matchedCount === 0) {
+      return NextResponse.json(
+        { error: "Customer contact cannot be changed after payment" },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json({ success: true });

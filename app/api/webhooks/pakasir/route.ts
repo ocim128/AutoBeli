@@ -54,20 +54,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // Pakasir is legacy-only. Never let this compatibility webhook settle a
+    // QRIS, MOCK, or otherwise differently-routed order.
+    if (order.paymentGateway !== "PAKASIR") {
+      return NextResponse.json(
+        { error: "Order does not belong to this payment gateway" },
+        { status: 400 }
+      );
+    }
+
     // 2. Idempotency: if already paid, return success immediately
     if (order.status === "PAID") {
       return NextResponse.json({ success: true, message: "Already paid" });
     }
 
+    const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const expectedAmount = product.priceIdr * (order.quantity || 1);
+    if (amount !== expectedAmount) {
+      return NextResponse.json({ success: false, message: "Amount mismatch" }, { status: 200 });
+    }
+
     // 3. Verify transaction status with Pakasir API
     // Skip verification for E2E test projects
-    const isTestProject = project === "test-project" || project === "mock-project";
+    const isTestProject =
+      process.env.NODE_ENV !== "production" &&
+      (project === "test-project" || project === "mock-project");
     let verifiedStatus = "pending";
 
     if (isTestProject) {
       verifiedStatus = "completed";
     } else {
-      const verification = await getPakasirTransactionStatus(order_id, amount);
+      const verification = await getPakasirTransactionStatus(order_id, expectedAmount);
       if (verification.success && verification.data) {
         verifiedStatus = verification.data.transaction.status;
       } else {
@@ -83,18 +104,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Not completed" }, { status: 200 });
     }
 
-    // 4. Get Product
-    const product = await db.collection<Product>("products").findOne({ _id: order.productId });
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-
     // 5. Use shared completion logic
     await handleSuccessfulPayment({
       orderId: order_id,
       order,
       product,
-      amount,
+      amount: expectedAmount,
       db,
       isTest: isTestProject,
     });

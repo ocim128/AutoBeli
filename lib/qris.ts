@@ -12,6 +12,7 @@ import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 export const QRIS_MIN_BASE_AMOUNT = 1000;
 export const QRIS_MAX_BASE_AMOUNT = 9999000;
+export const QRIS_MAX_UNIQUE_SUFFIX = 999;
 export const QRIS_DEFAULT_TIMEOUT_MS = 300000; // 5 minutes
 export const QRIS_DEFAULT_TIMEZONE = "Asia/Jakarta";
 
@@ -150,6 +151,10 @@ function validateQrisPayment(raw: unknown): QrisPayment | null {
   if (!raw || typeof raw !== "object") return null;
   const body = raw as Record<string, unknown>;
 
+  if (body.currency !== undefined && body.currency !== "IDR" && body.currency !== "idr") {
+    return null;
+  }
+
   const paymentId =
     typeof body.payment_id === "string"
       ? body.payment_id
@@ -184,10 +189,13 @@ function validateQrisPayment(raw: unknown): QrisPayment | null {
   if (paidAtMs !== undefined) payment.paidAt = new Date(paidAtMs).toISOString();
 
   // A paid REST record must report what was actually paid, and it must equal
-  // the recorded amount (tolerance is 0 at the AutoBeli side).
+  // the recorded amount (tolerance is 0 at the AutoBeli side). It must also
+  // include a settlement timestamp; otherwise a malformed provider response
+  // could be treated as a completed payment during reconciliation.
   if (status === "paid") {
     if (payment.paidAmount === undefined) return null;
     if (payment.paidAmount !== amount) return null;
+    if (payment.paidAt === undefined) return null;
   }
 
   return payment;
@@ -238,20 +246,46 @@ export function readBodyWithTimeout(response: Response, timeoutMs: number): Prom
 
 async function readImageWithTimeout(response: Response, timeoutMs: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
+    const reader = response.body?.getReader();
+    if (!reader) {
+      reject(new Error("QR image response has no body"));
+      return;
+    }
+
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
     const timer = setTimeout(() => {
+      void reader.cancel().catch(() => {});
       reject(new Error(`Response body read timed out after ${timeoutMs}ms`));
     }, timeoutMs);
 
-    response
-      .arrayBuffer()
-      .then((buf) => {
-        clearTimeout(timer);
-        resolve(Buffer.from(buf));
-      })
-      .catch((error) => {
+    const read = async () => {
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) {
+            clearTimeout(timer);
+            resolve(Buffer.concat(chunks));
+            return;
+          }
+
+          totalBytes += value.byteLength;
+          if (totalBytes > MAX_QR_IMAGE_BYTES) {
+            clearTimeout(timer);
+            await reader.cancel().catch(() => {});
+            reject(new Error("QR image too large"));
+            return;
+          }
+
+          chunks.push(value);
+        }
+      } catch (error) {
         clearTimeout(timer);
         reject(error);
-      });
+      }
+    };
+
+    void read();
   });
 }
 
@@ -322,7 +356,11 @@ export async function createQrisPayment(params: {
 
   const body = await parseJsonBody(response, CREATE_TIMEOUT_MS);
   const payment = validateQrisPayment(body);
-  if (!payment) {
+  if (
+    !payment ||
+    payment.amount < params.baseAmount ||
+    payment.amount > params.baseAmount + QRIS_MAX_UNIQUE_SUFFIX
+  ) {
     console.error("[Qris] create payment returned a malformed body");
     return { success: false, error: "Malformed Qris response", indeterminate: true };
   }
@@ -359,7 +397,7 @@ export async function getQrisPayment(paymentId: string): Promise<QrisGetResult> 
 
   const body = await parseJsonBody(response, REQUEST_TIMEOUT_MS);
   const payment = validateQrisPayment(body);
-  if (!payment) {
+  if (!payment || payment.paymentId !== paymentId) {
     console.error("[Qris] get payment returned a malformed body");
     return { success: false, error: "Malformed Qris response" };
   }
@@ -404,7 +442,19 @@ export async function fetchQrisQrImage(paymentId: string): Promise<QrisImageResu
     return { success: false, error: "QR image too large" };
   }
 
-  const image = await readImageWithTimeout(response, REQUEST_TIMEOUT_MS);
+  let image: Buffer;
+  try {
+    image = await readImageWithTimeout(response, REQUEST_TIMEOUT_MS);
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error && error.message === "QR image too large"
+          ? "QR image too large"
+          : "QR image read failed",
+    };
+  }
+
   if (image.byteLength === 0 || image.byteLength > MAX_QR_IMAGE_BYTES) {
     return { success: false, error: "QR image too large" };
   }

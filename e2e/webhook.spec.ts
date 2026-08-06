@@ -11,7 +11,7 @@ async function hasAppError(page: Page): Promise<boolean> {
 }
 
 test.describe("Webhook Processing", () => {
-  test("processes valid pakasir webhook (completed)", async ({ page }) => {
+  test("rejects the legacy Pakasir webhook for a QRIS order", async ({ page }) => {
     // Step 1: Get a valid product slug
     await page.goto("/");
 
@@ -53,9 +53,7 @@ test.describe("Webhook Processing", () => {
 
     console.log(`Created test order: ${orderId}`);
 
-    // Step 3: Simulate Pakasir Webhook
-    // Note: In production, Pakasir sends webhooks without signature verification
-    // (we verify by calling their API back to check status)
+    // A legacy webhook must not be able to settle an order created under QRIS.
     const webhookPayload = {
       order_id: orderId,
       status: "completed",
@@ -65,49 +63,12 @@ test.describe("Webhook Processing", () => {
       completed_at: new Date().toISOString(),
     };
 
-    // Mock the Pakasir API verification call
-    await page.route("**/app.pakasir.com/api/transactiondetail**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          transaction: {
-            amount: 50000,
-            order_id: orderId,
-            project: "test-project",
-            status: "completed",
-            payment_method: "qris",
-            completed_at: new Date().toISOString(),
-          },
-        }),
-      });
-    });
-
     const webhookRes = await apiContext.post("/api/webhooks/pakasir", {
       data: webhookPayload,
     });
 
-    // Check webhook response
-    if (!webhookRes.ok()) {
-      console.error("Webhook failed:", await webhookRes.text());
-    }
-    expect(webhookRes.ok()).toBeTruthy();
-    const webhookData = await webhookRes.json();
-    expect(webhookData.success).toBe(true);
-
-    // Step 4: Verify Order Status is PAID via UI
-    const orderPageResponse = await page.goto(`/order/${orderId}`);
-    expect(orderPageResponse?.ok()).toBeTruthy();
-
-    // Verify that we DO NOT see the payment button/QR code anymore
-    await expect(page.getByText("Waiting for payment", { exact: false })).not.toBeVisible();
-
-    // Alternatively, verify idempotency by hitting webhook again
-    const webhookRes2 = await apiContext.post("/api/webhooks/pakasir", {
-      data: webhookPayload,
-    });
-    const webhookData2 = await webhookRes2.json();
-    expect(webhookData2.message).toBe("Already paid");
+    expect(webhookRes.status()).toBe(400);
+    expect((await webhookRes.json()).error).toContain("payment gateway");
   });
 
   test("rejects invalid webhook payload", async ({ request }) => {

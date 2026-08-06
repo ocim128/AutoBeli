@@ -129,6 +129,17 @@ export async function getPakasirTransactionStatus(
       };
     }
 
+    if (
+      data.transaction.order_id !== orderId ||
+      data.transaction.amount !== amount ||
+      data.transaction.project !== PAKASIR_PROJECT_SLUG
+    ) {
+      return {
+        success: false,
+        error: "Transaction data mismatch",
+      };
+    }
+
     return {
       success: true,
       data: data as PakasirStatusResponse,

@@ -98,6 +98,20 @@ describe("POST /api/webhooks/qris", () => {
     expect(mockProcessQrisPaymentEvent).not.toHaveBeenCalled();
   });
 
+  it("rejects a signed webhook that declares a non-IDR currency", async () => {
+    const body = JSON.stringify({
+      payment_id: "pay_abc",
+      payment_status: "paid",
+      amount: 25123,
+      currency: "USD",
+    });
+
+    const res = await POST(webhookRequest(body));
+
+    expect(res.status).toBe(400);
+    expect(mockProcessQrisPaymentEvent).not.toHaveBeenCalled();
+  });
+
   it("routes a valid paid event through the shared processor with the attempt nonce", async () => {
     mockProcessQrisPaymentEvent.mockResolvedValueOnce("paid");
 

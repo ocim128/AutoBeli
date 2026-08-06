@@ -108,5 +108,25 @@ describe("Pakasir Library", () => {
 
       expect(result.success).toBe(false);
     });
+
+    it("rejects a provider response for a different order or amount", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          transaction: {
+            amount: 1,
+            order_id: "ORD-other",
+            project: "test-project",
+            status: "completed",
+            payment_method: "qris",
+          },
+        }),
+      });
+
+      const { getPakasirTransactionStatus } = await import("@/lib/pakasir");
+      const result = await getPakasirTransactionStatus("ORD-123", 50000);
+
+      expect(result).toEqual({ success: false, error: "Transaction data mismatch" });
+    });
   });
 });

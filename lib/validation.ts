@@ -148,14 +148,31 @@ export const qrisWebhookSchema = z.object({
   payment_id: z.string().min(1).max(200),
   payment_status: z.enum(["paid", "expired"]),
   amount: z.number().int().positive("Amount must be positive"),
+  currency: z.enum(["IDR", "idr"]).optional(),
   // `paid_amount` is intentionally optional: the Qris webhook body does not
   // carry it (settlement amount lives on the REST record, not the event).
   // The settlement-time amount check uses the amount recorded at creation.
   paid_amount: z.number().int().positive().optional(),
   // `paid_at` is an epoch-millisecond number in the Qris webhook; accept the
   // ISO sibling too for forward compatibility.
-  paid_at: z.union([z.number().positive(), z.string().max(100)]).optional(),
-  expires_at: z.union([z.number(), z.string().max(100)]).optional(),
+  paid_at: z
+    .union([
+      z.number().positive(),
+      z
+        .string()
+        .max(100)
+        .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid paid_at"),
+    ])
+    .optional(),
+  expires_at: z
+    .union([
+      z.number().positive(),
+      z
+        .string()
+        .max(100)
+        .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid expires_at"),
+    ])
+    .optional(),
   provider_transaction: z.record(z.string(), z.unknown()).optional(),
 });
 

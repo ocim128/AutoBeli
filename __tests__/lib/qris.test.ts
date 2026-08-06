@@ -210,6 +210,49 @@ describe("createQrisPayment", () => {
     expect(result).toMatchObject({ success: false, indeterminate: true });
   });
 
+  it("rejects a provider final amount below the server-managed base amount", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_123",
+        payment_status: "pending",
+        amount: 1,
+        expires_at: 1735689600000,
+      })
+    );
+
+    const result = await createQrisPayment(params);
+    expect(result).toMatchObject({ success: false, indeterminate: true });
+  });
+
+  it("rejects a provider response in a non-IDR currency", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_123",
+        payment_status: "pending",
+        amount: 25123,
+        currency: "USD",
+        expires_at: 1735689600000,
+      })
+    );
+
+    const result = await createQrisPayment(params);
+    expect(result).toMatchObject({ success: false, indeterminate: true });
+  });
+
+  it("rejects a provider suffix above the allowed 0-999 range", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_123",
+        payment_status: "pending",
+        amount: 26000,
+        expires_at: 1735689600000,
+      })
+    );
+
+    const result = await createQrisPayment(params);
+    expect(result).toMatchObject({ success: false, indeterminate: true });
+  });
+
   it("rejects a paid payment whose paid_amount differs from amount", async () => {
     mockFetch.mockResolvedValueOnce(
       jsonResponse({
@@ -232,6 +275,20 @@ describe("createQrisPayment", () => {
         payment_status: "paid",
         amount: 25123,
         paid_at: 1735689600000,
+        expires_at: 1735689600000,
+      })
+    );
+    const result = await createQrisPayment(params);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a paid REST record missing paid_at", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_123",
+        payment_status: "paid",
+        amount: 25123,
+        paid_amount: 25123,
         expires_at: 1735689600000,
       })
     );
@@ -278,6 +335,22 @@ describe("getQrisPayment", () => {
 
   it("returns an error for malformed bodies", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ hello: "world" }));
+    const result = await getQrisPayment("pay_123");
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a valid-looking response for a different payment ID", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_other",
+        payment_status: "paid",
+        amount: 25123,
+        paid_amount: 25123,
+        paid_at: "2026-01-01T00:00:00Z",
+        expires_at: "2026-01-01T00:05:00Z",
+      })
+    );
+
     const result = await getQrisPayment("pay_123");
     expect(result.success).toBe(false);
   });
@@ -354,6 +427,24 @@ describe("fetchQrisQrImage", () => {
         headers: { "Content-Type": "image/png", "Content-Length": String(2 * 1024 * 1024) },
       })
     );
+    const result = await fetchQrisQrImage("pay_123");
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a streamed oversized image without buffering it completely", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new Uint8Array(1024 * 1024));
+            controller.enqueue(new Uint8Array(1));
+            controller.close();
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "image/png" } }
+      )
+    );
+
     const result = await fetchQrisQrImage("pay_123");
     expect(result.success).toBe(false);
   });
