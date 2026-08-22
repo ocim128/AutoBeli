@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getMongoClient } from "@/lib/db";
 import { validate, qrisWebhookSchema } from "@/lib/validation";
-import { isQrisWebhookConfigured, verifyQrisWebhookSignature } from "@/lib/qris";
+import {
+  isQrisSettlementTimestampValid,
+  isQrisWebhookConfigured,
+  normalizeQrisTimestamp,
+  verifyQrisWebhookSignature,
+} from "@/lib/qris";
 import { processQrisPaymentEvent } from "@/lib/orders";
 
 /**
@@ -129,6 +134,22 @@ export async function POST(request: Request) {
     }
 
     const { payment_id, payment_status, amount, paid_amount } = validation.data!;
+    const providerCreatedAt = normalizeQrisTimestamp(validation.data!.created_at);
+    const providerTransactionTime = normalizeQrisTimestamp(
+      validation.data!.provider_transaction?.transaction_time
+    );
+
+    if (
+      payment_status === "paid" &&
+      !isQrisSettlementTimestampValid(
+        providerCreatedAt,
+        providerTransactionTime,
+        validation.data!.paid_at
+      )
+    ) {
+      console.error("[Qris] Rejected paid webhook with stale or missing provider transaction time");
+      return NextResponse.json({ success: true, result: "ignored" });
+    }
 
     const attempt = new URL(request.url).searchParams.get("attempt") || undefined;
 
@@ -144,6 +165,8 @@ export async function POST(request: Request) {
         paidAmount: paid_amount,
         paidAt: normalizeExpiresAt(validation.data!.paid_at),
         expiresAt: normalizeExpiresAt(validation.data!.expires_at),
+        providerCreatedAt,
+        providerTransactionTime,
         attempt,
       },
       db

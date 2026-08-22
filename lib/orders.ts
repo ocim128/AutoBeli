@@ -3,7 +3,7 @@ import { ObjectId, Db } from "mongodb";
 import { Order, Product } from "@/lib/definitions";
 import { invalidateProductCache } from "@/lib/products";
 import { getPakasirTransactionStatus } from "@/lib/pakasir";
-import { getQrisPayment } from "@/lib/qris";
+import { getQrisPayment, isQrisSettlementTimestampValid } from "@/lib/qris";
 import { ensureAccessToken } from "@/lib/tokens";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { upsertAudienceFromPaidOrder } from "@/lib/audience";
@@ -437,6 +437,8 @@ export interface QrisPaymentEvent {
   paidAmount?: number;
   paidAt?: number; // Epoch milliseconds
   expiresAt?: number; // Epoch milliseconds
+  providerCreatedAt?: number;
+  providerTransactionTime?: number;
   attempt?: string; // Opaque creation-attempt nonce from the payment's webhook URL
 }
 
@@ -522,6 +524,18 @@ export async function processQrisPaymentEvent(
   }
 
   // paid event
+  if (
+    (event.providerCreatedAt !== undefined || event.providerTransactionTime !== undefined) &&
+    !isQrisSettlementTimestampValid(
+      event.providerCreatedAt,
+      event.providerTransactionTime,
+      event.paidAt
+    )
+  ) {
+    console.error("[Qris] Rejected paid event with stale or missing provider transaction time");
+    return "ignored";
+  }
+
   if (order.status === "PAID") return "already_paid";
   if (order.status !== "PENDING") return "ignored"; // Late paid event after expiry
 
@@ -636,6 +650,8 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
             amount: payment.amount,
             paidAmount: payment.paidAmount,
             expiresAt: payment.expiresAt,
+            providerCreatedAt: payment.providerCreatedAt,
+            providerTransactionTime: payment.providerTransactionTime,
           },
           db
         );

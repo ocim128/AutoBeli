@@ -306,6 +306,8 @@ describe("getQrisPayment", () => {
         amount: 25123,
         paid_amount: 25123,
         paid_at: "2026-01-01T00:00:00Z",
+        created_at: "2026-01-01T00:00:00Z",
+        provider_transaction: { transaction_time: "2026-01-01T00:00:01Z" },
         expires_at: "2026-01-01T00:05:00Z",
       })
     );
@@ -324,7 +326,28 @@ describe("getQrisPayment", () => {
       expect(result.data.status).toBe("paid");
       expect(result.data.paidAmount).toBe(25123);
       expect(result.data.expiresAt).toBe(Date.parse("2026-01-01T00:05:00Z"));
+      expect(result.data.providerCreatedAt).toBe(Date.parse("2026-01-01T00:00:00Z"));
+      expect(result.data.providerTransactionTime).toBe(Date.parse("2026-01-01T00:00:01Z"));
     }
+  });
+
+  it("rejects a paid payment backed by a historical provider transaction", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        payment_id: "pay_123",
+        payment_status: "paid",
+        amount: 25123,
+        paid_amount: 25123,
+        paid_at: "2026-08-22T13:08:45.000Z",
+        created_at: "2026-08-22T13:08:41.000Z",
+        provider_transaction: { transaction_time: "2026-08-22T08:32:02+07:00" },
+        expires_at: "2026-08-22T13:13:41.000Z",
+      })
+    );
+
+    const result = await getQrisPayment("pay_123");
+
+    expect(result.success).toBe(false);
   });
 
   it("returns an error for non-2xx responses", async () => {

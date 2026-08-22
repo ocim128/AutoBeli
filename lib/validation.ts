@@ -164,6 +164,15 @@ export const qrisWebhookSchema = z.object({
         .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid paid_at"),
     ])
     .optional(),
+  created_at: z
+    .union([
+      z.number().positive(),
+      z
+        .string()
+        .max(100)
+        .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid created_at"),
+    ])
+    .optional(),
   expires_at: z
     .union([
       z.number().positive(),

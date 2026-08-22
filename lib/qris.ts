@@ -15,6 +15,7 @@ export const QRIS_MAX_BASE_AMOUNT = 9999000;
 export const QRIS_MAX_UNIQUE_SUFFIX = 999;
 export const QRIS_DEFAULT_TIMEOUT_MS = 300000; // 5 minutes
 export const QRIS_DEFAULT_TIMEZONE = "Asia/Jakarta";
+export const QRIS_TRANSACTION_TIME_SKEW_MS = 2 * 60 * 1000;
 
 const CREATE_TIMEOUT_MS = 10000;
 const REQUEST_TIMEOUT_MS = 8000;
@@ -27,6 +28,8 @@ export interface QrisPayment {
   expiresAt?: number; // Epoch milliseconds
   paidAmount?: number;
   paidAt?: string;
+  providerCreatedAt?: number;
+  providerTransactionTime?: number;
 }
 
 export type QrisCreateResult =
@@ -133,6 +136,26 @@ function normalizeExpiresAt(value: unknown): number | undefined {
   return undefined;
 }
 
+export function normalizeQrisTimestamp(value: unknown): number | undefined {
+  return normalizeExpiresAt(value);
+}
+
+export function isQrisSettlementTimestampValid(
+  providerCreatedAt: unknown,
+  providerTransactionTime: unknown,
+  providerPaidAt?: unknown
+): boolean {
+  const createdAt = normalizeExpiresAt(providerCreatedAt);
+  const transactionTime = normalizeExpiresAt(providerTransactionTime);
+  const paidAt = providerPaidAt === undefined ? undefined : normalizeExpiresAt(providerPaidAt);
+
+  if (createdAt === undefined || transactionTime === undefined) return false;
+  if (transactionTime < createdAt - QRIS_TRANSACTION_TIME_SKEW_MS) return false;
+  if (paidAt !== undefined && transactionTime > paidAt + QRIS_TRANSACTION_TIME_SKEW_MS)
+    return false;
+  return true;
+}
+
 function normalizeStatus(value: unknown): QrisPayment["status"] | null {
   if (value === "pending" || value === "paid" || value === "expired") return value;
   return null;
@@ -172,7 +195,20 @@ function validateQrisPayment(raw: unknown): QrisPayment | null {
   const expiresAt = normalizeExpiresAt(body.expires_at);
   if (expiresAt === undefined) return null;
 
-  const payment: QrisPayment = { paymentId, status, amount, expiresAt };
+  const providerCreatedAt = normalizeExpiresAt(body.created_at);
+  const providerTransaction =
+    body.provider_transaction && typeof body.provider_transaction === "object"
+      ? (body.provider_transaction as Record<string, unknown>)
+      : undefined;
+  const providerTransactionTime = normalizeExpiresAt(providerTransaction?.transaction_time);
+  const payment: QrisPayment = {
+    paymentId,
+    status,
+    amount,
+    expiresAt,
+    ...(providerCreatedAt !== undefined ? { providerCreatedAt } : {}),
+    ...(providerTransactionTime !== undefined ? { providerTransactionTime } : {}),
+  };
 
   if (body.paid_amount !== undefined) {
     if (
@@ -196,6 +232,11 @@ function validateQrisPayment(raw: unknown): QrisPayment | null {
     if (payment.paidAmount === undefined) return null;
     if (payment.paidAmount !== amount) return null;
     if (payment.paidAt === undefined) return null;
+    if (
+      !isQrisSettlementTimestampValid(providerCreatedAt, providerTransactionTime, payment.paidAt)
+    ) {
+      return null;
+    }
   }
 
   return payment;

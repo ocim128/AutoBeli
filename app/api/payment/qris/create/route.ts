@@ -187,6 +187,8 @@ export async function POST(request: Request) {
             amount: providerPayment.amount,
             paidAmount: providerPayment.paidAmount,
             expiresAt: providerPayment.expiresAt,
+            providerCreatedAt: providerPayment.providerCreatedAt,
+            providerTransactionTime: providerPayment.providerTransactionTime,
           },
           db
         );

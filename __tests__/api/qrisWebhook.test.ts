@@ -44,8 +44,12 @@ const PAID_BODY = JSON.stringify({
   payment_id: "pay_abc",
   payment_status: "paid",
   amount: 25123,
+  created_at: 1735689500000,
   paid_at: 1735689600000,
-  provider_transaction: { acquirer: "gopay" },
+  provider_transaction: {
+    acquirer: "gopay",
+    transaction_time: "2025-01-01T00:00:01.000Z",
+  },
 });
 
 beforeEach(() => {
@@ -130,6 +134,8 @@ describe("POST /api/webhooks/qris", () => {
         paidAmount: undefined,
         paidAt: 1735689600000,
         expiresAt: undefined,
+        providerCreatedAt: 1735689500000,
+        providerTransactionTime: 1735689601000,
         attempt: "nonce-1",
       },
       expect.anything()
@@ -146,6 +152,25 @@ describe("POST /api/webhooks/qris", () => {
       expect.objectContaining({ status: "paid", paidAmount: undefined }),
       expect.anything()
     );
+  });
+
+  it("acknowledges but ignores a paid webhook with a historical transaction", async () => {
+    const body = JSON.stringify({
+      payment_id: "pay_abc",
+      payment_status: "paid",
+      amount: 25123,
+      created_at: "2026-08-22T13:08:41.000Z",
+      paid_at: "2026-08-22T13:08:45.000Z",
+      provider_transaction: {
+        transaction_time: "2026-08-22T08:32:02+07:00",
+      },
+    });
+
+    const res = await POST(webhookRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ success: true, result: "ignored" });
+    expect(mockProcessQrisPaymentEvent).not.toHaveBeenCalled();
   });
 
   it("normalizes epoch-second expires_at values to milliseconds", async () => {
