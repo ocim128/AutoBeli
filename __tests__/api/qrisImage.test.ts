@@ -56,6 +56,19 @@ beforeEach(() => {
 });
 
 describe("GET /api/payment/qris/image", () => {
+  it("does not serve a QR after its deadline even while the order remains pending", async () => {
+    const order = makeOrder({
+      paymentMetadata: {
+        provider: "qris",
+        transaction_ref: "pay_abc",
+        amount: 25000,
+        expires_at: Date.now() - 1,
+      },
+    });
+    mockGetMongoClient.mockResolvedValue({ db: () => createDb(order) });
+    expect((await GET(imageRequest(`orderId=${ORDER_ID}`))).status).toBe(410);
+    expect(mockFetchQrisQrImage).not.toHaveBeenCalled();
+  });
   it("streams the PNG for a pending Qris order", async () => {
     mockGetMongoClient.mockResolvedValue({ db: () => createDb(makeOrder()) });
     mockFetchQrisQrImage.mockResolvedValueOnce({ success: true, image: PNG });

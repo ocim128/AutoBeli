@@ -51,10 +51,8 @@ import crypto from "crypto";
  *         description: Payment gateway not configured
  */
 
-// A creation lease older than this is considered stale: the bounded provider
-// timeout (5 minutes) guarantees any indeterminately-created provider payment
-// has expired by then, so a new create cannot double-charge.
-const CREATION_LEASE_STALE_MS = 10 * 60 * 1000;
+// After the bounded request finishes, retries reuse the same provider key.
+const CREATION_LEASE_STALE_MS = 30 * 1000;
 
 export async function POST(request: Request) {
   try {
@@ -158,6 +156,16 @@ export async function POST(request: Request) {
       const providerPayment = statusCheck.data;
 
       if (providerPayment.status === "pending") {
+        if (
+          providerPayment.reconcileUntil &&
+          providerPayment.reconcileUntil > Date.now() &&
+          (providerPayment.expiresAt ?? 0) <= Date.now()
+        ) {
+          return NextResponse.json(
+            { error: "Checking for your payment. Please wait before trying again." },
+            { status: 409 }
+          );
+        }
         const expiresAt = providerPayment.expiresAt ?? storedExpiry;
 
         if (providerPayment.expiresAt !== undefined && providerPayment.expiresAt > Date.now()) {
@@ -224,7 +232,10 @@ export async function POST(request: Request) {
     // provider payments for one order. Retrying an expired order clears the
     // old Qris metadata in the same atomic step; late events for the cleared
     // payment ID are then ignored.
-    const attempt = crypto.randomUUID();
+    const attempt =
+      order.status === "PENDING" && order.paymentCreationAttempt
+        ? order.paymentCreationAttempt
+        : crypto.randomUUID();
     const lockResult = await orderCollection.updateOne(
       {
         _id: order._id,
@@ -279,6 +290,7 @@ export async function POST(request: Request) {
       timeout: QRIS_DEFAULT_TIMEOUT_MS,
       webhookUrl,
       timezone: QRIS_DEFAULT_TIMEZONE,
+      idempotencyKey: attempt,
     });
 
     if (!createResult.success) {

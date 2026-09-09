@@ -88,6 +88,7 @@ describe("createQrisPayment", () => {
     timeout: 300000,
     webhookUrl: "https://autobeli.example.com/api/webhooks/qris?attempt=nonce-1",
     timezone: "Asia/Jakarta",
+    idempotencyKey: "nonce-1",
   };
 
   it("sends the server-managed payload with a bearer key", async () => {
@@ -107,6 +108,7 @@ describe("createQrisPayment", () => {
     expect(url).toBe("https://qris.example.com/payment");
     expect(init.method).toBe("POST");
     expect(init.headers.Authorization).toBe("Bearer test-qris-key");
+    expect(init.headers["Idempotency-Key"]).toBe("nonce-1");
     expect(JSON.parse(init.body as string)).toEqual({
       mode: "server_managed",
       base_amount: 25000,
@@ -128,6 +130,19 @@ describe("createQrisPayment", () => {
     const result = await createQrisPayment({ ...params, baseAmount: 500 });
     expect(result).toMatchObject({ success: false, indeterminate: false });
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("returns an indeterminate result when the successful response body stalls", async () => {
+    vi.useFakeTimers();
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 201, text: () => new Promise(() => {}) });
+    const pending = createQrisPayment(params);
+    await vi.advanceTimersByTimeAsync(10001);
+    expect(await pending).toMatchObject({ success: false, indeterminate: true });
+  });
+
+  it("does not permit a fresh attempt after an idempotency conflict", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error_code: "IDEMPOTENCY_CONFLICT" }, 409));
+    expect(await createQrisPayment(params)).toMatchObject({ success: false, indeterminate: true });
   });
 
   it("treats a 4xx as a known-safe provider rejection", async () => {

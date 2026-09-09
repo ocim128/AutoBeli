@@ -26,6 +26,8 @@ import { fetchQrisQrImage, isQrisConfigured } from "@/lib/qris";
  *         description: Invalid order ID
  *       404:
  *         description: No pending Qris payment for this order
+ *       410:
+ *         description: The QR payment deadline has passed
  *       502:
  *         description: QR image fetch failed
  */
@@ -55,6 +57,9 @@ export async function GET(request: Request) {
 
     if (!transactionRef) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (order?.paymentMetadata?.expires_at && order.paymentMetadata.expires_at <= Date.now()) {
+      return NextResponse.json({ error: "QR payment deadline has passed" }, { status: 410 });
     }
 
     const imageResult = await fetchQrisQrImage(transactionRef);

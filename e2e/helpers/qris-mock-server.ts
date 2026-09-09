@@ -20,6 +20,7 @@ interface MockPayment {
   created_at: number;
   paid_amount?: number;
   paid_at?: number;
+  provider_transaction?: { transaction_time: string };
 }
 
 const payments = new Map<string, MockPayment>();
@@ -46,6 +47,7 @@ export function settle(paymentId: string, paidAmount: number) {
   payment.status = "paid";
   payment.paid_amount = paidAmount;
   payment.paid_at = Date.now();
+  payment.provider_transaction = { transaction_time: new Date(payment.paid_at).toISOString() };
 }
 
 const PNG_BYTES = Buffer.from(

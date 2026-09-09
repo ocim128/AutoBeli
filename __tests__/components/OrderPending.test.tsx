@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import OrderPending from "@/components/OrderPending";
 
 vi.mock("next/navigation", () => ({
@@ -30,6 +30,25 @@ beforeEach(() => {
 });
 
 describe("OrderPending", () => {
+  it("hides the QR at the payment deadline while confirmation continues", async () => {
+    render(
+      <OrderPending
+        orderId="64b64c7f9f1b2c0012345678"
+        productTitle="Test"
+        amount={25000}
+        createdAt="2026-01-01T00:00:00Z"
+        isQris
+        expiresAt={Date.now() + 1000}
+      />
+    );
+    expect(screen.getByAltText("Qris QR code")).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1001);
+    });
+    expect(screen.queryByAltText("Qris QR code")).not.toBeInTheDocument();
+    expect(screen.getByText(/Please do not pay again yet/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Create New Payment/i })).not.toBeInTheDocument();
+  });
   it("renders the QR image, final amount, and expiry for a Qris order", () => {
     const expiresAt = Date.now() + 240_000;
     render(

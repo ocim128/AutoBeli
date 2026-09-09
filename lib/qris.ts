@@ -26,6 +26,7 @@ export interface QrisPayment {
   status: "pending" | "paid" | "expired";
   amount: number; // Final server-managed amount, whole Rupiah
   expiresAt?: number; // Epoch milliseconds
+  reconcileUntil?: number;
   paidAmount?: number;
   paidAt?: string;
   providerCreatedAt?: number;
@@ -53,7 +54,12 @@ function mapQrisErrorCode(code: string | undefined, httpStatus: number): string 
     case "INVALID_BASE_AMOUNT":
       return "Order total is outside the supported payment range.";
     case "NO_AVAILABLE_AMOUNT":
+    case "AMOUNT_IN_USE":
       return "Payment provider is busy. Please try again in a moment.";
+    case "IDEMPOTENCY_CONFLICT":
+      return "This payment request has changed. Please contact support.";
+    case "PROVIDER_UNAVAILABLE":
+      return "Payment provider is starting. Please try again shortly.";
     case "QRIS_INVALID":
       return "Payment provider is not fully configured. Please contact support.";
     case "UNAUTHORIZED":
@@ -206,6 +212,7 @@ function validateQrisPayment(raw: unknown): QrisPayment | null {
     status,
     amount,
     expiresAt,
+    reconcileUntil: normalizeExpiresAt(body.reconcile_until),
     ...(providerCreatedAt !== undefined ? { providerCreatedAt } : {}),
     ...(providerTransactionTime !== undefined ? { providerTransactionTime } : {}),
   };
@@ -347,6 +354,7 @@ export async function createQrisPayment(params: {
   timeout: number;
   webhookUrl: string;
   timezone: string;
+  idempotencyKey?: string;
 }): Promise<QrisCreateResult> {
   const { baseUrl, apiKey } = getQrisConfig();
   if (!baseUrl || !apiKey) {
@@ -366,6 +374,7 @@ export async function createQrisPayment(params: {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
+          ...(params.idempotencyKey ? { "Idempotency-Key": params.idempotencyKey } : {}),
         },
         body: JSON.stringify({
           mode: "server_managed",
@@ -384,18 +393,28 @@ export async function createQrisPayment(params: {
   }
 
   if (!response.ok) {
-    const code = await readQrisErrorCode(response);
+    let code: string | undefined;
+    try {
+      code = await readQrisErrorCode(response);
+    } catch {
+      /* Preserve the HTTP failure category. */
+    }
     console.error("[Qris] create payment failed: HTTP", response.status, code ?? "(no code)");
     // 4xx is a definitive provider rejection; 5xx is indeterminate.
     return {
       success: false,
       error: mapQrisErrorCode(code, response.status),
       code,
-      indeterminate: response.status >= 500,
+      indeterminate: response.status >= 500 || code === "IDEMPOTENCY_CONFLICT",
     };
   }
 
-  const body = await parseJsonBody(response, CREATE_TIMEOUT_MS);
+  let body: unknown;
+  try {
+    body = await parseJsonBody(response, CREATE_TIMEOUT_MS);
+  } catch {
+    return { success: false, error: "Qris response timed out", indeterminate: true };
+  }
   const payment = validateQrisPayment(body);
   if (
     !payment ||
@@ -436,7 +455,12 @@ export async function getQrisPayment(paymentId: string): Promise<QrisGetResult> 
     return { success: false, error: `Payment lookup failed (HTTP ${response.status})` };
   }
 
-  const body = await parseJsonBody(response, REQUEST_TIMEOUT_MS);
+  let body: unknown;
+  try {
+    body = await parseJsonBody(response, REQUEST_TIMEOUT_MS);
+  } catch {
+    return { success: false, error: "Qris response timed out" };
+  }
   const payment = validateQrisPayment(body);
   if (!payment || payment.paymentId !== paymentId) {
     console.error("[Qris] get payment returned a malformed body");

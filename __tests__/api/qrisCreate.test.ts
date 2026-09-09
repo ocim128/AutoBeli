@@ -295,6 +295,32 @@ describe("POST /api/payment/qris/create", () => {
     expect(mockCreateQrisPayment).not.toHaveBeenCalled();
   });
 
+  it("does not expire or replace a payment during provider reconciliation", async () => {
+    const order = makeOrder({
+      paymentMetadata: {
+        provider: "qris",
+        transaction_ref: "checking",
+        amount: 25000,
+        expires_at: Date.now() - 1000,
+      },
+    });
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockGetQrisPayment.mockResolvedValueOnce({
+      success: true,
+      data: {
+        paymentId: "checking",
+        status: "pending",
+        amount: 25000,
+        expiresAt: Date.now() - 1000,
+        reconcileUntil: Date.now() + 119000,
+      },
+    });
+    expect((await POST(createRequest({ orderId: ORDER_ID }))).status).toBe(409);
+    expect(mockCreateQrisPayment).not.toHaveBeenCalled();
+    expect(mockProcessQrisPaymentEvent).not.toHaveBeenCalled();
+    expect(order.status).toBe("PENDING");
+  });
+
   it("settles a stale stored payment that the provider reports as paid", async () => {
     const order = makeOrder({
       paymentMetadata: {
@@ -409,6 +435,8 @@ describe("POST /api/payment/qris/create", () => {
 
     expect(res.status).toBe(200);
     expect(mockCreateQrisPayment).toHaveBeenCalledTimes(1);
+    expect(mockCreateQrisPayment.mock.calls[0][0].idempotencyKey).toBe("old-nonce");
+    expect(mockCreateQrisPayment.mock.calls[0][0].webhookUrl).toContain("attempt=old-nonce");
     expect(order.paymentMetadata?.transaction_ref).toBe("pay_new");
   });
 

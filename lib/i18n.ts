@@ -118,6 +118,8 @@ export const translations = {
       checkStatus: "Periksa Status",
       retryPayment: "Coba Bayar Lagi",
       waitingConfirmation: "Menunggu konfirmasi pembayaran...",
+      checkingPayment:
+        "Waktu pembayaran habis. Kami sedang memeriksa pembayaran yang sudah masuk. Jangan bayar ulang dulu.",
       purchaseSuccessful: "Pembelian Berhasil",
       purchaseSuccessfulDesc: "Konten digital Anda siap diakses.",
       paid: "Dibayar",
@@ -310,6 +312,8 @@ export const translations = {
       checkStatus: "Check Status",
       retryPayment: "Retry Payment",
       waitingConfirmation: "Waiting for payment confirmation...",
+      checkingPayment:
+        "The QR has expired. We are checking for payments already made. Please do not pay again yet.",
       purchaseSuccessful: "Purchase Successful",
       purchaseSuccessfulDesc: "Your digital content is ready to access.",
       paid: "Paid",

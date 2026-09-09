@@ -127,6 +127,8 @@ test.describe("Qris Payment Flow", () => {
       payment_status: "paid",
       amount: finalAmount,
       paid_at: Date.now(),
+      created_at: getPayment(paymentId)!.created_at,
+      provider_transaction: { transaction_time: new Date().toISOString() },
     });
     const webhookRes = await apiContext.post("/api/webhooks/qris", {
       headers: { "Content-Type": "application/json", "X-Signature": sign(paidBody) },

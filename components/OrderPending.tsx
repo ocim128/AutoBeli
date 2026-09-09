@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatIDR, formatDate, shortOrderId } from "@/lib/format";
@@ -21,7 +21,7 @@ interface OrderPendingProps {
 }
 
 const POLL_INTERVAL_MS = 8000;
-const EXPIRY_GRACE_MS = 30_000;
+const EXPIRY_GRACE_MS = 150_000;
 const FALLBACK_POLL_CUTOFF_MS = 180_000;
 
 export default function OrderPending({
@@ -36,6 +36,17 @@ export default function OrderPending({
   const { t, language } = useLanguage();
   const router = useRouter();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [deadlineReachedAt, setDeadlineReachedAt] = useState(0);
+  const qrExpired = Boolean(expiresAt && deadlineReachedAt >= expiresAt);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const timer = setTimeout(
+      () => setDeadlineReachedAt(Date.now()),
+      Math.max(0, expiresAt - Date.now())
+    );
+    return () => clearTimeout(timer);
+  }, [expiresAt]);
 
   // Auto-poll for payment status updates.
   // The server page (order/[orderId]/page.tsx) calls syncOrderPaymentStatus()
@@ -123,7 +134,12 @@ export default function OrderPending({
         />
 
         {/* Qris QR code */}
-        {isQris && (
+        {isQris && qrExpired && (
+          <Panel padding="lg">
+            <p role="status">{t("checkout.checkingPayment")}</p>
+          </Panel>
+        )}
+        {isQris && !qrExpired && (
           <Panel featured padding="lg" className="space-y-5">
             <div className="flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
