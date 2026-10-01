@@ -395,7 +395,7 @@ describe("POST /api/payment/qris/create", () => {
 
     const createArgs = mockCreateQrisPayment.mock.calls[0][0];
     expect(createArgs.baseAmount).toBe(25000);
-    expect(createArgs.timeout).toBe(300000);
+    expect(createArgs.timeout).toBe(1200000);
     expect(createArgs.webhookUrl).toMatch(
       /^https:\/\/autobeli\.example\.com\/api\/webhooks\/qris\?attempt=.+/
     );

@@ -32,7 +32,7 @@ different pending amounts:
 {
   "mode": "server_managed",
   "base_amount": 25000,
-  "timeout": 300000,
+  "timeout": 1200000,
   "tolerance": 0,
   "webhook_url": "https://autobeli.example.com/api/webhooks/qris?attempt=<opaque>",
   "tz": "Asia/Jakarta"

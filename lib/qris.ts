@@ -13,7 +13,7 @@ import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 export const QRIS_MIN_BASE_AMOUNT = 1000;
 export const QRIS_MAX_BASE_AMOUNT = 9999000;
 export const QRIS_MAX_UNIQUE_SUFFIX = 999;
-export const QRIS_DEFAULT_TIMEOUT_MS = 300000; // 5 minutes
+export const QRIS_DEFAULT_TIMEOUT_MS = 1200000; // 20 minutes
 export const QRIS_DEFAULT_TIMEZONE = "Asia/Jakarta";
 export const QRIS_TRANSACTION_TIME_SKEW_MS = 2 * 60 * 1000;
 

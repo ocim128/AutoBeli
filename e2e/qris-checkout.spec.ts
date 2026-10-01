@@ -110,6 +110,7 @@ test.describe("Qris Payment Flow", () => {
 
     const paymentId: string = paymentData.paymentId;
     const finalAmount: number = paymentData.amount;
+    expect(paymentData.expiresAt - getPayment(paymentId)!.created_at).toBe(20 * 60 * 1000);
 
     // 2. Visit the order page; the QR image and exact final amount must render.
     await page.goto(`/order/${orderId}`);
