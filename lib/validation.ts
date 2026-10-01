@@ -62,6 +62,26 @@ export const searchOrderSchema = z
 // Product Schemas
 // ============================================
 
+export const MAX_PRODUCT_IMAGE_BYTES = 4 * 1024 * 1024;
+export const PRODUCT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+
+export const productImageUploadSchema = z.object({
+  size: z
+    .number()
+    .int()
+    .min(1, "Image is empty")
+    .max(MAX_PRODUCT_IMAGE_BYTES, "Image must be 4 MB or smaller"),
+  type: z.enum(PRODUCT_IMAGE_TYPES, { error: "Choose a JPEG, PNG, or WebP image" }),
+});
+
+const productImageUrlSchema = z
+  .string()
+  .url("Invalid image URL")
+  .max(2000, "URL too long")
+  .or(z.string().regex(/^\/api\/images\/[a-f0-9]{24}$/, "Invalid image URL"))
+  .or(z.literal(""))
+  .optional();
+
 export const createProductSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   slug: z
@@ -76,12 +96,7 @@ export const createProductSchema = z.object({
     .min(0, "Price cannot be negative")
     .max(1000000000, "Price too high"),
   content: z.string().min(1, "Content is required").max(100000, "Content too large (max 100KB)"),
-  imageUrl: z
-    .string()
-    .url("Invalid image URL")
-    .max(2000, "URL too long")
-    .or(z.literal(""))
-    .optional(),
+  imageUrl: productImageUrlSchema,
   postPurchaseTemplate: z.string().max(2000, "Template too long").optional(),
   isActive: z.boolean().optional().default(true),
 });
@@ -96,7 +111,7 @@ export const updateProductSchema = z.object({
   description: z.string().max(2000).optional(),
   priceIdr: z.coerce.number().int().min(0).max(1000000000).optional(),
   content: z.string().min(1).max(100000).optional(),
-  imageUrl: z.string().url("Invalid image URL").max(2000).or(z.literal("")).optional(),
+  imageUrl: productImageUrlSchema,
   postPurchaseTemplate: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
 });

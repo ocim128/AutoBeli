@@ -10,6 +10,7 @@ import { Panel } from "@/components/ui/panel";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductImageField } from "@/components/admin/ProductImageField";
 
 export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -71,6 +73,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingImage) return;
     setSaving(true);
     setError("");
 
@@ -201,33 +204,12 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
               />
             </Field>
 
-            {/* Image URL */}
-            <Field
-              label="Image URL (Optional)"
-              monoLabel
-              htmlFor="imageUrl"
-              helper="External image URL for product thumbnail."
-            >
-              <Input
-                type="url"
-                id="imageUrl"
-                name="imageUrl"
-                placeholder="https://example.com/image.jpg"
-                value={form.imageUrl}
-                onChange={handleChange}
-              />
-              {form.imageUrl && (
-                <div className="mt-2 inline-flex">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.imageUrl}
-                    alt="Preview"
-                    className="h-16 w-auto rounded-md border border-[var(--line)] opacity-90"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                  />
-                </div>
-              )}
-            </Field>
+            <ProductImageField
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((prev) => ({ ...prev, imageUrl }))}
+              onUploadingChange={setUploadingImage}
+              disabled={saving}
+            />
 
             <Separator />
 
@@ -295,8 +277,8 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
               <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving} size="lg">
-                {saving ? "Saving..." : "Update Product"}
+              <Button type="submit" disabled={saving || uploadingImage} size="lg">
+                {uploadingImage ? "Uploading image..." : saving ? "Saving..." : "Update Product"}
               </Button>
             </div>
           </div>

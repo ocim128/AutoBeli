@@ -10,6 +10,7 @@ import { Panel } from "@/components/ui/panel";
 import { Field } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductImageField } from "@/components/admin/ProductImageField";
 
 export default function CreateProduct() {
   return (
@@ -42,6 +43,7 @@ function CreateProductContent() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (sourceSlug) {
@@ -77,6 +79,7 @@ function CreateProductContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingImage) return;
     setLoading(true);
     setError("");
 
@@ -197,28 +200,12 @@ function CreateProductContent() {
               />
             </Field>
 
-            {/* Image URL */}
-            <Field label="Image URL (Optional)" monoLabel htmlFor="imageUrl">
-              <Input
-                type="url"
-                id="imageUrl"
-                name="imageUrl"
-                placeholder="https://example.com/image.jpg"
-                value={form.imageUrl}
-                onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-              />
-              {form.imageUrl && (
-                <div className="mt-2 inline-flex">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.imageUrl}
-                    alt="Preview"
-                    className="h-16 w-auto rounded-md border border-[var(--line)] opacity-90"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                  />
-                </div>
-              )}
-            </Field>
+            <ProductImageField
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((prev) => ({ ...prev, imageUrl }))}
+              onUploadingChange={setUploadingImage}
+              disabled={loading}
+            />
 
             <Separator />
 
@@ -262,8 +249,8 @@ function CreateProductContent() {
               <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} size="lg">
-                {loading ? "Saving..." : "Create Product"}
+              <Button type="submit" disabled={loading || uploadingImage} size="lg">
+                {uploadingImage ? "Uploading image..." : loading ? "Saving..." : "Create Product"}
               </Button>
             </div>
           </div>

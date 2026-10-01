@@ -48,6 +48,9 @@ import { getAdminProducts, invalidateProductCache } from "@/lib/products";
  *                 type: integer
  *               content:
  *                 type: string
+ *               imageUrl:
+ *                 type: string
+ *                 description: External image URL or permanent /api/images/{id} upload URL
  *               isActive:
  *                 type: boolean
  *     responses:
@@ -79,6 +82,9 @@ import { getAdminProducts, invalidateProductCache } from "@/lib/products";
  *                 type: integer
  *               content:
  *                 type: string
+ *               imageUrl:
+ *                 type: string
+ *                 description: External image URL or permanent /api/images/{id} upload URL
  *               isActive:
  *                 type: boolean
  *     responses:

@@ -60,6 +60,12 @@ instances. Failed payment checks and unavailable content do not consume the cool
   - single stock edit/delete
   - bulk delete by pasted username list, scoped to matching unsold stock in that product only
 
+## Product image uploads
+
+Product create and edit forms accept image uploads as well as image URLs. Uploads support JPEG, PNG, and WebP files up to 4 MB and 20 megapixels. Images are converted to WebP, with a maximum width and height of 1600 pixels, and stored in the `productImages` MongoDB collection. Products keep the permanent relative URL `/api/images/[id]` in their existing `imageUrl` field.
+
+Uploads require an admin session; image URLs are public for storefront display. Images have no expiry and are retained when a product is changed, duplicated, or deleted. They survive app restarts and redeploys as long as the same persistent MongoDB database is used. Include `productImages` in database backups. No additional storage credentials or environment variables are required.
+
 ## Local setup
 
 ### Prerequisites
