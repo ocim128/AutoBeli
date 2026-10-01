@@ -44,11 +44,22 @@ import crypto from "crypto";
  *       404:
  *         description: Order not found
  *       409:
- *         description: A payment creation is already in progress for this order
+ *         description: Payment creation or reconciliation is in progress, or the provider request conflicts
+ *         headers:
+ *           Retry-After:
+ *             description: Seconds to wait before retrying a temporary conflict
+ *             schema:
+ *               type: integer
  *       410:
  *         description: The existing Qris payment has expired
  *       503:
- *         description: Payment gateway not configured
+ *         description: Payment gateway not configured or temporarily unavailable
+ *       504:
+ *         description: Payment creation outcome is uncertain; retry after the specified delay
+ *         headers:
+ *           Retry-After:
+ *             schema:
+ *               type: integer
  */
 
 // After the bounded request finishes, retries reuse the same provider key.
@@ -163,7 +174,14 @@ export async function POST(request: Request) {
         ) {
           return NextResponse.json(
             { error: "Checking for your payment. Please wait before trying again." },
-            { status: 409 }
+            {
+              status: 409,
+              headers: {
+                "Retry-After": String(
+                  Math.ceil((providerPayment.reconcileUntil - Date.now()) / 1000)
+                ),
+              },
+            }
           );
         }
         const expiresAt = providerPayment.expiresAt ?? storedExpiry;
@@ -224,7 +242,7 @@ export async function POST(request: Request) {
     if (order.paymentCreationStartedAt && order.paymentCreationStartedAt >= staleBefore) {
       return NextResponse.json(
         { error: "A payment creation is already in progress for this order" },
-        { status: 409 }
+        { status: 409, headers: { "Retry-After": "30" } }
       );
     }
 
@@ -279,7 +297,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         { error: "A payment creation is already in progress for this order" },
-        { status: 409 }
+        { status: 409, headers: { "Retry-After": "30" } }
       );
     }
 
@@ -300,16 +318,24 @@ export async function POST(request: Request) {
           { _id: order._id, paymentCreationAttempt: attempt },
           { $unset: { paymentCreationStartedAt: "", paymentCreationAttempt: "" } }
         );
-        return NextResponse.json({ error: createResult.error }, { status: 502 });
+        return NextResponse.json(
+          { error: createResult.error },
+          createResult.code === "PROVIDER_UNAVAILABLE"
+            ? { status: 503, headers: { "Retry-After": "3" } }
+            : { status: 502 }
+        );
       }
 
       // Indeterminate outcome (timeout/network/5xx): Qris may have created the
       // payment. Keep the lease; the attempt nonce lets a webhook recover the
       // metadata, and no second provider payment may be created meanwhile.
       console.error("[Qris] Create payment outcome indeterminate:", createResult.error);
+      if (createResult.code === "IDEMPOTENCY_CONFLICT") {
+        return NextResponse.json({ error: createResult.error }, { status: 409 });
+      }
       return NextResponse.json(
         { error: "Payment provider did not confirm the payment. Please try again shortly." },
-        { status: 504 }
+        { status: 504, headers: { "Retry-After": "30" } }
       );
     }
 
@@ -352,6 +378,33 @@ export async function POST(request: Request) {
 
       console.error("[Qris] Lost metadata persistence race without stored metadata");
       return NextResponse.json({ error: "Payment creation failed" }, { status: 500 });
+    }
+
+    // A retry with the original key can recover a payment that has since
+    // expired or settled. Process its status before returning a usable QR.
+    if (payment.status !== "pending") {
+      const result = await processQrisPaymentEvent(
+        {
+          paymentId: payment.paymentId,
+          status: payment.status,
+          amount: payment.amount,
+          paidAmount: payment.paidAmount,
+          expiresAt: payment.expiresAt,
+          providerCreatedAt: payment.providerCreatedAt,
+          providerTransactionTime: payment.providerTransactionTime,
+        },
+        db
+      );
+      if (result === "paid" || result === "already_paid") {
+        return NextResponse.json({ success: true, alreadyPaid: true });
+      }
+      if (result === "expired" || result === "already_expired") {
+        return NextResponse.json({ error: "Payment expired" }, { status: 410 });
+      }
+      return NextResponse.json(
+        { error: "Failed to reconcile the recovered payment" },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({

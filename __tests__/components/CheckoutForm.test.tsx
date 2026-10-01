@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CheckoutForm from "@/components/CheckoutForm";
 
@@ -39,6 +39,116 @@ describe("CheckoutForm Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("waits and retries a temporary QRIS creation failure without resaving contact", async () => {
+    vi.useFakeTimers();
+    mockFetch
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Payment provider did not confirm the payment." }), {
+          status: 504,
+          headers: { "Retry-After": "30" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Creation in progress" }), {
+          status: 409,
+          headers: { "Retry-After": "1" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, paymentId: "recovered" }))
+      );
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="QRIS" />);
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "returning@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button"));
+    });
+    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(mockPush).toHaveBeenCalledWith("/order/order123");
+    expect(mockFetch.mock.calls.slice(1).map((call) => call[1].body)).toEqual([
+      JSON.stringify({ orderId: "order123" }),
+      JSON.stringify({ orderId: "order123" }),
+      JSON.stringify({ orderId: "order123" }),
+    ]);
+  });
+
+  it("stops retrying after three QRIS creation attempts", async () => {
+    vi.useFakeTimers();
+    mockFetch.mockResolvedValueOnce({ ok: true }).mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ error: "Provider still unavailable" }), {
+          status: 504,
+          headers: { "Retry-After": "30" },
+        })
+    );
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="QRIS" />);
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "returning@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button"));
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(screen.getByRole("alert")).toHaveTextContent("Provider still unavailable");
+    expect(screen.getByRole("button")).not.toBeDisabled();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("opens order status so a recovered expired QRIS payment can be retried", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Payment expired" }), { status: 410 })
+      );
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="QRIS" />);
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "returning@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/order/order123");
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows a permanent QRIS conflict immediately without retrying", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ error: "This payment request has changed. Please contact support." }),
+          { status: 409 }
+        )
+      );
+    render(<CheckoutForm orderId="order123" amount={50000} paymentGateway="QRIS" />);
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "returning@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("request has changed");
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("renders with amount displayed", () => {

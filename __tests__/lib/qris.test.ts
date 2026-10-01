@@ -185,6 +185,16 @@ describe("createQrisPayment", () => {
     expect(result).toMatchObject({ success: false, indeterminate: true });
   });
 
+  it("treats Gopay startup unavailability as a safe rejection before payment creation", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error_code: "PROVIDER_UNAVAILABLE" }, 503));
+    expect(await createQrisPayment(params)).toMatchObject({
+      success: false,
+      code: "PROVIDER_UNAVAILABLE",
+      indeterminate: false,
+      error: "Payment provider is starting. Please try again shortly.",
+    });
+  });
+
   it("treats a network failure as indeterminate", async () => {
     mockFetch.mockRejectedValueOnce(new Error("socket hangup"));
     const result = await createQrisPayment(params);
@@ -277,6 +287,37 @@ describe("createQrisPayment", () => {
     );
     const result = await createQrisPayment(params);
     expect(result.success).toBe(false);
+  });
+
+  it("accepts settlement evidence in a Gopay paid creation replay", async () => {
+    const createdAt = Date.parse("2026-10-01T10:00:00Z");
+    const paidAt = createdAt + 1000;
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          id: "recovered-paid",
+          status: "paid",
+          amount: 25123,
+          created_at: createdAt,
+          expires_at: createdAt + params.timeout,
+          paid_amount: 25123,
+          paid_at: paidAt,
+          provider_transaction: { transaction_time: new Date(paidAt).toISOString() },
+        },
+        201
+      )
+    );
+    expect(await createQrisPayment(params)).toMatchObject({
+      success: true,
+      data: {
+        paymentId: "recovered-paid",
+        status: "paid",
+        amount: 25123,
+        paidAmount: 25123,
+        providerCreatedAt: createdAt,
+        providerTransactionTime: paidAt,
+      },
+    });
   });
 
   it("rejects a paid REST record missing paid_amount", async () => {

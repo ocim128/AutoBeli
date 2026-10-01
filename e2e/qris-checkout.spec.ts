@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import crypto from "crypto";
-import { E2E_PRODUCT_SLUG, E2E_QRIS_HMAC_KEY } from "./helpers/config";
+import { MongoClient, ObjectId } from "mongodb";
+import { E2E_PRODUCT_SLUG, E2E_QRIS_HMAC_KEY, getE2EMongoUri } from "./helpers/config";
 
 /**
  * Full Qris end-to-end payment flow.
@@ -16,6 +17,117 @@ function sign(rawBody: string): string {
 }
 
 test.describe("Qris Payment Flow", () => {
+  test("checks out with the same email as an unpaid order and recovers a lost response", async ({
+    page,
+    request,
+  }) => {
+    const email = "returning-unpaid@example.com";
+    const oldOrder = await request.post("/api/orders", { data: { slug: E2E_PRODUCT_SLUG } });
+    expect(oldOrder.ok()).toBe(true);
+    const { orderId: oldOrderId } = await oldOrder.json();
+    expect(
+      (await request.patch("/api/orders", { data: { orderId: oldOrderId, contact: email } })).ok()
+    ).toBe(true);
+    const oldPayment = await request.post("/api/payment/qris/create", {
+      data: { orderId: oldOrderId },
+    });
+    expect(oldPayment.ok()).toBe(true);
+    const { paymentId: oldPaymentId } = await oldPayment.json();
+
+    const newOrder = await request.post("/api/orders", { data: { slug: E2E_PRODUCT_SLUG } });
+    expect(newOrder.ok()).toBe(true);
+    const { orderId } = await newOrder.json();
+    let createCalls = 0;
+    let recoveredPaymentId = "";
+    await page.route("**/api/payment/qris/create", async (route) => {
+      createCalls++;
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      const payment = await response.json();
+      if (createCalls === 1) {
+        recoveredPaymentId = payment.paymentId;
+        await route.fulfill({
+          status: 504,
+          headers: { "Content-Type": "application/json", "Retry-After": "1" },
+          body: JSON.stringify({
+            error: "Payment provider did not confirm the payment. Please try again shortly.",
+          }),
+        });
+      } else {
+        expect(payment.paymentId).toBe(recoveredPaymentId);
+        await route.fulfill({ response });
+      }
+    });
+    await page.goto(`/checkout/${orderId}`);
+    await page.getByLabel(/Email Address|Alamat Email/i).fill(email);
+    await page.getByRole("button", { name: /Pay|Bayar/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/order/${orderId}$`));
+    await expect(page.getByAltText("Qris QR code")).toBeVisible();
+    expect(createCalls).toBe(2);
+    expect(recoveredPaymentId).not.toBe(oldPaymentId);
+    expect(
+      (await (await request.get(`http://127.0.0.1:9119/payment/${oldPaymentId}`)).json()).status
+    ).toBe("pending");
+  });
+
+  test("recovers last night's expired payment and creates a fresh payment after an explicit retry", async ({
+    page,
+    request,
+  }) => {
+    const orderResponse = await request.post("/api/orders", { data: { slug: E2E_PRODUCT_SLUG } });
+    expect(orderResponse.ok()).toBe(true);
+    const { orderId } = await orderResponse.json();
+    const attempt = crypto.randomUUID();
+    const providerResponse = await request.post("http://127.0.0.1:9119/payment", {
+      headers: { "Idempotency-Key": attempt },
+      data: {
+        mode: "server_managed",
+        base_amount: 25000,
+        timeout: 1200000,
+        tolerance: 0,
+        webhook_url: `http://localhost:3001/api/webhooks/qris?attempt=${attempt}`,
+        tz: "Asia/Jakarta",
+      },
+    });
+    expect(providerResponse.ok()).toBe(true);
+    const { id: oldPaymentId } = await providerResponse.json();
+    expect(
+      (await request.post(`http://127.0.0.1:9119/__test/payment/${oldPaymentId}/expire`)).ok()
+    ).toBe(true);
+    const client = new MongoClient(getE2EMongoUri());
+    try {
+      await client.connect();
+      await client
+        .db()
+        .collection("orders")
+        .updateOne(
+          { _id: new ObjectId(orderId) },
+          {
+            $set: {
+              paymentCreationAttempt: attempt,
+              paymentCreationStartedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            },
+          }
+        );
+    } finally {
+      await client.close();
+    }
+
+    await page.goto(`/checkout/${orderId}`);
+    await page.getByLabel(/Email Address|Alamat Email/i).fill("unpaid-last-night@example.com");
+    await page.getByRole("button", { name: /Pay|Bayar/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/order/${orderId}$`));
+    await expect(page.getByAltText("Qris QR code")).not.toBeVisible();
+    await page.getByRole("link", { name: /Create New Payment|Buat Pembayaran Baru/i }).click();
+    await page.getByLabel(/Email Address|Alamat Email/i).fill("unpaid-last-night@example.com");
+    await page.getByRole("button", { name: /Pay|Bayar/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/order/${orderId}$`));
+    await expect(page.getByAltText("Qris QR code")).toBeVisible();
+    const payment = await request.post("/api/payment/qris/create", { data: { orderId } });
+    expect(payment.ok()).toBe(true);
+    expect((await payment.json()).paymentId).not.toBe(oldPaymentId);
+  });
+
   test("create -> QR image -> signed paid webhook -> delivery, with idempotent duplicate", async ({
     page,
     request,

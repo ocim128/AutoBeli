@@ -185,6 +185,9 @@ function createRequest(body: unknown): Request {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCreateQrisPayment.mockReset();
+  mockGetQrisPayment.mockReset();
+  mockProcessQrisPaymentEvent.mockReset();
   mockIsQrisConfigured.mockReturnValue(true);
   process.env.NEXT_PUBLIC_BASE_URL = "https://autobeli.example.com";
 });
@@ -475,6 +478,133 @@ describe("POST /api/payment/qris/create", () => {
     expect(order.paymentCreationStartedAt).toBeUndefined();
     expect(order.paymentCreationAttempt).toBeUndefined();
     expect(order.paymentMetadata).toBeUndefined();
+  });
+
+  it("recovers a timed-out creation using the same key after the lease expires", async () => {
+    const order = makeOrder({ customerContact: "returning@example.com" });
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment
+      .mockResolvedValueOnce({
+        success: false,
+        error: "Qris request failed",
+        indeterminate: true,
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          paymentId: "recovered",
+          status: "pending",
+          amount: 25000,
+          expiresAt: Date.now() + 60000,
+        },
+      });
+    const failed = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(failed.status).toBe(504);
+    expect(failed.headers.get("Retry-After")).toBe("30");
+    const attempt = order.paymentCreationAttempt;
+    expect((await POST(createRequest({ orderId: ORDER_ID }))).status).toBe(409);
+    order.paymentCreationStartedAt = new Date(Date.now() - 31000);
+    const recovered = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(recovered.status).toBe(200);
+    expect(mockCreateQrisPayment.mock.calls[1][0].idempotencyKey).toBe(attempt);
+    expect(mockCreateQrisPayment.mock.calls[1][0]).toEqual(mockCreateQrisPayment.mock.calls[0][0]);
+    expect(order.paymentMetadata?.transaction_ref).toBe("recovered");
+  });
+
+  it("releases a rejected startup request and signals a short automatic retry", async () => {
+    const order = makeOrder();
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment.mockResolvedValueOnce({
+      success: false,
+      error: "Payment provider is starting. Please try again shortly.",
+      code: "PROVIDER_UNAVAILABLE",
+      indeterminate: false,
+    });
+    const res = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(res.status).toBe(503);
+    expect(res.headers.get("Retry-After")).toBe("3");
+    expect(order.paymentCreationAttempt).toBeUndefined();
+    expect(order.paymentCreationStartedAt).toBeUndefined();
+  });
+
+  it("preserves a conflicting attempt and reports the specific error without automatic retries", async () => {
+    const order = makeOrder({ paymentCreationAttempt: "conflicting-attempt" });
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment.mockResolvedValueOnce({
+      success: false,
+      error: "This payment request has changed. Please contact support.",
+      code: "IDEMPOTENCY_CONFLICT",
+      indeterminate: true,
+    });
+    const res = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(res.status).toBe(409);
+    expect(res.headers.get("Retry-After")).toBeNull();
+    expect((await res.json()).error).toContain("request has changed");
+    expect(order.paymentCreationAttempt).toBe("conflicting-attempt");
+  });
+
+  it("expires a recovered creation from last night rather than returning its stale QR", async () => {
+    const order = makeOrder({
+      paymentCreationStartedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      paymentCreationAttempt: "last-night",
+    });
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment.mockResolvedValueOnce({
+      success: true,
+      data: {
+        paymentId: "old-unpaid",
+        status: "expired",
+        amount: 25000,
+        expiresAt: Date.now() - 60000,
+      },
+    });
+    mockProcessQrisPaymentEvent.mockResolvedValueOnce("expired");
+    const res = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(res.status).toBe(410);
+    expect(mockProcessQrisPaymentEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId: "old-unpaid", status: "expired", amount: 25000 }),
+      expect.anything()
+    );
+    expect(order.paymentMetadata?.transaction_ref).toBe("old-unpaid");
+    expect(order.paymentCreationAttempt).toBeUndefined();
+  });
+
+  it("settles a recovered paid creation through the canonical payment processor", async () => {
+    const order = makeOrder({ paymentCreationAttempt: "paid-attempt" });
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment.mockResolvedValueOnce({
+      success: true,
+      data: {
+        paymentId: "already-paid",
+        status: "paid",
+        amount: 25000,
+        paidAmount: 25000,
+        expiresAt: Date.now() + 60000,
+        providerCreatedAt: Date.now() - 1000,
+        providerTransactionTime: Date.now(),
+      },
+    });
+    mockProcessQrisPaymentEvent.mockResolvedValueOnce("paid");
+    const res = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ success: true, alreadyPaid: true });
+    expect(mockProcessQrisPaymentEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId: "already-paid", status: "paid", paidAmount: 25000 }),
+      expect.anything()
+    );
+  });
+
+  it("does not report a recovered paid payment as successful when fulfillment fails", async () => {
+    const order = makeOrder();
+    mockGetMongoClient.mockResolvedValue({ db: () => createFakeDb(order, makeProduct()) });
+    mockCreateQrisPayment.mockResolvedValueOnce({
+      success: true,
+      data: { paymentId: "unfulfilled", status: "paid", amount: 25000, paidAmount: 25000 },
+    });
+    mockProcessQrisPaymentEvent.mockResolvedValueOnce("error");
+    const res = await POST(createRequest({ orderId: ORDER_ID }));
+    expect(res.status).toBe(502);
+    expect((await res.json()).success).toBeUndefined();
   });
 
   it("clears old metadata and creates a new payment for a retried expired order", async () => {

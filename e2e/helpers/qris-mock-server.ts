@@ -24,11 +24,13 @@ interface MockPayment {
 }
 
 const payments = new Map<string, MockPayment>();
+const creationRequests = new Map<string, { body: string; paymentId: string }>();
 let nextId = 1;
 let runId = Date.now();
 
 export function resetPayments() {
   payments.clear();
+  creationRequests.clear();
   nextId = 1;
   // E2E orders remain in MongoDB between runs. Keep provider IDs unique across
   // resets so the production unique transaction-reference index does not make
@@ -83,6 +85,19 @@ export function startQrisMockServer(port: number): Promise<http.Server> {
         return;
       }
 
+      const expireMatch = url.match(/^\/__test\/payment\/([^/]+)\/expire$/);
+      if (method === "POST" && expireMatch) {
+        const payment = payments.get(expireMatch[1]);
+        if (!payment) {
+          sendJson(res, 404, { error_code: "PAYMENT_NOT_FOUND" });
+          return;
+        }
+        payment.status = "expired";
+        payment.expires_at = Date.now() - 24 * 60 * 60 * 1000;
+        sendJson(res, 200, payment);
+        return;
+      }
+
       // CORS / health preflight not needed; AutoBeli calls these server-side.
 
       // POST /payment — create a server-managed payment
@@ -102,6 +117,16 @@ export function startQrisMockServer(port: number): Promise<http.Server> {
             sendJson(res, 400, { error_code: "INVALID_BASE_AMOUNT" });
             return;
           }
+          const key = req.headers["idempotency-key"] as string | undefined;
+          const existing = key ? creationRequests.get(key) : undefined;
+          if (existing) {
+            if (existing.body !== body) {
+              sendJson(res, 409, { error_code: "IDEMPOTENCY_CONFLICT" });
+              return;
+            }
+            sendJson(res, 201, payments.get(existing.paymentId));
+            return;
+          }
           const id = `mock_pay_${runId}_${nextId++}`;
           const now = Date.now();
           const payment: MockPayment = {
@@ -113,6 +138,7 @@ export function startQrisMockServer(port: number): Promise<http.Server> {
             created_at: now,
           };
           payments.set(id, payment);
+          if (key) creationRequests.set(key, { body, paymentId: id });
           sendJson(res, 201, {
             id: payment.id,
             status: payment.status,

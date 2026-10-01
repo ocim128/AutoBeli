@@ -68,15 +68,31 @@ function CheckoutForm({ orderId, amount, paymentGateway, retry = false }: Checko
           throw new Error(data.error || t("checkout.contactSaveFailed"));
         }
 
-        const payRes = await fetch(getPaymentEndpoint(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, ...(retry ? { retry: true } : {}) }),
-        });
+        let payData;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const payRes = await fetch(getPaymentEndpoint(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId, ...(retry ? { retry: true } : {}) }),
+          });
+          payData = await payRes.json();
+          if (paymentGateway === "QRIS" && payRes.status === 410) {
+            router.push(`/order/${orderId}`);
+            return;
+          }
+          if (payRes.ok) break;
 
-        const payData = await payRes.json();
-
-        if (!payRes.ok) {
+          const retryAfter = Number(payRes.headers?.get("Retry-After"));
+          if (
+            paymentGateway === "QRIS" &&
+            attempt < 2 &&
+            [409, 503, 504].includes(payRes.status) &&
+            retryAfter > 0 &&
+            Number.isFinite(retryAfter)
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+            continue;
+          }
           throw new Error(payData.error || t("checkout.paymentCreationFailed"));
         }
 
@@ -97,7 +113,7 @@ function CheckoutForm({ orderId, amount, paymentGateway, retry = false }: Checko
         setLoading(false);
       }
     },
-    [contact, orderId, router, t, getPaymentEndpoint, retry]
+    [contact, orderId, router, t, getPaymentEndpoint, paymentGateway, retry]
   );
 
   return (

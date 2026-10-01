@@ -313,9 +313,9 @@ async function readImageWithTimeout(response: Response, timeoutMs: number): Prom
  * Create a server-managed Qris payment.
  *
  * The `indeterminate` flag distinguishes failure modes for the caller's lease
- * handling: a 4xx is a known-safe provider rejection (no payment was created),
- * while timeouts, network errors, 5xx, and malformed responses are
- * indeterminate — Qris may have created the payment.
+ * handling: provider rejections release the lease when no payment was created.
+ * Timeouts, network errors, most 5xx, malformed responses, and idempotency
+ * conflicts are indeterminate — Qris may already have created the payment.
  */
 export async function createQrisPayment(params: {
   baseAmount: number;
@@ -368,12 +368,15 @@ export async function createQrisPayment(params: {
       /* Preserve the HTTP failure category. */
     }
     console.error("[Qris] create payment failed: HTTP", response.status, code ?? "(no code)");
-    // 4xx is a definitive provider rejection; 5xx is indeterminate.
+    // Gopay reports PROVIDER_UNAVAILABLE before inserting a payment.
+    // Other 5xx and idempotency conflicts may refer to an existing payment.
     return {
       success: false,
       error: mapQrisErrorCode(code, response.status),
       code,
-      indeterminate: response.status >= 500 || code === "IDEMPOTENCY_CONFLICT",
+      indeterminate:
+        (response.status >= 500 && code !== "PROVIDER_UNAVAILABLE") ||
+        code === "IDEMPOTENCY_CONFLICT",
     };
   }
 
