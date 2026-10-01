@@ -78,10 +78,9 @@ describe("Pakasir Library", () => {
         },
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse))
+      );
 
       const { getPakasirTransactionStatus } = await import("@/lib/pakasir");
       const result = await getPakasirTransactionStatus("ORD-123", 50000);
@@ -98,10 +97,9 @@ describe("Pakasir Library", () => {
     });
 
     it("should handle errors", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: "Not found" }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Not found" }), { status: 404 })
+      );
 
       const { getPakasirTransactionStatus } = await import("@/lib/pakasir");
       const result = await getPakasirTransactionStatus("ORD-123", 50000);
@@ -110,18 +108,19 @@ describe("Pakasir Library", () => {
     });
 
     it("rejects a provider response for a different order or amount", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          transaction: {
-            amount: 1,
-            order_id: "ORD-other",
-            project: "test-project",
-            status: "completed",
-            payment_method: "qris",
-          },
-        }),
-      });
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: {
+              amount: 1,
+              order_id: "ORD-other",
+              project: "test-project",
+              status: "completed",
+              payment_method: "qris",
+            },
+          })
+        )
+      );
 
       const { getPakasirTransactionStatus } = await import("@/lib/pakasir");
       const result = await getPakasirTransactionStatus("ORD-123", 50000);

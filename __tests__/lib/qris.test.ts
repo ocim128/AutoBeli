@@ -134,10 +134,16 @@ describe("createQrisPayment", () => {
 
   it("returns an indeterminate result when the successful response body stalls", async () => {
     vi.useFakeTimers();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 201, text: () => new Promise(() => {}) });
+    const cancel = vi.fn();
+    mockFetch.mockResolvedValueOnce(new Response(new ReadableStream({ cancel }), { status: 201 }));
     const pending = createQrisPayment(params);
     await vi.advanceTimersByTimeAsync(10001);
-    expect(await pending).toMatchObject({ success: false, indeterminate: true });
+    expect(await pending).toMatchObject({
+      success: false,
+      indeterminate: true,
+      error: "Qris response timed out",
+    });
+    expect(cancel).toHaveBeenCalledOnce();
   });
 
   it("does not permit a fresh attempt after an idempotency conflict", async () => {
@@ -186,21 +192,11 @@ describe("createQrisPayment", () => {
   });
 
   it("treats a timeout as indeterminate", async () => {
-    vi.useFakeTimers();
-    mockFetch.mockImplementation(
-      (_input, init: RequestInit) =>
-        new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
-        })
-    );
-
-    const promise = createQrisPayment(params);
-    const assertion = expect(promise).resolves.toMatchObject({
+    mockFetch.mockRejectedValueOnce(new DOMException("Request timed out", "TimeoutError"));
+    await expect(createQrisPayment(params)).resolves.toMatchObject({
       success: false,
       indeterminate: true,
     });
-    await vi.advanceTimersByTimeAsync(11000);
-    await assertion;
   });
 
   it("treats malformed JSON as indeterminate", async () => {

@@ -4,13 +4,13 @@ import { getSession } from "@/lib/auth";
 import { Product } from "@/lib/definitions";
 import { encryptContent, decryptContent } from "@/lib/crypto";
 import { validate, createProductSchema, updateProductSchema } from "@/lib/validation";
-import { invalidateProductCache } from "@/lib/products";
+import { getAdminProducts, invalidateProductCache } from "@/lib/products";
 
 /**
  * @swagger
  * /api/products:
  *   get:
- *     description: Returns list of products or a single product by slug
+ *     description: Returns admin product summaries with stock counts, or a single product by slug
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -201,12 +201,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const products = await db
-      .collection<Product>("products")
-      .find({})
-      .project({ contentEncrypted: 0, "stockItems.contentEncrypted": 0 })
-      .sort({ createdAt: -1 })
-      .toArray();
+    const products = await getAdminProducts();
 
     return NextResponse.json({ products });
   } catch (e) {

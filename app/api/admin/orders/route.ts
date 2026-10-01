@@ -40,11 +40,17 @@ export async function GET(request: Request) {
         { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
         {
           $project: {
-            "product.contentEncrypted": 0,
-            "product.stockItems.contentEncrypted": 0,
-            // Internal payment-creation lease fields must not reach the browser
-            paymentCreationStartedAt: 0,
-            paymentCreationAttempt: 0,
+            _id: 1,
+            productId: 1,
+            status: 1,
+            amountPaid: 1,
+            paymentGateway: 1,
+            customerContact: 1,
+            createdAt: 1,
+            paidAt: 1,
+            quantity: 1,
+            "product.title": 1,
+            "product.priceIdr": 1,
           },
         },
       ])

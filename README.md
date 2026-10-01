@@ -159,6 +159,7 @@ Notes:
 - Order delivery does not depend on email. Email is a best-effort copy and recovery aid.
 - Mock payment and mock webhook routes are blocked in production.
 - Playwright requires `E2E_MONGODB_URI`, and refuses to run unless it points to a dedicated database whose name contains `e2e`. This prevents checkout tests and the local Qris mock from changing normal or production stock.
+- Playwright seeds its own encrypted stock fixture, runs a shared local Qris mock, and uses isolated test credentials and client IPs. Missing database access fails setup rather than skipping payment tests.
 
 ## Common commands
 
@@ -167,6 +168,7 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run typecheck
 npm run test:run
 npm run test:coverage
 npm run test:e2e

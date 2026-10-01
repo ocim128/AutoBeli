@@ -1,35 +1,15 @@
-import { test, expect, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
-/**
- * Helper to check if the page is showing a database/server error
- */
-async function hasAppError(page: Page): Promise<boolean> {
-  return page
-    .getByText("Something went wrong")
-    .isVisible()
-    .catch(() => false);
-}
+import { E2E_PRODUCT_SLUG } from "./helpers/config";
 
-async function openFirstProductOrSkip(page: Page): Promise<boolean> {
-  const productLink = page.locator('a[href^="/product/"]').first();
-  await productLink.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
-
-  if (!(await productLink.isVisible())) {
-    test.skip(true, "No products available for testing");
-    return false;
-  }
-
-  const href = await productLink.getAttribute("href");
-  if (!href) {
-    test.skip(true, "No product link available for testing");
-    return false;
-  }
-
+async function openSeededProduct(page: Page): Promise<void> {
+  const href = `/product/${E2E_PRODUCT_SLUG}`;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       await page.goto(href, { waitUntil: "domcontentloaded" });
       await expect(page).toHaveURL(/\/product\/.+/);
-      return true;
+      return;
     } catch (error) {
       const isTransientNavigationAbort = String(error).includes("ERR_ABORTED");
       if (!isTransientNavigationAbort || attempt === 1) throw error;
@@ -78,14 +58,12 @@ async function clickBuyAndWaitForCheckout(page: Page) {
 
 /**
  * Complete checkout flow E2E test
- * Note: This requires a product to exist in the database
- * For CI, you may need to seed test data first
+ * Uses the product seeded by the setup project.
  */
 
 test.describe("Checkout Flow", () => {
   test.describe.configure({ mode: "serial" });
 
-  // Skip if no products available
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });
@@ -96,15 +74,8 @@ test.describe("Checkout Flow", () => {
     // and e2e/helpers/qris-mock-server.ts). The order page then renders the
     // pending state. Full settlement is covered by qris-checkout.spec.ts.
 
-    // Check for app error (DB down)
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      test.skip(true, "Database connection error - skipping test");
-      return;
-    }
-
     // Step 1: Find a product and open it
-    if (!(await openFirstProductOrSkip(page))) return;
+    await openSeededProduct(page);
 
     // Step 2: Verify product page elements
     // Note: Default language is Indonesian
@@ -128,14 +99,7 @@ test.describe("Checkout Flow", () => {
   });
 
   test("checkout validates empty contact", async ({ page }) => {
-    // Check for app error (DB down)
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      test.skip(true, "Database connection error - skipping test");
-      return;
-    }
-
-    if (!(await openFirstProductOrSkip(page))) return;
+    await openSeededProduct(page);
 
     await clickBuyAndWaitForCheckout(page);
 
@@ -153,19 +117,20 @@ test.describe("Checkout Flow", () => {
   });
 
   test("buy button shows loading state", async ({ page }) => {
-    // Check for app error (DB down)
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      test.skip(true, "Database connection error - skipping test");
-      return;
-    }
+    await openSeededProduct(page);
 
-    if (!(await openFirstProductOrSkip(page))) return;
-
-    // Delay the API response to catch the loading state
+    // Hold a real successful response until the loading state is asserted.
+    let releaseResponse!: () => void;
+    const responseReady = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
     await page.route("**/api/orders", async (route) => {
       if (route.request().method() === "POST") {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        await responseReady;
+        await route.fulfill({ response });
+        return;
       }
       await route.continue();
     });
@@ -187,31 +152,22 @@ test.describe("Checkout Flow", () => {
     }
 
     await expect(buyButton).toHaveAttribute("aria-busy", "true");
+    releaseResponse();
+    await expect(page).toHaveURL(/\/checkout\/.+/, { timeout: 10000 });
   });
 });
 
 test.describe("Checkout Page Direct Access", () => {
   test("shows error for invalid order ID format", async ({ page }) => {
     // Try to access checkout with invalid order ID
-    const response = await page.goto("/checkout/invalid-order-id");
-
-    // Should show error or redirect
-    // The exact behavior depends on implementation
-    expect(response?.status()).toBeGreaterThanOrEqual(200);
+    await page.goto("/checkout/invalid-order-id");
+    await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
   });
 
   test("shows error for non-existent order", async ({ page }) => {
     // Valid MongoDB ObjectId format but doesn't exist
     await page.goto("/checkout/aaaaaaaaaaaaaaaaaaaaaaaa");
 
-    // Should show "not found" or similar error
-    // Implementation specific - could be 404 or error message
-    const content = await page.content();
-    expect(
-      content.includes("not found") ||
-        content.includes("Not Found") ||
-        content.includes("error") ||
-        page.url().includes("404")
-    ).toBeTruthy();
+    await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
   });
 });

@@ -24,16 +24,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Panel } from "@/components/ui/panel";
 import { collectUnsoldUsernames } from "@/lib/stockConverter";
 import { toast } from "sonner";
+import type { AdminProductSummary } from "@/lib/products";
 
-interface ProductWithStock {
-  slug: string;
-  title: string;
-  priceIdr: number;
-  isActive: boolean;
-  isSold?: boolean;
-  createdAt: Date;
-  stockItems?: Array<{ isSold: boolean }>;
-}
+type ProductWithStock = AdminProductSummary;
 
 interface StockResponse {
   stockItems?: Array<{ content: string; isSold: boolean }>;
@@ -58,15 +51,10 @@ function collectUnsoldContent(
 }
 
 function getStockInfo(product: ProductWithStock) {
-  if (product.stockItems && product.stockItems.length > 0) {
-    const available = product.stockItems.filter((item) => !item.isSold).length;
-    const total = product.stockItems.length;
-    return { available, total, hasStock: true };
-  }
   return {
-    available: product.isSold ? 0 : 1,
-    total: 1,
-    hasStock: false,
+    available: product.stockStats.available,
+    total: product.stockStats.total,
+    hasStock: product.stockStats.hasStockSystem,
   };
 }
 

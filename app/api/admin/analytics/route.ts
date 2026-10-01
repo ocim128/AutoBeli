@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     };
 
     // 1. Daily Revenue (Last 7 Days)
-    const dailyRevenue = await db
+    const dailyRevenueQuery = db
       .collection("orders")
       .aggregate([
         {
@@ -68,22 +68,8 @@ export async function GET(request: Request) {
       ])
       .toArray();
 
-    // Fill in missing days with zero revenue
-    const filledDailyRevenue = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const existing = dailyRevenue.find((r) => r._id === dateStr);
-      filledDailyRevenue.push({
-        date: dateStr,
-        revenue: existing ? existing.revenue : 0,
-        orders: existing ? existing.orders : 0,
-      });
-    }
-
     // 2. Top Products by Revenue
-    const topProducts = await db
+    const topProductsQuery = db
       .collection("orders")
       .aggregate([
         {
@@ -122,7 +108,7 @@ export async function GET(request: Request) {
       .toArray();
 
     // 3. Summary Stats
-    const summary = await db
+    const summaryQuery = db
       .collection("orders")
       .aggregate([
         {
@@ -138,6 +124,26 @@ export async function GET(request: Request) {
         },
       ])
       .toArray();
+
+    const [dailyRevenue, topProducts, summary] = await Promise.all([
+      dailyRevenueQuery,
+      topProductsQuery,
+      summaryQuery,
+    ]);
+
+    // Fill in missing days with zero revenue
+    const filledDailyRevenue = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const existing = dailyRevenue.find((r) => r._id === dateStr);
+      filledDailyRevenue.push({
+        date: dateStr,
+        revenue: existing ? existing.revenue : 0,
+        orders: existing ? existing.orders : 0,
+      });
+    }
 
     const statsSummary =
       summary.length > 0

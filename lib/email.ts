@@ -1,7 +1,7 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { getBaseUrl } from "@/lib/baseUrl";
-import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import { fetchWithTimeout, readBodyWithTimeout } from "@/lib/fetchWithTimeout";
 
 interface EmailData {
   orderId: string;
@@ -144,7 +144,7 @@ function normalizeProviderError(raw: string): string {
 }
 
 async function getProviderErrorMessage(response: Response): Promise<string> {
-  const rawText = await response.text();
+  const rawText = await readBodyWithTimeout(response, 8000);
 
   if (!rawText) {
     return "";

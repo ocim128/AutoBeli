@@ -90,10 +90,13 @@ export async function POST(request: Request) {
     const db = client.db();
 
     // Additional DB-based rate limit (global safety cap)
-    const recentOrders = await db.collection<Order>("orders").countDocuments({
-      createdAt: { $gt: new Date(Date.now() - 60 * 1000) },
-      status: "PENDING",
-    });
+    const recentOrders = await db.collection<Order>("orders").countDocuments(
+      {
+        createdAt: { $gt: new Date(Date.now() - 60 * 1000) },
+        status: "PENDING",
+      },
+      { limit: 51 }
+    );
 
     if (recentOrders > 50) {
       return NextResponse.json({ error: "System busy. Try again later." }, { status: 429 });

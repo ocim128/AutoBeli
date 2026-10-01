@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import { fetchWithTimeout, readBodyWithTimeout } from "@/lib/fetchWithTimeout";
 
 const PAKASIR_API_KEY = process.env.PAKASIR_API_KEY || "";
 const PAKASIR_PROJECT_SLUG = process.env.PAKASIR_PROJECT_SLUG || "";
@@ -120,7 +120,7 @@ export async function getPakasirTransactionStatus(
       };
     }
 
-    const data = await response.json();
+    const data = JSON.parse(await readBodyWithTimeout(response, 8000));
 
     if (!data.transaction) {
       return {

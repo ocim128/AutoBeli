@@ -1,20 +1,6 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
-/**
- * Helper to check if the page is showing a database/server error
- * Supports both English and Indonesian error messages
- */
-async function hasAppError(page: Page): Promise<boolean> {
-  const enError = await page
-    .getByText("Something went wrong")
-    .isVisible()
-    .catch(() => false);
-  const idError = await page
-    .getByText("Waduh, Ada yang Salah")
-    .isVisible()
-    .catch(() => false);
-  return enError || idError;
-}
+import { E2E_PRODUCT_SLUG } from "./helpers/config";
 
 test.describe("Homepage", () => {
   test("has correct title", async ({ page }) => {
@@ -23,33 +9,17 @@ test.describe("Homepage", () => {
     await expect(page).toHaveTitle(/AutoBeli/i);
   });
 
-  test("displays hero section or error page", async ({ page }) => {
+  test("displays hero section", async ({ page }) => {
     await page.goto("/");
-
-    // Either the hero section loads OR we see an error page (DB issue)
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      // If there's an error page, just verify it's shown properly
-      await expect(
-        page.getByText("Something went wrong").or(page.getByText("Waduh, Ada yang Salah"))
-      ).toBeVisible();
-      await expect(page.getByRole("button", { name: /try again|coba lagi/i })).toBeVisible();
-    } else {
-      // Check for main heading - matches "Konten Digital." from i18n
-      await expect(page.getByRole("heading", { level: 1 })).toContainText("Konten Digital");
-      await expect(page.getByText("Pengiriman Instan").first()).toBeVisible();
-    }
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Konten Digital");
+    await expect(page.getByText("Pengiriman Instan").first()).toBeVisible();
   });
 
-  test("shows products section or handles error", async ({ page }) => {
+  test("shows products section", async ({ page }) => {
     await page.goto("/");
-
-    const hasError = await hasAppError(page);
-    if (!hasError) {
-      await expect(
-        page.getByRole("heading", { level: 2, name: /Aset Tersedia|Available Assets/i })
-      ).toBeVisible();
-    }
+    await expect(
+      page.getByRole("heading", { level: 2, name: /Aset Tersedia|Available Assets/i })
+    ).toBeVisible();
   });
 
   test("has navigation header", async ({ page }) => {
@@ -69,67 +39,31 @@ test.describe("Homepage", () => {
   test("products are clickable and navigate to product page", async ({ page }) => {
     await page.goto("/");
 
-    // Skip if there's an error page
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      test.skip();
-      return;
-    }
-
-    // If there are products, clicking one should navigate
-    const productLink = page.locator('a[href^="/product/"]').first();
-
-    // Check if any products exist
-    if (await productLink.isVisible()) {
-      await productLink.click();
-
-      // Should navigate to product page
-      await expect(page).toHaveURL(/\/product\/.+/);
-    }
+    const productLink = page.locator(`a[href="/product/${E2E_PRODUCT_SLUG}"]`).first();
+    await expect(productLink).toBeVisible();
+    await productLink.click();
+    await expect(page).toHaveURL(`/product/${E2E_PRODUCT_SLUG}`);
   });
 });
 
 test.describe("Product Page", () => {
-  test("shows 404 or error for non-existent product", async ({ page }) => {
-    const response = await page.goto("/product/non-existent-product-xyz");
+  test("shows 404 for non-existent product", async ({ page }) => {
+    await page.goto("/product/non-existent-product-xyz");
 
-    // Should return 404, or 500 if DB is down, or check for 404/error text
-    const status = response?.status();
-    if (status === 404) {
-      expect(status).toBe(404);
-    } else {
-      // Check for either 404 content OR error page (DB down)
-      const hasErrorPage = await hasAppError(page);
-
-      const has404Heading = await page
-        .getByRole("heading", { level: 1, name: "404" })
-        .isVisible()
-        .catch(() => false);
-      const has404Copy = await page
-        .getByText(/asset not found|aset tidak ditemukan|page not found/i)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const hasRecoveryAction = await page
-        .getByRole("link", { name: /return to store|kembali ke toko|find my order|cari pesanan/i })
-        .first()
-        .isVisible()
-        .catch(() => false);
-      expect(hasErrorPage || has404Heading || has404Copy || hasRecoveryAction).toBeTruthy();
-    }
+    // Streamed App Router responses can carry HTTP 200 for a not-found page.
+    await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /return to store|kembali ke toko/i }).first()
+    ).toBeVisible();
   });
 
   test("has breadcrumb navigation", async ({ page }) => {
     await page.goto("/");
 
-    const productLink = page.locator('a[href^="/product/"]').first();
-
-    if (await productLink.isVisible()) {
-      await productLink.click();
-
-      // Should have breadcrumb with Store link (Toko)
-      await expect(page.getByRole("link", { name: /Toko|Store/i }).first()).toBeVisible();
-    }
+    const productLink = page.locator(`a[href="/product/${E2E_PRODUCT_SLUG}"]`).first();
+    await expect(productLink).toBeVisible();
+    await productLink.click();
+    await expect(page.getByRole("link", { name: /Toko|Store/i }).first()).toBeVisible();
   });
 });
 
@@ -155,8 +89,8 @@ test.describe("Admin Access", () => {
     await page.getByPlaceholder(/password/i).fill("wrongpassword");
     await page.getByRole("button", { name: /unlock/i }).click();
 
-    // Should show "Invalid password" OR rate limit message
-    await expect(page.locator("form")).toContainText(/invalid password|too many/i);
+    // The isolated test IP has not exhausted its login limit.
+    await expect(page.locator("form")).toContainText(/invalid password/i);
   });
 
   test("login form prevents empty submission", async ({ page }) => {
@@ -174,8 +108,8 @@ test.describe("API Health", () => {
   test("health endpoint returns response", async ({ request }) => {
     const response = await request.get("/api/health");
 
-    // Health endpoint should always return 200 (ok) or 500 (db issues), never crash
-    expect([200, 500]).toContain(response.status());
+    // The setup project requires a reachable database.
+    expect(response.status()).toBe(200);
 
     const body = await response.json();
     expect(body.status).toBeDefined();
@@ -188,8 +122,8 @@ test.describe("Order Flow (Mock)", () => {
       data: { slug: "" },
     });
 
-    // 400 for validation error, or 500 if DB is down
-    expect([400, 500]).toContain(response.status());
+    // Invalid input is rejected before database access.
+    expect(response.status()).toBe(400);
   });
 
   test("order creation rejects invalid slug format", async ({ request }) => {
@@ -197,30 +131,32 @@ test.describe("Order Flow (Mock)", () => {
       data: { slug: "Invalid Slug!" },
     });
 
-    // 400 for validation error, or 500 if DB is down
-    expect([400, 500]).toContain(response.status());
+    // Invalid input is rejected before database access.
+    expect(response.status()).toBe(400);
     const body = await response.json();
     expect(body.error).toBeDefined();
   });
 
-  test("order creation returns 404 or 500 for non-existent product", async ({ request }) => {
+  test("order creation returns 404 for non-existent product", async ({ request }) => {
     const response = await request.post("/api/orders", {
       data: { slug: "non-existent-product-xyz" },
     });
 
-    // 404 if product not found, or 500 if DB is down
-    expect([404, 500]).toContain(response.status());
+    // Missing products must return 404.
+    expect(response.status()).toBe(404);
   });
 });
 
 test.describe("Rate Limiting", () => {
   test("returns rate limit headers on order creation", async ({ request }) => {
     const response = await request.post("/api/orders", {
-      data: { slug: "test-product" },
+      data: { slug: E2E_PRODUCT_SLUG },
     });
 
-    // Accept various statuses: 200 (success), 400 (validation), 404 (not found), 429 (rate limited), 500 (DB error)
-    expect([200, 400, 404, 429, 500]).toContain(response.status());
+    // A fresh test IP receives the configured rate-limit headers.
+    expect(response.status()).toBe(200);
+    expect(response.headers()["x-ratelimit-limit"]).toBe("10");
+    expect(response.headers()["x-ratelimit-remaining"]).toBe("9");
   });
 });
 
@@ -258,11 +194,7 @@ test.describe("Responsive Design", () => {
     // Page should still be functional - title always works
     await expect(page).toHaveTitle(/AutoBeli/i);
 
-    // Either show hero heading OR error page
-    const hasError = await hasAppError(page);
-    if (!hasError) {
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    }
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
   test("homepage is responsive on tablet", async ({ page }) => {

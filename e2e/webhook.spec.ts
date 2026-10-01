@@ -1,50 +1,16 @@
-import { test, expect, request, Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
-/**
- * Helper to check if the page is showing a database/server error
- */
-async function hasAppError(page: Page): Promise<boolean> {
-  return page
-    .getByText("Something went wrong")
-    .isVisible()
-    .catch(() => false);
-}
+import { E2E_PRODUCT_SLUG } from "./helpers/config";
 
 test.describe("Webhook Processing", () => {
-  test("rejects the legacy Pakasir webhook for a QRIS order", async ({ page }) => {
-    // Step 1: Get a valid product slug
-    await page.goto("/");
-
-    // Check for app error (DB down)
-    const hasError = await hasAppError(page);
-    if (hasError) {
-      test.skip(true, "Database connection error - skipping test");
-      return;
-    }
-
-    const productLink = page.locator('a[href^="/product/"]').first();
-
-    // Skip if no products
-    if (!(await productLink.isVisible())) {
-      test.skip(true, "No products available for testing");
-      return;
-    }
-
-    const href = await productLink.getAttribute("href");
-    const slug = href?.split("/product/")[1];
-    expect(slug).toBeTruthy();
+  test("rejects the legacy Pakasir webhook for a QRIS order", async ({ request }) => {
+    const slug = E2E_PRODUCT_SLUG;
 
     // Step 2: Create a PENDING order via API
-    const apiContext = await request.newContext();
+    const apiContext = request;
     const createOrderRes = await apiContext.post("/api/orders", {
       data: { slug },
     });
-
-    // Handle DB errors gracefully
-    if (createOrderRes.status() === 500) {
-      test.skip(true, "Database connection error - skipping test");
-      return;
-    }
 
     expect(createOrderRes.ok()).toBeTruthy();
     const orderData = await createOrderRes.json();
@@ -95,13 +61,6 @@ test.describe("Webhook Processing", () => {
       data: webhookPayload,
     });
 
-    // Will likely return success with "Verification failed" since Pakasir API won't find it
-    // or 404 if our DB doesn't have the order
-    const data = await webhookRes.json();
-    expect(
-      webhookRes.status() === 404 ||
-        data.message === "Verification failed" ||
-        data.message === "Not completed"
-    ).toBeTruthy();
+    expect(webhookRes.status()).toBe(404);
   });
 });

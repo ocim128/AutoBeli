@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { OrderWithProduct } from "@/lib/orders";
+import type { OrderWithProduct } from "@/lib/orders";
 import {
   Table,
   TableBody,
@@ -22,8 +22,21 @@ import { DataTableShell } from "@/components/ui/data-table-shell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Panel } from "@/components/ui/panel";
 
+type AdminOrderSummary = Pick<
+  OrderWithProduct,
+  | "_id"
+  | "productId"
+  | "status"
+  | "amountPaid"
+  | "paymentGateway"
+  | "customerContact"
+  | "createdAt"
+  | "paidAt"
+  | "quantity"
+> & { product?: Pick<OrderWithProduct["product"], "title" | "priceIdr"> };
+
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<OrderWithProduct[]>([]);
+  const [orders, setOrders] = useState<AdminOrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

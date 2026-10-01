@@ -34,6 +34,79 @@ export function serializeProductForClient(
   };
 }
 
+export interface AdminProductSummary extends SerializedProduct {
+  createdAt: string;
+  stockStats: { total: number; available: number; sold: number; hasStockSystem: boolean };
+}
+
+export async function getAdminProducts(): Promise<AdminProductSummary[]> {
+  const client = await getMongoClient();
+  const products = await client
+    .db()
+    .collection<Product>("products")
+    .aggregate<Product & Pick<AdminProductSummary, "stockStats">>([
+      { $sort: { createdAt: -1 } },
+      {
+        $set: {
+          stockStats: {
+            total: { $size: { $ifNull: ["$stockItems", []] } },
+            available: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: ["$stockItems", []] },
+                  as: "item",
+                  cond: { $ne: ["$$item.isSold", true] },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          stockStats: {
+            $cond: [
+              { $gt: ["$stockStats.total", 0] },
+              {
+                total: "$stockStats.total",
+                available: "$stockStats.available",
+                sold: { $subtract: ["$stockStats.total", "$stockStats.available"] },
+                hasStockSystem: true,
+              },
+              {
+                total: 1,
+                available: { $cond: [{ $eq: ["$isSold", true] }, 0, 1] },
+                sold: { $cond: [{ $eq: ["$isSold", true] }, 1, 0] },
+                hasStockSystem: false,
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          title: 1,
+          slug: 1,
+          description: 1,
+          priceIdr: 1,
+          imageUrl: 1,
+          isActive: 1,
+          isSold: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          stockStats: 1,
+        },
+      },
+    ])
+    .toArray();
+
+  return products.map((product) => ({
+    ...serializeProductForClient(product),
+    createdAt: new Date(product.createdAt).toISOString(),
+    stockStats: product.stockStats,
+  }));
+}
+
 /**
  * Get all active products with caching and request deduplication
  * Cache TTL: 1 minute

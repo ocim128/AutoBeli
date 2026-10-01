@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
+import { E2E_ADMIN_PASSWORD, E2E_PRODUCT_SLUG } from "./helpers/config";
 
 test.describe("Admin Authentication", () => {
   test.beforeEach(async ({ page }) => {
@@ -51,7 +52,7 @@ test.describe("Admin Authentication", () => {
       data: { password: "wrongpassword" },
     });
 
-    expect([401, 429]).toContain(response.status());
+    expect(response.status()).toBe(401);
   });
 
   test("login API rejects empty password", async ({ request }) => {
@@ -59,8 +60,7 @@ test.describe("Admin Authentication", () => {
       data: { password: "" },
     });
 
-    // 400 is ideal, but if rate limited, 429 is also acceptable for E2E flow
-    expect([400, 429]).toContain(response.status());
+    expect(response.status()).toBe(400);
   });
 
   test("login API rate limiting works", async ({ request }) => {
@@ -76,9 +76,11 @@ test.describe("Admin Authentication", () => {
 
     const responses = await Promise.all(attempts);
 
-    // At least some should be rate limited (429) or unauthorized (401)
     const statuses = responses.map((r) => r.status());
-    expect(statuses.some((s) => s === 401 || s === 429)).toBe(true);
+    expect(statuses.filter((s) => s === 401)).toHaveLength(5);
+    expect(statuses.filter((s) => s === 429)).toHaveLength(5);
+    const limited = responses.find((response) => response.status() === 429)!;
+    expect(Number(limited.headers()["retry-after"])).toBeGreaterThan(0);
   });
 });
 
@@ -86,38 +88,63 @@ test.describe("Admin Session Management", () => {
   test("session cookie is httpOnly", async ({ page, context }) => {
     await page.goto("/admin/login");
 
-    // After any interaction, check cookie settings
-    // Note: We can't directly test httpOnly from JS, but we can verify
-    // the cookie exists after login (if successful)
+    await page.getByPlaceholder(/password/i).fill(E2E_ADMIN_PASSWORD);
+    await page.getByRole("button", { name: /unlock/i }).click();
+    await expect(page).toHaveURL("/admin/dashboard", { timeout: 15000 });
     const cookies = await context.cookies();
 
-    // If admin_session cookie exists, verify it's secure
     const sessionCookie = cookies.find((c) => c.name === "admin_session");
-    if (sessionCookie) {
-      expect(sessionCookie.httpOnly).toBe(true);
-      expect(sessionCookie.sameSite).toBe("Lax");
-    }
+    expect(sessionCookie).toBeDefined();
+    expect(sessionCookie?.httpOnly).toBe(true);
+    expect(sessionCookie?.sameSite).toBe("Lax");
+    expect(await page.evaluate(() => document.cookie)).not.toContain("admin_session");
   });
 });
 
 test.describe("Admin Dashboard (Authenticated)", () => {
-  // Note: These tests require valid ADMIN_PASSWORD in environment
-  // Skip in CI unless credentials are available
+  test("list APIs return stock counts and product summaries without inventory", async ({
+    request,
+  }) => {
+    const login = await request.post("/api/auth/login", { data: { password: E2E_ADMIN_PASSWORD } });
+    expect(login.status()).toBe(200);
+    const productsResponse = await request.get("/api/products");
+    expect(productsResponse.status()).toBe(200);
+    const { products } = await productsResponse.json();
+    const stockProduct = products.find(
+      (product: { slug: string }) => product.slug === E2E_PRODUCT_SLUG
+    );
+    expect(stockProduct.stockStats).toMatchObject({ total: 100, hasStockSystem: true });
+    expect(stockProduct.stockStats.available + stockProduct.stockStats.sold).toBe(100);
+    for (const product of products) {
+      expect(product).not.toHaveProperty("stockItems");
+      expect(product).not.toHaveProperty("contentEncrypted");
+      expect(product).not.toHaveProperty("content");
+    }
+    expect(
+      products.find((product: { slug: string }) => product.slug === "e2e-legacy-available")
+        .stockStats
+    ).toEqual({ total: 1, available: 1, sold: 0, hasStockSystem: false });
+    expect(
+      products.find((product: { slug: string }) => product.slug === "e2e-legacy-sold").stockStats
+    ).toEqual({ total: 1, available: 0, sold: 1, hasStockSystem: false });
 
-  test.skip("successful login redirects to dashboard", async ({ page }) => {
-    // This test requires the actual ADMIN_PASSWORD
-    // Only run manually or with proper test credentials
+    const created = await request.post("/api/orders", { data: { slug: E2E_PRODUCT_SLUG } });
+    expect(created.status()).toBe(200);
+    const { orderId } = await created.json();
+    const ordersResponse = await request.get("/api/admin/orders");
+    expect(ordersResponse.status()).toBe(200);
+    const { orders } = await ordersResponse.json();
+    const order = orders.find((row: { _id: string }) => row._id === orderId);
+    expect(order.product).toEqual({ title: "E2E Digital Access", priceIdr: 25000 });
+    expect(order).not.toHaveProperty("paymentCreationAttempt");
+  });
+
+  test("successful login redirects to dashboard", async ({ page }) => {
     await page.goto("/admin/login");
 
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      test.skip(true, "ADMIN_PASSWORD not set");
-      return;
-    }
-
-    await page.getByPlaceholder(/password/i).fill(adminPassword);
+    await page.getByPlaceholder(/password/i).fill(E2E_ADMIN_PASSWORD);
     await page.getByRole("button", { name: /unlock/i }).click();
 
-    await expect(page).toHaveURL("/admin/dashboard");
+    await expect(page).toHaveURL("/admin/dashboard", { timeout: 15000 });
   });
 });

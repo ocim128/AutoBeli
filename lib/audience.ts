@@ -467,13 +467,15 @@ export async function getAudienceList(
   const filter = buildAudienceFilter(params);
   const collection = db.collection<AudienceContact>(AUDIENCE_COLLECTION);
 
-  const total = await collection.countDocuments(filter);
-  const rows = await collection
-    .find(filter)
-    .sort({ updatedAt: -1 })
-    .skip((params.page - 1) * params.pageSize)
-    .limit(params.pageSize)
-    .toArray();
+  const [total, rows] = await Promise.all([
+    collection.countDocuments(filter),
+    collection
+      .find(filter)
+      .sort({ updatedAt: -1 })
+      .skip((params.page - 1) * params.pageSize)
+      .limit(params.pageSize)
+      .toArray(),
+  ]);
 
   const rowsWithStats = await (async () => {
     const statsMap = await getBatchOrderStats(rows, db);

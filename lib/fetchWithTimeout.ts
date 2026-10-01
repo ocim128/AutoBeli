@@ -3,36 +3,45 @@ export async function fetchWithTimeout(
   init: RequestInit = {},
   timeoutMs = 8000
 ): Promise<Response> {
-  const controller = new AbortController();
-  const upstreamSignal = init.signal;
-  let timedOut = false;
-  const abortFromUpstream = () => controller.abort(upstreamSignal?.reason);
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
-
-  if (upstreamSignal) {
-    if (upstreamSignal.aborted) {
-      controller.abort(upstreamSignal.reason);
-    } else {
-      upstreamSignal.addEventListener("abort", abortFromUpstream, { once: true });
-    }
-  }
+  const deadline = AbortSignal.timeout(timeoutMs);
+  const signal = init.signal ? AbortSignal.any([init.signal, deadline]) : deadline;
 
   try {
-    return await fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
+    // Keep the signal attached after headers arrive so body reads also abort.
+    return await fetch(input, { ...init, signal });
   } catch (error) {
-    if (timedOut) {
+    if (signal.reason === deadline.reason && deadline.aborted) {
       throw new Error(`Request timed out after ${timeoutMs}ms`);
     }
 
     throw error;
+  }
+}
+
+export async function readBodyWithTimeout(response: Response, timeoutMs: number): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+
+  const chunks: Uint8Array[] = [];
+  let timer: ReturnType<typeof setTimeout>;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`Response body read timed out after ${timeoutMs}ms`));
+      void reader.cancel().catch(() => {});
+    }, timeoutMs);
+  });
+  const read = async () => {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return Buffer.concat(chunks).toString("utf8");
+      chunks.push(value);
+    }
+  };
+
+  try {
+    return await Promise.race([read(), deadline]);
   } finally {
-    clearTimeout(timeout);
-    upstreamSignal?.removeEventListener("abort", abortFromUpstream);
+    clearTimeout(timer!);
+    reader.releaseLock();
   }
 }

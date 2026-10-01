@@ -1,5 +1,7 @@
 import crypto from "crypto";
-import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import { fetchWithTimeout, readBodyWithTimeout } from "@/lib/fetchWithTimeout";
+
+export { readBodyWithTimeout } from "@/lib/fetchWithTimeout";
 
 /**
  * Server-side client for the Qris payment service.
@@ -256,40 +258,6 @@ async function parseJsonBody(response: Response, timeoutMs: number): Promise<unk
   } catch {
     return undefined;
   }
-}
-
-/**
- * Bound the time spent reading the response body. `fetchWithTimeout` aborts on
- * the headers arriving, but a server can stall mid-body; this guards the body
- * read so a wedged connection cannot hang the route beyond `timeoutMs`.
- *
- * Exported for direct unit testing.
- */
-export function readBodyWithTimeout(response: Response, timeoutMs: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Response body read timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-
-    response
-      .text()
-      .then(
-        (text) => {
-          clearTimeout(timer);
-          resolve(text);
-        },
-        (error) => {
-          clearTimeout(timer);
-          reject(error);
-        }
-      )
-      .catch((error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-  });
 }
 
 async function readImageWithTimeout(response: Response, timeoutMs: number): Promise<Buffer> {

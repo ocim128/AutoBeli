@@ -71,6 +71,18 @@ export function startQrisMockServer(port: number): Promise<http.Server> {
       const url = req.url || "";
       const method = req.method || "GET";
 
+      const settleMatch = url.match(/^\/__test\/payment\/([^/]+)\/settle$/);
+      if (method === "POST" && settleMatch) {
+        const payment = payments.get(settleMatch[1]);
+        if (!payment) {
+          sendJson(res, 404, { error_code: "PAYMENT_NOT_FOUND" });
+          return;
+        }
+        settle(payment.id, payment.amount);
+        sendJson(res, 200, payment);
+        return;
+      }
+
       // CORS / health preflight not needed; AutoBeli calls these server-side.
 
       // POST /payment — create a server-managed payment
@@ -130,6 +142,7 @@ export function startQrisMockServer(port: number): Promise<http.Server> {
         if (payment.status === "paid") {
           body.paid_amount = payment.paid_amount;
           body.paid_at = payment.paid_at;
+          body.provider_transaction = payment.provider_transaction;
         }
         sendJson(res, 200, body);
         return;

@@ -30,7 +30,7 @@ import { GET } from "@/app/api/health/route";
 const originalEnv = { ...process.env };
 
 beforeEach(() => {
-  process.env.NODE_ENV = "production";
+  vi.stubEnv("NODE_ENV", "production");
   mockGetPaymentGateway.mockReset();
   mockIsQrisConfigured.mockReset();
   mockGetMongoClient.mockReset();

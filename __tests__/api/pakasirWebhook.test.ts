@@ -74,7 +74,7 @@ function setDatabase(order: Order) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.NODE_ENV = "test";
+  vi.stubEnv("NODE_ENV", "test");
   mockGetPakasirTransactionStatus.mockResolvedValue({
     success: true,
     data: {
@@ -113,7 +113,7 @@ describe("POST /api/webhooks/pakasir", () => {
   });
 
   it("does not treat a test project as paid in production", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const order = makeOrder("PAKASIR");
     setDatabase(order);
 

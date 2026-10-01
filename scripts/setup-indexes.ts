@@ -158,6 +158,12 @@ async function setupIndexes() {
     // ========================================
     console.log("\n📄 Setting up TOKENS indexes...");
 
+    // Unique index on token for validation
+    await db
+      .collection("tokens")
+      .createIndex({ token: 1 }, { unique: true, name: "idx_token_unique" });
+    console.log("  ✅ Created unique index: tokens.token");
+
     // Index on orderId for token lookups
     const duplicateTokenOrders = await db
       .collection("tokens")
@@ -189,12 +195,6 @@ async function setupIndexes() {
         .createIndex({ orderId: 1 }, { unique: true, name: "idx_token_order_unique" });
     }
     console.log("  ✅ Ensured index: tokens.orderId");
-
-    // Unique index on token for validation
-    await db
-      .collection("tokens")
-      .createIndex({ token: 1 }, { unique: true, name: "idx_token_unique" });
-    console.log("  ✅ Created unique index: tokens.token");
 
     // ========================================
     // AUDIENCES COLLECTION INDEXES

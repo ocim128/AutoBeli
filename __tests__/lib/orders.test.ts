@@ -73,19 +73,21 @@ function createFakeDb(order: Order, product: Product) {
   };
 
   const tokenCollection = {
-    findOneAndUpdate: vi.fn(async (filter: { orderId: ObjectId }, update: never) => {
-      let token = tokens.find((entry) => idMatches(entry.orderId, filter.orderId));
+    findOneAndUpdate: vi.fn(
+      async (filter: { orderId: ObjectId }, update: { $setOnInsert: AccessToken }) => {
+        let token = tokens.find((entry) => idMatches(entry.orderId, filter.orderId));
 
-      if (!token) {
-        token = {
-          _id: new ObjectId(),
-          ...(update.$setOnInsert as AccessToken),
-        };
-        tokens.push(token);
+        if (!token) {
+          token = {
+            _id: new ObjectId(),
+            ...update.$setOnInsert,
+          };
+          tokens.push(token);
+        }
+
+        return token;
       }
-
-      return token;
-    }),
+    ),
   };
 
   const db = {
