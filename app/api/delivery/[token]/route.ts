@@ -4,6 +4,37 @@ import { AccessToken, Product, Order } from "@/lib/definitions";
 import { decryptContent } from "@/lib/crypto";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rateLimit";
 
+/**
+ * @swagger
+ * /api/delivery/{token}:
+ *   get:
+ *     description: Deliver purchased content for a paid order. Successful delivery starts an atomic two-second per-token cooldown; simultaneous requests receive 429. Content responses are never cached.
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Purchased content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: string
+ *       403:
+ *         description: Invalid token or payment not confirmed
+ *       404:
+ *         description: Content unavailable
+ *       429:
+ *         description: IP rate limit or per-token cooldown exceeded
+ *       500:
+ *         description: Delivery or decryption failed
+ */
 export async function GET(request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
@@ -40,8 +71,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 403 });
     }
 
-    // 2. Rate Limiting (Basic)
-    // In a real app, use Redis. Here, we check lastAccessedAt inside DB.
+    // 2. Reject recent accesses early; the final update also checks the cooldown atomically.
     const now = new Date();
     if (tokenDoc.lastAccessedAt) {
       const timeDiff = now.getTime() - new Date(tokenDoc.lastAccessedAt).getTime();
@@ -108,14 +138,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
       return NextResponse.json({ error: "Decryption error" }, { status: 500 });
     }
 
-    // 5. Update Usage Metrics
-    await db.collection<AccessToken>("tokens").updateOne(
-      { _id: tokenDoc._id },
+    // 5. Claim the cooldown and update usage atomically before releasing content.
+    const accessedAt = new Date();
+    const accessResult = await db.collection<AccessToken>("tokens").updateOne(
+      {
+        _id: tokenDoc._id,
+        $or: [
+          { lastAccessedAt: { $exists: false } },
+          { lastAccessedAt: { $lte: new Date(accessedAt.getTime() - 2000) } },
+        ],
+      },
       {
         $inc: { usageCount: 1 },
-        $set: { lastAccessedAt: now },
+        $set: { lastAccessedAt: accessedAt },
       }
     );
+
+    if (accessResult.matchedCount === 0) {
+      return NextResponse.json({ error: "Rate limit exceeded. Please wait." }, { status: 429 });
+    }
 
     // 6. Return Content via Secure Headers
     return new NextResponse(JSON.stringify({ content }), {

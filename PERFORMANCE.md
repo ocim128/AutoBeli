@@ -100,6 +100,14 @@ export async function getOrFetch<T>(key, fetcher, ttl): Promise<T>;
 3. Execute fetch, store in pending
 4. Cache result, cleanup pending
 
+### Invalidation during a query
+
+Key deletion, prefix invalidation, and cache clearing also retire matching pending
+queries. Requests after invalidation start a fresh query; requests already waiting
+on the old query still receive its result. Only the current query may populate the
+cache or clear its pending entry. This prevents queries started before a stock,
+product, or settings update from restoring stale data for another cache TTL.
+
 ---
 
 ## 5. React Component Optimizations

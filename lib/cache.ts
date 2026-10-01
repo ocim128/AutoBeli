@@ -18,6 +18,8 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
+const pendingRequests = new Map<string, Promise<unknown>>();
+
 class MemoryCache {
   private cache: Map<string, CacheEntry<unknown>> = new Map();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
@@ -65,6 +67,7 @@ class MemoryCache {
    * Delete a specific key from the cache
    */
   delete(key: string): boolean {
+    pendingRequests.delete(key);
     return this.cache.delete(key);
   }
 
@@ -72,6 +75,9 @@ class MemoryCache {
    * Invalidate all keys that start with a prefix
    */
   invalidatePrefix(prefix: string): number {
+    for (const key of pendingRequests.keys()) {
+      if (key.startsWith(prefix)) pendingRequests.delete(key);
+    }
     let count = 0;
     for (const key of this.cache.keys()) {
       if (key.startsWith(prefix)) {
@@ -86,6 +92,7 @@ class MemoryCache {
    * Clear the entire cache
    */
   clear(): void {
+    pendingRequests.clear();
     this.cache.clear();
   }
 
@@ -164,8 +171,6 @@ export const CACHE_TTL = {
 // requests for the same data arrive simultaneously
 // ================================================
 
-const pendingRequests = new Map<string, Promise<unknown>>();
-
 /**
  * Deduplicated fetch with caching
  * If multiple requests for the same key arrive at the same time,
@@ -193,18 +198,19 @@ export async function getOrFetch<T>(
   }
 
   // 3. Create new fetch promise
-  const fetchPromise = (async () => {
-    try {
-      const data = await fetcher();
-      if (data !== null) {
+  const fetchPromise = Promise.resolve()
+    .then(fetcher)
+    .then((data) => {
+      // Invalidated queries still resolve for their callers but cannot restore stale data.
+      if (data !== null && pendingRequests.get(key) === fetchPromise) {
         cache.set(key, data, ttlSeconds);
       }
       return data;
-    } finally {
-      // Clean up pending request
-      pendingRequests.delete(key);
-    }
-  })();
+    })
+    .finally(() => {
+      // An older query must not remove a replacement query's deduplication entry.
+      if (pendingRequests.get(key) === fetchPromise) pendingRequests.delete(key);
+    });
 
   // 4. Store as pending
   pendingRequests.set(key, fetchPromise);

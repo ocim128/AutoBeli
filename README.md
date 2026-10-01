@@ -42,6 +42,15 @@ AutoBeli is a Next.js storefront for selling text-based digital products with se
 - Paid orders only consume unsold stock items.
 - Admin inventory actions that copy or bulk delete by username operate on unsold stock only and do not touch sold content.
 
+## Secure content delivery
+
+`GET /api/delivery/[token]` requires a valid token for a paid order and returns
+content with `Cache-Control: no-store`. Delivery is IP-rate-limited and enforces a
+two-second per-token cooldown with an atomic MongoDB update before returning
+content. Concurrent requests using the same token receive HTTP 429 when another
+request claims the cooldown, including requests from different IPs or app
+instances. Failed payment checks and unavailable content do not consume the cooldown.
+
 ## Admin inventory tools
 
 - `/admin/products` lets admins copy all unsold usernames for one product, copy all unsold usernames across the catalog, and copy all unsold stock content across the catalog.
@@ -206,6 +215,7 @@ Transactional and broadcast email is sent through the Cloudflare worker in [`wor
 - [`AGENTS.md`](./AGENTS.md)
 - [`DESIGN.md`](./DESIGN.md)
 - [`PERFORMANCE.md`](./PERFORMANCE.md)
+- [`docs/maintenance-log.md`](./docs/maintenance-log.md)
 - [`docs/email-audience-and-product-broadcast-plan.md`](./docs/email-audience-and-product-broadcast-plan.md)
 - [`docs/hybrid-tactical-ui-redesign-plan.md`](./docs/hybrid-tactical-ui-redesign-plan.md)
 - [`docs/qris-payment-gateway-integration-plan.md`](./docs/qris-payment-gateway-integration-plan.md)
