@@ -233,6 +233,14 @@ test.describe("Qris Payment Flow", () => {
       expect.arrayContaining([expect.objectContaining({ orderId })])
     );
 
+    const orderRecovery = await request.post("/api/orders/search", {
+      data: { orderId },
+    });
+    expect(orderRecovery.ok()).toBe(true);
+    expect((await orderRecovery.json()).orders).toEqual(
+      expect.arrayContaining([expect.objectContaining({ orderId, amountPaid: finalAmount })])
+    );
+
     // 6. Idempotency: replay the same signed webhook. The order must stay paid
     //    and the response must acknowledge the duplicate.
     const duplicateRes = await apiContext.post("/api/webhooks/qris", {

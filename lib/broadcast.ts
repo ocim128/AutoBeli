@@ -1,7 +1,10 @@
 import { Db, ObjectId } from "mongodb";
 import { AudienceContact, Product, ProductBroadcastLog } from "./definitions";
 import { sendPlainTextEmail } from "./email";
-import { getAudienceRecipientsForProductBroadcast } from "./audience";
+import {
+  countAudienceRecipientsForProductBroadcast,
+  getAudienceRecipientsForProductBroadcast,
+} from "./audience";
 import { buildProductBroadcastBody, buildProductBroadcastSubject } from "./broadcastTemplate";
 
 const BROADCAST_COLLECTION = "broadcasts";
@@ -60,8 +63,7 @@ export async function resolveBroadcastProduct(
 }
 
 export async function getBroadcastRecipientCount(productId: ObjectId, db: Db): Promise<number> {
-  const recipients = await getAudienceRecipientsForProductBroadcast(productId, db);
-  return recipients.length;
+  return countAudienceRecipientsForProductBroadcast(productId, db);
 }
 
 async function logBroadcast(log: Omit<ProductBroadcastLog, "_id">, db: Db): Promise<void> {
@@ -148,9 +150,18 @@ export async function sendProductBroadcast(params: {
     };
   }
 
-  const recipients = await getAudienceRecipientsForProductBroadcast(params.product._id, params.db);
-  const recipientCount = recipients.length;
   const maxRecipients = getBroadcastMaxRecipients();
+  const eligibleCount = await getBroadcastRecipientCount(params.product._id, params.db);
+
+  const recipients =
+    eligibleCount > maxRecipients
+      ? []
+      : await getAudienceRecipientsForProductBroadcast(
+          params.product._id,
+          params.db,
+          maxRecipients + 1
+        );
+  const recipientCount = eligibleCount > maxRecipients ? eligibleCount : recipients.length;
 
   if (recipientCount === 0) {
     return {

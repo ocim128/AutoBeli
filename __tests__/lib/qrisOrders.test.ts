@@ -455,6 +455,17 @@ describe("processQrisPaymentEvent", () => {
 });
 
 describe("syncOrderPaymentStatus (qris branch)", () => {
+  it("does not query the provider for an expired order", async () => {
+    const order = makeQrisOrder({ status: "EXPIRED" });
+    const fake = createFakeDb(order, makeProduct());
+    mockGetMongoClient.mockResolvedValue({ db: () => fake.db });
+
+    await expect(syncOrderPaymentStatus(order._id!.toString())).resolves.toBe(false);
+    expect(mockGetQrisPayment).not.toHaveBeenCalled();
+    expect(fake.tokens).toHaveLength(0);
+    expect(fake.productUpdates).toHaveLength(0);
+  });
+
   it("fulfills a paid provider payment exactly once across webhook and poll", async () => {
     const order = makeQrisOrder();
     const product = makeProduct();

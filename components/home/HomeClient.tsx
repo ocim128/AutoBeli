@@ -121,6 +121,8 @@ export function HomeClient({ products }: { products: Product[] }) {
                         src={heroProduct.imageUrl}
                         alt={heroProduct.title}
                         fill
+                        sizes="(min-width: 1024px) 346px, (min-width: 552px) 386px, calc(100vw - 132px)"
+                        priority
                         objectFit="cover"
                         className="transition-transform duration-500 group-hover:scale-[1.03]"
                       />
@@ -186,6 +188,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                               src={product.imageUrl}
                               alt={product.title}
                               fill
+                              sizes="56px"
                               objectFit="cover"
                               className="transition-transform duration-300 group-hover:scale-[1.04]"
                             />
@@ -319,6 +322,7 @@ function ProductCard({ product }: { product: Product }) {
               src={product.imageUrl}
               alt={product.title}
               fill
+              sizes="(min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 768px) calc((100vw - 72px) / 2), (min-width: 640px) calc((100vw - 56px) / 2), calc(100vw - 32px)"
               objectFit="cover"
               className="transition-transform duration-500 group-hover:scale-[1.04]"
             />

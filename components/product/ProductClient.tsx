@@ -104,6 +104,8 @@ export function ProductClient({
                   src={product.imageUrl}
                   alt={product.title}
                   fill
+                  sizes="(min-width: 1152px) 627px, (min-width: 1024px) calc(58.333vw - 45px), (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)"
+                  priority
                   objectFit="cover"
                   className="transition-transform duration-700 group-hover:scale-[1.03]"
                 />

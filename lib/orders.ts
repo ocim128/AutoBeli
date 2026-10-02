@@ -392,7 +392,9 @@ export async function handleSuccessfulPayment({
 async function retrySendingEmail(orderId: string, order: Order, db: Db): Promise<void> {
   if (!order.emailSent && order.customerContact) {
     try {
-      const product = await db.collection<Product>("products").findOne({ _id: order.productId });
+      const product = await db
+        .collection<Product>("products")
+        .findOne<Pick<Product, "title">>({ _id: order.productId }, { projection: { title: 1 } });
 
       if (product) {
         const emailResult = await sendOrderConfirmationEmail({
@@ -594,7 +596,7 @@ export async function syncOrderPaymentStatus(orderId: string): Promise<boolean> 
 
     const order = await db.collection<Order>("orders").findOne({ _id: new ObjectId(orderId) });
 
-    if (!order || !order.paymentMetadata?.transaction_ref) {
+    if (!order || order.status === "EXPIRED" || !order.paymentMetadata?.transaction_ref) {
       return false;
     }
 

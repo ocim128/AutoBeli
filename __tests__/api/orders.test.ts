@@ -107,6 +107,36 @@ describe("POST /api/orders overload guard", () => {
     mocks.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
   });
 
+  it.each([
+    { product: { isSold: false }, quantity: 1, status: 200 },
+    { product: { isSold: true }, quantity: 1, status: 410 },
+    { product: { isSold: false }, quantity: 2, status: 400 },
+    { product: { stockItems: [{ isSold: false }, { isSold: false }] }, quantity: 2, status: 200 },
+    { product: { stockItems: [{ isSold: false }, { isSold: true }] }, quantity: 2, status: 410 },
+  ])(
+    "preserves stock checks using projected fields: $product, quantity $quantity",
+    async ({ product, quantity, status }) => {
+      mocks.countDocuments.mockResolvedValue(0);
+      mocks.findOne.mockResolvedValue({ _id: new ObjectId(), priceIdr: 10000, ...product });
+      const response = await POST(
+        new Request("http://localhost/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-forwarded-for": `stock-test-${status}-${quantity}`,
+          },
+          body: JSON.stringify({ slug: "test-product", quantity }),
+        })
+      );
+
+      expect(response.status).toBe(status);
+      expect(mocks.findOne).toHaveBeenCalledWith(
+        { slug: "test-product", isActive: true },
+        { projection: { priceIdr: 1, isSold: 1, "stockItems.isSold": 1 } }
+      );
+    }
+  );
+
   it.each([50, 51, 500])("preserves the threshold with %i recent orders", async (count) => {
     mocks.countDocuments.mockResolvedValue(Math.min(count, 51));
     const response = await POST(

@@ -103,7 +103,12 @@ export async function POST(request: Request) {
     }
 
     // Get Product (only active, check sold status in code to avoid second query)
-    const product = await db.collection<Product>("products").findOne({ slug, isActive: true });
+    const product = await db
+      .collection<Product>("products")
+      .findOne(
+        { slug, isActive: true },
+        { projection: { priceIdr: 1, isSold: 1, "stockItems.isSold": 1 } }
+      );
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });

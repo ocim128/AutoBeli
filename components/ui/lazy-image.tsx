@@ -14,6 +14,8 @@ interface LazyImageProps {
   width?: number;
   /** Height of the image */
   height?: number;
+  /** Rendered image width at each responsive breakpoint */
+  sizes?: string;
   /** Optional blur placeholder data URL */
   blurDataURL?: string;
   /** Fallback component when image fails to load */
@@ -73,6 +75,7 @@ function LazyImage({
   alt,
   width,
   height,
+  sizes,
   blurDataURL,
   fallback,
   fill = false,
@@ -132,14 +135,15 @@ function LazyImage({
           width={fill ? undefined : width || 800}
           height={fill ? undefined : height || 600}
           fill={fill}
+          sizes={sizes}
           onLoad={handleLoad}
           onError={handleError}
           className={cn("transition-opacity duration-500", isLoaded ? "opacity-100" : "opacity-0")}
           style={{ objectFit }}
           loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
           placeholder={blurDataURL ? "blur" : "empty"}
           blurDataURL={blurDataURL}
-          priority={priority}
         />
       )}
 
@@ -160,6 +164,7 @@ function LazyImage({
           )}
           style={{ objectFit }}
           loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
         />
       )}
 

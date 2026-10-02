@@ -43,7 +43,8 @@ export async function POST(request: Request) {
     const client = await getMongoClient();
     const db = client.db();
 
-    const orders: Array<Order & { product?: Product }> = [];
+    type RecoveryProduct = Pick<Product, "_id" | "title" | "slug">;
+    const orders: Array<Order & { product?: RecoveryProduct }> = [];
 
     if (orderId) {
       // Search by order ID - exact match only
@@ -54,17 +55,17 @@ export async function POST(request: Request) {
 
       if (order) {
         // Get product info
-        const product = await db.collection<Product>("products").findOne({
-          _id: order.productId,
-        });
+        const product = await db
+          .collection<Product>("products")
+          .findOne<RecoveryProduct>(
+            { _id: order.productId },
+            { projection: { title: 1, slug: 1 } }
+          );
 
         if (product) {
           orders.push({
             ...order,
-            product: {
-              ...product,
-              contentEncrypted: "", // Never expose encrypted content
-            },
+            product,
           });
         }
       }
@@ -87,12 +88,9 @@ export async function POST(request: Request) {
       const productsArr = await db
         .collection<Product>("products")
         .find({ _id: { $in: productIds.map((id) => new ObjectId(id)) } })
-        .project<Pick<Product, keyof Product>>({
-          contentEncrypted: 0,
-          "stockItems.contentEncrypted": 0,
-        })
+        .project<RecoveryProduct>({ title: 1, slug: 1 })
         .toArray();
-      const productMap = new Map<string, Product>(
+      const productMap = new Map<string, RecoveryProduct>(
         productsArr.map((p) => [p._id?.toString() ?? "", p])
       );
 

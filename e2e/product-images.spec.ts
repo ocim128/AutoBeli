@@ -83,7 +83,11 @@ test("product images persist through create, reload, replacement, and public acc
     }
 
     await page.goto(`/product/${slug}`);
-    await expect(page.locator(`img[src*="${imageIds[1].toHexString()}"]`)).toBeVisible();
+    const productImage = page.locator(`img[src*="${imageIds[1].toHexString()}"]`);
+    await expect(productImage).toBeVisible();
+    await expect(productImage).toHaveAttribute("loading", "eager");
+    await expect(productImage).toHaveAttribute("fetchpriority", "high");
+    await expect(productImage).toHaveAttribute("sizes", /627px/);
     await expect
       .poll(() =>
         page

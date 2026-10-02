@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { fetchWithTimeout, readBodyWithTimeout } from "@/lib/fetchWithTimeout";
@@ -24,19 +24,57 @@ afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("upstream request deadlines", () => {
   it("aborts a connection that never returns headers", async () => {
-    await expect(fetchWithTimeout(`${baseUrl}/headers`, {}, 100)).rejects.toThrow("timed out");
+    const deadline = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init!.signal!.addEventListener("abort", () => reject(init!.signal!.reason));
+        })
+    );
+    const request = fetchWithTimeout(`${baseUrl}/headers`, {}, 100);
+    const assertion = expect(request).rejects.toThrow("Request timed out after 100ms");
+
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(AbortSignal.timeout).toHaveBeenCalledWith(100);
+    deadline.abort(new DOMException("Deadline expired", "TimeoutError"));
+    await assertion;
   });
 
   it("still aborts a stalled body after headers arrive", async () => {
+    const deadline = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (_input, init) =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              init!.signal!.addEventListener("abort", () => controller.error(init!.signal!.reason));
+            },
+          })
+        )
+    );
     const response = await fetchWithTimeout(`${baseUrl}/body`, {}, 100);
+    const assertion = expect(response.text()).rejects.toThrow("Deadline expired");
+
+    deadline.abort(new DOMException("Deadline expired", "TimeoutError"));
+    await assertion;
+  });
+
+  it("aborts a real stalled HTTP body", async () => {
+    const response = await fetchWithTimeout(`${baseUrl}/body`, {}, 1000);
     await expect(response.text()).rejects.toThrow();
   });
 
   it("preserves caller cancellation after headers arrive", async () => {
     const controller = new AbortController();
-    const response = await fetchWithTimeout(`${baseUrl}/body`, { signal: controller.signal }, 1000);
+    const response = await fetchWithTimeout(`${baseUrl}/body`, { signal: controller.signal }, 3000);
     const body = response.text();
     const assertion = expect(body).rejects.toThrow();
     controller.abort();

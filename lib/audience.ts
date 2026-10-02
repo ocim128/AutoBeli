@@ -327,44 +327,55 @@ export async function reconcileAudienceForPaidOrderContactChange(
   await collection.updateOne({ _id: matched._id }, updateOperation);
 }
 
-export async function getAudienceRecipientsForProductBroadcast(
+async function buildBroadcastRecipientFilter(
   productId: ObjectId,
   db: Db
-): Promise<AudienceContact[]> {
+): Promise<Record<string, unknown>> {
   await seedAudienceFromPaidOrdersIfEmpty(db);
 
-  const buyerOrders = await db
-    .collection(ORDER_COLLECTION)
-    .find({
-      productId,
-      status: "PAID",
-      customerContact: { $exists: true, $nin: [null, ""] },
-    })
-    .project<{ customerContact?: string }>({ customerContact: 1 })
-    .toArray();
+  const buyerContacts = await db.collection(ORDER_COLLECTION).distinct("customerContact", {
+    productId,
+    status: "PAID",
+    customerContact: { $exists: true, $nin: [null, ""] },
+  });
 
   const buyerEmails = new Set<string>();
-  for (const order of buyerOrders) {
-    const email = normalizeEmail(order.customerContact || "");
+  for (const contact of buyerContacts) {
+    const email = normalizeEmail(typeof contact === "string" ? contact : "");
     if (email) buyerEmails.add(email);
   }
 
-  const audienceRows = await db
-    .collection(AUDIENCE_COLLECTION)
-    .find({
-      status: "ACTIVE",
-      ...buildNotDeletedFilter(),
-    })
+  return {
+    status: "ACTIVE",
+    ...buildNotDeletedFilter(),
+    allEmails: { $nin: Array.from(buyerEmails) },
+  };
+}
+
+export async function countAudienceRecipientsForProductBroadcast(
+  productId: ObjectId,
+  db: Db
+): Promise<number> {
+  const filter = await buildBroadcastRecipientFilter(productId, db);
+  return db.collection(AUDIENCE_COLLECTION).countDocuments(filter);
+}
+
+export async function getAudienceRecipientsForProductBroadcast(
+  productId: ObjectId,
+  db: Db,
+  limit: number
+): Promise<Pick<AudienceContact, "_id" | "email" | "allEmails">[]> {
+  const filter = await buildBroadcastRecipientFilter(productId, db);
+  return db
+    .collection<AudienceContact>(AUDIENCE_COLLECTION)
+    .find(filter)
     .project<Pick<AudienceContact, "_id" | "email" | "allEmails">>({
       _id: 1,
       email: 1,
       allEmails: 1,
     })
+    .limit(limit)
     .toArray();
-
-  return audienceRows.filter((row) =>
-    row.allEmails.every((email) => !buyerEmails.has(email))
-  ) as AudienceContact[];
 }
 
 export async function softDeleteAudienceContact(id: string, db: Db): Promise<boolean> {

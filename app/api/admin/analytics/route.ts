@@ -27,12 +27,13 @@ export async function GET(request: Request) {
     const client = await getMongoClient();
     const db = client.db();
 
-    // Calculate dates for the last 7 days
+    // Calculate UTC boundaries for today and the preceding 6 days.
     const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    today.setUTCHours(0, 0, 0, 0);
     const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
     // Base filter to exclude test orders
     const testOrderFilter = {
@@ -54,12 +55,12 @@ export async function GET(request: Request) {
         {
           $match: {
             ...testOrderFilter,
-            paidAt: { $gte: sevenDaysAgo, $lte: today },
+            paidAt: { $gte: sevenDaysAgo, $lt: tomorrow },
           },
         },
         {
           $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidAt" } },
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidAt", timezone: "UTC" } },
             revenue: { $sum: "$amountPaid" },
             orders: { $sum: 1 },
           },
@@ -135,7 +136,7 @@ export async function GET(request: Request) {
     const filledDailyRevenue = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
-      d.setDate(d.getDate() - i);
+      d.setUTCDate(d.getUTCDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       const existing = dailyRevenue.find((r) => r._id === dateStr);
       filledDailyRevenue.push({
